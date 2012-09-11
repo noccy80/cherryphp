@@ -18,16 +18,16 @@ if (!$libpath) {
     require($libpath.'/lib/bootstrap.php');
 }
 
-$lepton = new \Lepton\Lepton(__FILE__);
+$lepton = new \cherry\Lepton(__FILE__);
 
 require('lib/markdown.php');
 
 // We need this to set up a CLI application
-require_once('lib/lepton/cli/application.php');
+require_once('lib/cherry/cli/application.php');
 
-use \Lepton\Base\Event;
+use \cherry\Base\Event;
 
-class CherryDocApplication extends \Lepton\Cli\Application {
+class CherryDocApplication extends \cherry\Cli\Application {
     protected $projectfile = 'cherrydoc.ini';
     protected $segments = null;
     /**
@@ -56,7 +56,7 @@ class CherryDocApplication extends \Lepton\Cli\Application {
     function onBefore() {
     }
     function onAfter() {
-        \Lepton\log(\Lepton\LOG_DEBUG,'Cleaning up...');
+        \cherry\log(\cherry\LOG_DEBUG,'Cleaning up...');
     }
     /**
      * Main function, when we get here everything has been parsed and loaded Ok.

@@ -17,7 +17,7 @@ class HelpCommands extends CommandBundle {
 
     function help($command=null) {
         if (!$command) {
-            $app = \lepton\Lepton::getInstance()->getApplication();
+            $app = \cherry\Lepton::getInstance()->getApplication();
             $app->usage();
         } else {
             $cobj = \cherryutil\commands\CommandList::getInstance()->findCommand($command);

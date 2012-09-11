@@ -8,14 +8,14 @@ keywords:
 
 In the MVC dictionary a controller is a class that is responsible for handling
 actions that are sent to the web application. In CherryPHP they are all descendants
-of the `\Lepton\Mvc\Controller\Base` class, and a number of helpful varieties are
+of the `\cherry\Mvc\Controller\Base` class, and a number of helpful varieties are
 available. These include:
 
- * ***\Lepton\Mvc\Controller\Simple*** is a very simple controller that wraps
+ * ***\cherry\Mvc\Controller\Simple*** is a very simple controller that wraps
    most of the complex functionality into calls to `initialize()` and to a
    function composed of the controller method followed by the word Action, 
    for example `indexAction`.
- * ***\Lepton\Mvc\Controller\Basic*** gives you a bit more control while wrapping
+ * ***\cherry\Mvc\Controller\Basic*** gives you a bit more control while wrapping
    methods that can't be located into a special `unknown()` method along with
    some other helpful traits.
 
@@ -24,7 +24,7 @@ script normally found at `public/index.php`. The redirection to this script
 should be done by `mod_rewrite` or similar.
 
 What this script does is fire up an instance of the application class, which is
-normally a `\Lepton\Mvc\Application`
+normally a `\cherry\Mvc\Application`
 
 
 ## Example controllers
@@ -34,12 +34,12 @@ normally a `\Lepton\Mvc\Application`
     <?php
     
     namespace MyApp\Controllers;
-    class IndexController extends \Lepton\Mvc\Controller\Basic {
+    class IndexController extends \cherry\Mvc\Controller\Basic {
     
         public function initialize() {
             // Create the view and initialize it to a frame with a
             // placeholder for the rendered view.
-            $this->view = new \Lepton\Mvc\View\Frame('frames/default.phtml');
+            $this->view = new \cherry\Mvc\View\Frame('frames/default.phtml');
         }
     
         public function indexAction() {

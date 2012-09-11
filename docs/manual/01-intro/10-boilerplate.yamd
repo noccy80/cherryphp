@@ -44,8 +44,8 @@ The automatic detection works as such:
         }
         
         // Create the main lepton instance as well as a new MVC application
-        $lepton = new \Lepton\Lepton(__FILE__);
-        $app = new \Lepton\Mvc\Application();
+        $lepton = new \cherry\Lepton(__FILE__);
+        $app = new \cherry\Mvc\Application();
         
         // Set the application, then run it
         $lepton->setApplication($app);
@@ -72,6 +72,6 @@ You can see what loaders are available using the list-loaders command:
 
 ## Applications
 
-### \Lepton\Mvc\Application
+### \cherry\Mvc\Application
 
-### \Lepton\Cli\Application
+### \cherry\Cli\Application

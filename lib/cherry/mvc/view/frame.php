@@ -12,7 +12,7 @@ class Frame extends Base {
     public function __construct($frame,array $options = null) {
         // Constructor
         $this->frame = $frame;
-        $this->app = \lepton\Lepton::getInstance()->getApplication();
+        $this->app = \cherry\Lepton::getInstance()->getApplication();
     }
     
     function __ob_callback($str) {

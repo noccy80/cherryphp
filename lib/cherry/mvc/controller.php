@@ -1,21 +1,21 @@
 <?php
 
-namespace Lepton\Mvc\Controller;
+namespace cherry\Mvc\Controller;
 
 abstract class Base {
 
     protected $app = null;
     protected $req = null;
 
-    function __construct(\Lepton\Mvc\Request $req) {
-        $this->app = \Lepton\Application::getInstance();
+    function __construct(\cherry\Mvc\Request $req) {
+        $this->app = \cherry\Application::getInstance();
         $this->req = $req;
         if (is_callable(array($this,'initialize'))) $this->initialize();
     }
 
-    static function factory($cn, \Lepton\Mvc\Request $req) {
+    static function factory($cn, \cherry\Mvc\Request $req) {
         // Check the namespace
-        $app = \Lepton\Application::getInstance();
+        $app = \cherry\Application::getInstance();
         $cfg = $app->getConfiguration('application','application');
         $ns = $cfg['namespace'];
         if (substr($cn,0,strlen($ns)) == $ns) {
@@ -42,7 +42,7 @@ abstract class Base {
 
 class Basic extends Base {
 
-    function unhandled(\Lepton\Mvc\Request $req) {
+    function unhandled(\cherry\Mvc\Request $req) {
     
     }
 

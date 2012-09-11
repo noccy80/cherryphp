@@ -1,9 +1,9 @@
 <?php
 
 namespace MyApp;
-class Router extends \Lepton\Mvc\Router\Base {
+class Router extends \cherry\Mvc\Router\Base {
 
-    function route(\Lepton\Mvc\Request $request) {
+    function route(\cherry\Mvc\Request $request) {
         printf("in router...\n");
     }
 

@@ -2,12 +2,12 @@
 
 namespace cherry\net;
 
-require_once('lib/lepton/base/event.php');
+require_once('lib/cherry/base/event.php');
 require_once('lib/cherry/net/socket.php');
 require_once('lib/cherry/net/sockettransport.php');
 
-use \lepton\base\Event;
-use \lepton\base\EventEmitter;
+use \cherry\base\Event;
+use \cherry\base\EventEmitter;
 
 class SocketServer extends EventEmitter {
 
@@ -47,7 +47,7 @@ class ServerSession {
     }
 
     public function upgradeTransport(\cherry\net\socket\transport\Transport $transport) {
-        \lepton\log(\lepton\LOG_DEBUG,'Upgrading transport for socket...');
+        \cherry\log(\cherry\LOG_DEBUG,'Upgrading transport for socket...');
     }
 
 }

@@ -5,7 +5,7 @@
         <input type="textbox" id="email" required="true" />
     </row>
     <row>
-        <widget class="\Lepton\Web\Captcha" />
+        <widget class="\cherry\Web\Captcha" />
     </row>
     <row align="right">
         <input type="submit" id="submit">

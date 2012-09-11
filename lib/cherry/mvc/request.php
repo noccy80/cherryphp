@@ -1,6 +1,6 @@
 <?php
 
-namespace Lepton\Mvc;
+namespace cherry\Mvc;
 
 class Request {
 

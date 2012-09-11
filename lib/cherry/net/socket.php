@@ -1,9 +1,9 @@
 <?php
 
 namespace cherry\net\socket;
-require_once 'lib/lepton/base/event.php';
+require_once 'lib/cherry/base/event.php';
 require_once 'lib/cherry/net/proxy.php';
-use \lepton\base\EventEmitter;
+use \cherry\base\EventEmitter;
 use \cherry\net\proxy\Proxy;
 
 const SOCK_PROXY = 0x20;
@@ -28,7 +28,7 @@ class TcpSocket extends Socket {
     }
     public function connect() {
         if ($this->flags & SOCK_PROXY) {
-            \lepton\log(\lepton\LOG_DEBUG,'Proxied connection, creating proxy');
+            \cherry\log(\cherry\LOG_DEBUG,'Proxied connection, creating proxy');
             $proxy = new \cherry\net\proxy\SocksProxy('127.0.0.1',8088);
             $this->proxyConnect($proxy);
         }

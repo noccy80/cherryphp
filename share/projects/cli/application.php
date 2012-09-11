@@ -8,14 +8,14 @@ define('APP_FQCN','/'.APP_NS.'/'.APPLICATION);
 
 require_once('lib/bootstrap.php');
 
-$lepton = new \Lepton\Lepton(__FILE__);
+$lepton = new \cherry\Lepton(__FILE__);
 
 // We need this to set up a CLI application
-require_once('lib/lepton/cli/application.php');
+require_once('lib/cherry/cli/application.php');
 
-use \Lepton\Base\Event;
+use \cherry\Base\Event;
 
-class Application extends \Lepton\Cli\Application {
+class Application extends \cherry\Cli\Application {
     protected $apppath = null;
     protected $route = false;
     protected $config = 'development';

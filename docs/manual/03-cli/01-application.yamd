@@ -29,7 +29,7 @@ are recommended (the `initialize` method is optional):
     
     }
     
-    $lepton = new \Lepton\Lepton(__FILE__);
+    $lepton = new \cherry\Lepton(__FILE__);
     $lepton->runApplication(new CherryApplication());
 
 ## Interacting with the command line

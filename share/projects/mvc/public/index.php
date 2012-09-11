@@ -12,9 +12,9 @@ if (!( @include_once "lib/bootstrap.php" )) {
     require_once($libpath.'/lib/bootstrap.php');
 }
 
-$lepton = new \Lepton\Lepton(__FILE__);
+$lepton = new \cherry\Lepton(__FILE__);
 
-$app = new \Lepton\Mvc\Application();
+$app = new \cherry\Mvc\Application();
 
 $lepton->runApplication($app);
 

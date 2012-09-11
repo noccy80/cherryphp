@@ -1,12 +1,12 @@
 <?php
 
-namespace Lepton\Base {
+namespace cherry\Base {
 
     class Event {
 
         private static $handlers = array();
         static function observe($event,$callback) {
-            if (!is_callable($callback)) throw new \Lepton\Base\EventException(_('Callback function is not callable'));
+            if (!is_callable($callback)) throw new \cherry\Base\EventException(_('Callback function is not callable'));
             if (!array_key_exists($event,self::$handlers)) {
                 self::$handlers[$event] = array();
             }
@@ -38,25 +38,25 @@ namespace Lepton\Base {
         private $handlers = array();
 
         public function on($event,$callback,$replace=false) {
-            if (!is_callable($callback)) throw new \Lepton\Base\EventException(_('Callback function is not callable'));
+            if (!is_callable($callback)) throw new \cherry\Base\EventException(_('Callback function is not callable'));
             if((!array_key_exists($event,$this->handlers)) || ($replace)) {
                 $this->handlers[$event] = array();
             }
             $this->handlers[$event][] = $callback;
-            \Lepton\log(\Lepton\LOG_DEBUG,"EventEmitter[%s]: Hooked event <%s>", get_class($this),$event);
+            \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Hooked event <%s>", get_class($this),$event);
         }
 
         protected function emit($event,$args=null) {
             $args = func_get_args();
             $args = array_slice($args,1);
             if (array_key_exists($event,$this->handlers)) {
-                \Lepton\log(\Lepton\LOG_DEBUG,"EventEmitter[%s]: Emiting event <%s> to %d listeners", get_class($this), $event, count($this->handlers[$event]));
+                \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Emiting event <%s> to %d listeners", get_class($this), $event, count($this->handlers[$event]));
                 foreach($this->handlers[$event] as $cb) {
                     $ret = call_user_func_array($cb,$args);
                     if ($ret) return $ret;
                 }
             } else {
-                \Lepton\log(\Lepton\LOG_DEBUG,"EventEmitter[%s]: Event <%s> has no listeners so not emited", get_class($this), $event, count($this->handlers[$event]));
+                \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Event <%s> has no listeners so not emited", get_class($this), $event, count($this->handlers[$event]));
             }
         }
 

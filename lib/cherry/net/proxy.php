@@ -10,7 +10,7 @@ abstract class Proxy {
         $this->credentials = $cred;
     }
     public function __construct($host,$port,$flags=0x00) {
-        \lepton\log(\lepton\LOG_DEBUG,'Creating new proxy (%s)',get_class($this));
+        \cherry\log(\cherry\LOG_DEBUG,'Creating new proxy (%s)',get_class($this));
     }
     public function getSocket() { }
     public function connect() { }

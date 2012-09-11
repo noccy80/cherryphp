@@ -1,8 +1,8 @@
 <?php
 
-namespace Lepton\Cli;
+namespace cherry\Cli;
 
-abstract class Application extends \Lepton\Application {
+abstract class Application extends \cherry\Application {
 
     private $arguments = array();
     private $commands = array();
@@ -11,7 +11,7 @@ abstract class Application extends \Lepton\Application {
 
     function __construct() {
         global $argv;
-        \lepton\log(\lepton\LOG_DEBUG,'Spawning application');
+        \cherry\log(\cherry\LOG_DEBUG,'Spawning application');
         $this->init();
         $opts = '';
         $lopts = array();
@@ -131,7 +131,7 @@ abstract class Application extends \Lepton\Application {
     }
 
     function init() {
-        \Lepton\log(\Lepton\LOG_DEBUG, 'Warning: application does not override init().');
+        \cherry\log(\cherry\LOG_DEBUG, 'Warning: application does not override init().');
     }
     function usage() {
         $this->usageheader();

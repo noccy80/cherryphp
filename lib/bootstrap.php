@@ -1,6 +1,6 @@
 <?php
 
-namespace Lepton;
+namespace cherry;
 
 define('CHERRY_VERSION','1.0.0-alpha');
 if ($_app = getenv("CHERRY_APP")) define('CHERRY_APP',$_app);
@@ -56,7 +56,7 @@ class Lepton {
     private static $instance = null;
 
     public static function getInstance() {
-        if (!self::$instance) self::$instance = new \Lepton\Lepton();
+        if (!self::$instance) self::$instance = new \cherry\Lepton();
         return self::$instance;
     }
 
@@ -72,11 +72,11 @@ class Lepton {
                     require_once $extdir.'extension.php';
                 }
             }
-        } catch (\lepton\ApplicationException $e) {
+        } catch (\cherry\ApplicationException $e) {
         }
-        \Lepton\Base\Event::invoke('onbeforeapplication');
+        \cherry\Base\Event::invoke('onbeforeapplication');
         $app->run();
-        \Lepton\Base\Event::invoke('onafterapplication');
+        \cherry\Base\Event::invoke('onafterapplication');
     }
 
     public function getApplication() {
@@ -100,18 +100,18 @@ class Lepton {
     }
 
     public function _spl_autoload($class) {
-        \lepton\log(\lepton\LOG_DEBUG,'Autoload request: %s', $class);
+        \cherry\log(\cherry\LOG_DEBUG,'Autoload request: %s', $class);
         $file = 'lib'.DIRECTORY_SEPARATOR.strtolower(str_replace('\\',DIRECTORY_SEPARATOR,$class)).'.php';
         if ( @include_once $file ) {
-            \lepton\log(\lepton\LOG_DEBUG,'Included %s',$file);
+            \cherry\log(\cherry\LOG_DEBUG,'Included %s',$file);
             return;
         }
         $file = dirname('lib'.DIRECTORY_SEPARATOR.strtolower(str_replace('\\',DIRECTORY_SEPARATOR,$class))).'.php';
         if ( @include_once $file ) {
-            \lepton\log(\lepton\LOG_DEBUG,'Included %s',$file);
+            \cherry\log(\cherry\LOG_DEBUG,'Included %s',$file);
             return;
         }
-        \lepton\log(\lepton\LOG_DEBUG,'No matching file found for autoload of %s', $class);
+        \cherry\log(\cherry\LOG_DEBUG,'No matching file found for autoload of %s', $class);
     }
 
 }

@@ -1,11 +1,11 @@
 <?php
 
 namespace MyApp\Controllers;
-class IndexController extends \Lepton\Mvc\Controller\Base {
+class IndexController extends \cherry\Mvc\Controller\Base {
 
     protected function initialize() {
         $this->view = new \cherry\mvc\view\Frame('frames/default.phtml');
-        //$hashlib = $this->load('\Lepton\Crypto\Hashing','sha256');
+        //$hashlib = $this->load('\cherry\Crypto\Hashing','sha256');
         //printf("Fancy hash: %s\n", $hashlib->hash(time()));
     }
 
