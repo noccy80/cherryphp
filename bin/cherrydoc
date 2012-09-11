@@ -25,7 +25,7 @@ require('lib/markdown.php');
 // We need this to set up a CLI application
 require_once('lib/cherry/cli/application.php');
 
-use \cherry\Base\Event;
+use cherry\Base\Event;
 
 class CherryDocApplication extends \cherry\Cli\Application {
     protected $projectfile = 'cherrydoc.ini';

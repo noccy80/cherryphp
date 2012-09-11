@@ -6,8 +6,8 @@ require_once('lib/cherry/base/event.php');
 require_once('lib/cherry/net/socket.php');
 require_once('lib/cherry/net/sockettransport.php');
 
-use \cherry\base\Event;
-use \cherry\base\EventEmitter;
+use cherry\base\Event;
+use cherry\base\EventEmitter;
 
 class SocketServer extends EventEmitter {
 

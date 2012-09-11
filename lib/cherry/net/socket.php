@@ -3,8 +3,8 @@
 namespace cherry\net\socket;
 require_once 'lib/cherry/base/event.php';
 require_once 'lib/cherry/net/proxy.php';
-use \cherry\base\EventEmitter;
-use \cherry\net\proxy\Proxy;
+use cherry\base\EventEmitter;
+use cherry\net\proxy\Proxy;
 
 const SOCK_PROXY = 0x20;
 const SOCK_NONBLOCKING = 0x08;

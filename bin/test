@@ -16,8 +16,8 @@ $lepton = new \cherry\Lepton(__FILE__);
 // We need this to set up a CLI application
 require_once('lib/cherry/cli/application.php');
 
-use \cherry\Base\Event;
-use \cherry\Base\EventEmitter;
+use cherry\base\Event;
+use cherry\base\EventEmitter;
 
 require_once('lib/cherry/net/socketserver.php');
 $ss = new \cherry\net\SocketServer(6667);
@@ -30,3 +30,13 @@ $ss->on('ready', function() {
     printf("Server is ready.\n");
 });
 $ss->start();
+
+class q {
+    function m($name) { echo "Awesome, $name!\n"; }
+}
+
+use \cherry\base\Callable;
+$cb = new Callable(function($name){ echo "Hello, $name\n"; });
+$cb('World');
+$cb = new Callable('q','m');
+$cb('World');

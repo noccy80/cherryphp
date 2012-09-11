@@ -1,9 +1,9 @@
 <?php
 
 namespace cherryutil\commands;
-use \cherryutil\commands\Command;
-use \cherryutil\commands\CommandBundle;
-use \cherryutil\commands\CommandList;
+use cherryutil\commands\Command;
+use cherryutil\commands\CommandBundle;
+use cherryutil\commands\CommandList;
 
 class ScaffoldingCommands extends CommandBundle {
     
