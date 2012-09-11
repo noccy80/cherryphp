@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<cherryform>
+    <row>
+        <input type="textbox" id="username" required="true" />
+        <input type="textbox" id="email" required="true" />
+    </row>
+    <row>
+        <widget class="\Lepton\Web\Captcha" />
+    </row>
+    <row align="right">
+        <input type="submit" id="submit">
+    </row>
+    <strings lang="en-us">
+        <string key="username.label">Desired username:</string>
+        <string key="email.label">E-mail address</string>
+    </strings>
+</cherryform>

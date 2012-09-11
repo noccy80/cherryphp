@@ -1,0 +1,83 @@
+title: Controllers
+description: What are controllers and what do they do?
+author: Christopher Vagnetoft
+keywords:
+---
+
+# Controllers: What are they and what do they do?
+
+In the MVC dictionary a controller is a class that is responsible for handling
+actions that are sent to the web application. In CherryPHP they are all descendants
+of the `\Lepton\Mvc\Controller\Base` class, and a number of helpful varieties are
+available. These include:
+
+ * ***\Lepton\Mvc\Controller\Simple*** is a very simple controller that wraps
+   most of the complex functionality into calls to `initialize()` and to a
+   function composed of the controller method followed by the word Action, 
+   for example `indexAction`.
+ * ***\Lepton\Mvc\Controller\Basic*** gives you a bit more control while wrapping
+   methods that can't be located into a special `unknown()` method along with
+   some other helpful traits.
+
+When a request is received by the web server, it is directed to the single loader
+script normally found at `public/index.php`. The redirection to this script
+should be done by `mod_rewrite` or similar.
+
+What this script does is fire up an instance of the application class, which is
+normally a `\Lepton\Mvc\Application`
+
+
+## Example controllers
+
+### Basic controller invoking a view inside a frame
+
+    <?php
+    
+    namespace MyApp\Controllers;
+    class IndexController extends \Lepton\Mvc\Controller\Basic {
+    
+        public function initialize() {
+            // Create the view and initialize it to a frame with a
+            // placeholder for the rendered view.
+            $this->view = new \Lepton\Mvc\View\Frame('frames/default.phtml');
+        }
+    
+        public function indexAction() {
+            // Load the view 
+            $this->view->load('index/index.phtml');
+        }
+    
+    }
+
+## Managing views
+
+### Invoking a view
+
+        public function indexAction() {
+            // Load the view 
+            $this->view->load('index/index.phtml');
+        }
+
+You can pass data on to the view through the request state.
+
+## Content in all its glory
+
+### Embedding the content in the frame
+
+Embedding is done with the "magic" tag <@content/>. This tag can take an `encoding` attribute 
+to encode the output data before inserting it:
+
+    <@content encoding="base64" />
+
+You can safely omit the `/` at the end of the tag if it makes you feel uncomfortable.
+The complete list of attributes that are available are:
+
+<dl>
+<dt><code>encoding="<em>encoding</em>"</code></dt>
+    <dd>Encode the content using the specified encoding scheme. This can be used to output Base64-encoded content among other things.</dd>
+<dt><code>src="<em>view.phtml</em>"</code></dt>
+    <dd>Load a specific view. If this attribute is left out, the previous view buffer is rendered.</dd>
+<dt><code>widget="<em>widget-id</em>"</code></dt>
+    <dd>Insert a widget in the content. The widget must be registered with the widget manager
+    before it can be used with the @content tag.</dd>
+</dl>

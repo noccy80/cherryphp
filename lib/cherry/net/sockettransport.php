@@ -1,0 +1,44 @@
+<?php
+
+namespace cherry\net\socket\transport;
+
+require_once('lib/lepton/base/event.php');
+require_once('lib/cherry/net/socket.php');
+
+use \lepton\base\Event;
+use \lepton\base\EventEmitter;
+
+abstract class Transport extends EventEmitter {
+
+    abstract function initialize();
+    abstract function read();
+
+}
+
+class HttpTransport extends Transport {
+
+    private $headers = array();
+
+    function initialize() {
+    }
+
+    function read() {
+        // If this is a websocket request, we go ahead and upgrade to a
+        // websocket connection.
+        if (!empty($this->headers['upgrade'])) {
+            if ($this->headers['upgrade'] == 'websocket') {
+                $this->emit('upgrade', new \cherry\net\socket\transport\HttpTransport(), $headers);
+            }
+        }
+    }
+
+}
+
+class WebSocketTransport extends Transport {
+
+    function initialize() {
+    }
+    function read() {
+    }
+
+}

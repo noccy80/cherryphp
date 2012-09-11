@@ -1,0 +1,132 @@
+#!/usr/bin/php
+<?php
+
+define('APPLICATION','LeptonApplication');
+// Bootstrap
+$libpath = getenv('CHERRY_LIB');
+if (!$libpath) {
+    fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+    exit(1);
+}
+require($libpath.'/lib/bootstrap.php');
+$lepton = new \Lepton\Lepton(__FILE__);
+
+// We need this to set up a CLI application
+require_once('lib/lepton/cli/application.php');
+require_once('lib/cherryutil/command.php');
+require_once('lib/cherryutil/commands/all.php');
+
+use \Lepton\Base\Event;
+
+class CherryApplication extends \Lepton\Cli\Application {
+    protected $apppath = null;
+    protected $route = false;
+    protected $config = 'development';
+    /**
+     * Init is called when the application is created. This is the perfect place to
+     * register command line arguments, hook events and set up defaults.
+     */
+    function init() {
+    
+        // Help:  -h or --help
+        $this->addArgument('h','help',
+                            'Show this help');
+        // Application path:  -a path or --app path
+        // Bound to $this->apppath
+        $this->addArgument('a:','app',
+                            'Application path (default: ./application)',
+                            array($this,'apppath'));
+        // Invoke via router:  -r or --route
+        // Bound to $this->router
+        $this->addArgument('r','route',
+                            'Invoke request via application router', 
+                            array($this,'route'));
+        // Configuration to use:  -c or --config
+        $this->addArgument('c','config',
+                            'Configuration to use',
+                            array($this,'config'));
+
+        /*
+        $this->addCommand('install-all','Install CherryPHP to the system.');
+        $this->addCommand('uninstall-all','Uninstall CherryPHP from the system.');
+        $this->addCommand('install-tools','Install the toolset for the current user.');
+        $this->addCommand('create <template> <name>','Create a new application');
+        $this->addCommand('init-loader <template>','Initialize a new loader from the specified template');
+        $this->addCommand('list-templates','Lists all the installed templates.');
+        $this->addCommand('package <project> <file>','Package a project into a single phar archive');
+        $this->addCommand('deploy <file>','Deploy a phar archive');
+        */
+
+        // Bind events that we can find useful
+        Event::observe('onbeforeapplication',array($this,'onBefore'));
+        Event::observe('onafterapplication',array($this,'onAfter'));
+        
+        // Set some defaults (arguments are not parsed yet)
+        $this->apppath = './application';
+    }
+    function onBefore() {
+    }
+    function onAfter() {
+        \Lepton\log(\Lepton\LOG_DEBUG,'Cleaning up...');
+    }
+    /**
+     * Main function, when we get here everything has been parsed and loaded Ok.
+     */
+    function main() {
+        if (($this->hasArgument('h'))
+        || (count($this->parameters) == 0)) {
+            $this->usage();
+            return 1;
+        }
+        
+        $clicmd = $this->parameters[0];
+        $clist = \cherryutil\commands\CommandList::getInstance();
+        $cmd = $clist->findCommand($clicmd);
+
+        if ($cmd) {
+            $status = call_user_func_array($cmd,array_slice($this->parameters,1));
+        } else {
+            fprintf(STDERR,"No such command: %s\n", $this->parameters[0]);
+            return 2;
+        }
+        
+    }
+    
+    function usagecommands() {
+        $cb = \cherryutil\commands\CommandList::getInstance();
+        fprintf(STDERR,"Commands:\n");
+        foreach($cb->getCommands() as $command) {
+            fprintf(STDERR,"    %s\n", (string)$command);
+        }
+        fprintf(STDERR,"\n");
+        
+    }
+    
+    function usageinfo() {
+        fprintf(STDERR,"    To create a new application, see the 'create' command.\n\n");
+        fprintf(STDERR,"Environment variables:\n");
+        $env = array(
+            '$CHERRY_LIB' => getenv('CHERRY_LIB'),
+            '$CHERRY_APP' => getenv('CHERRY_APP'),
+            '$DEBUG' => getenv('DEBUG'),
+            '$APPLICATION' => getenv('APPLICATION')
+        );
+        foreach($env as $k => $v) {
+            fprintf(STDERR,"    %-20s %s\n", $k, $v);
+        }
+    }
+    
+    /**
+     * Function to return some basic application information
+     */
+    function getApplicationInfo() {
+        return array(
+            'appname' => 'CherryTool',
+            'version' => '1.0',
+            'description' => 'CherryPHP helper tool',
+            'copyright' => "Copyright (c) 2012, The CherryPHP Project\nDistributed under GNU GPL version 3"
+        );
+    }
+}
+
+$lepton->runApplication(new CherryApplication());

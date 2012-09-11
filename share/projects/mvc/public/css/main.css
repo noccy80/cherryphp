@@ -1,0 +1,46 @@
+html {
+    overflow: auto;
+}
+
+body {
+    position:absolute;
+    left:5px;
+    top:5px;
+    right:5px;
+    bottom:5px;
+    overflow-y:scroll;
+    overflow-x:hidden;
+    background-color:#F8F8F8;
+    font-size:13px;
+    font-family:sans-serif;
+    width:900px;
+    margin:0px auto;
+    padding:0px;
+}
+
+a {
+    color:#FFFFFF;
+    text-decoration:none;
+}
+
+a:hover {
+    text-decoration:underline;
+}
+
+#chphp_header {
+    background-color:#BB0000;
+    padding:100px 10px 10px 10px;
+}
+
+::-webkit-scrollbar {
+    width:8px;
+}
+::-webkit-scrollbar-track {
+    background:rgba(160,160,160,0.1);
+}
+::-webkit-scrollbar-thumb {
+    background:rgba(160,160,160,0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+    background:rgba(160,160,160,0.8);
+}

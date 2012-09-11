@@ -1,0 +1,15 @@
+This action creates a phar archive from a project or part thereof.
+ 
+The options accepted by this command are:
+
+ +bare
+    Does not include any extensions and scrubs the configuration.
+ +template
+    This archive is to be used as a template.
+ +extension 
+    Force package type to be an extension.
+ to <dest>
+    Change the destination file (sourcepath.phar)
+ with-loader <loader>
+    Apply a custom loader to the phar archive. The loader must exist and be a
+    valid .php file.

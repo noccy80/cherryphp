@@ -1,0 +1,182 @@
+#!/usr/bin/php
+<?php
+
+if (!function_exists('yaml_parse')) {
+    fprintf(STDERR,"cherrydoc requires yaml support, please install yaml.\n");
+    exit(1);
+}
+
+$libpath = getenv('CHERRY_LIB');
+if (!$libpath) {
+    if (file_exists('lib/bootstrap.php')) {
+        require 'lib/bootstrap.php';
+    } else {
+        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+        exit(1);
+    }
+} else {
+    require($libpath.'/lib/bootstrap.php');
+}
+
+$lepton = new \Lepton\Lepton(__FILE__);
+
+require('lib/markdown.php');
+
+// We need this to set up a CLI application
+require_once('lib/lepton/cli/application.php');
+
+use \Lepton\Base\Event;
+
+class CherryDocApplication extends \Lepton\Cli\Application {
+    protected $projectfile = 'cherrydoc.ini';
+    protected $segments = null;
+    /**
+     * Init is called when the application is created. This is the perfect place to
+     * register command line arguments, hook events and set up defaults.
+     */
+    function init() {
+    
+        // Help:  -h or --help
+        $this->addArgument('h','help',
+                            'Show this help');
+        // Application path:  -a path or --app path
+        // Bound to $this->apppath
+        $this->addArgument('i:','input',
+                            'Input file (.ini)',
+                            array($this,'projectfile'));
+
+        // Bind events that we can find useful
+        Event::observe('onbeforeapplication',array($this,'onBefore'));
+        Event::observe('onafterapplication',array($this,'onAfter'));
+        
+        // Set some defaults (arguments are not parsed yet)
+        $this->apppath = './application';
+        $this->segments = new StdClass();
+    }
+    function onBefore() {
+    }
+    function onAfter() {
+        \Lepton\log(\Lepton\LOG_DEBUG,'Cleaning up...');
+    }
+    /**
+     * Main function, when we get here everything has been parsed and loaded Ok.
+     */
+    function main() {
+        if ($this->hasArgument('h')) {
+            $this->usage();
+            return 1;
+        }
+        if (file_exists($this->projectfile)) {
+            $this->buildDoc($this->projectfile);
+            
+        } else {
+            $this->usage();
+            return 1;
+        }
+    }
+    /**
+     * Function to return some basic application information
+     */
+    function getApplicationInfo() {
+        return array(
+            'appname' => 'CherryDoc',
+            'version' => '1.0',
+            'description' => 'Create documentation and manuals',
+            'copyright' => "Copyright (c) 2012, The CherryPHP Project\nDistributed under GNU GPL version 3"
+        );
+    }
+    
+    function buildDoc($project) {
+
+        if (!file_exists($project)) {
+            fprintf(STDERR,"Error: Project file not found - %s\n", $project);
+            exit(1);
+        }
+        printf("Reading %s...\n", $project);   
+        $pcfg = parse_ini_file($project,true);
+        
+        $docpath = $pcfg['cherrydoc']['sources'];
+        $doctitle = $pcfg['cherrydoc']['title'];
+        printf("Generating document %s\n", $doctitle);
+        $this->segments->text = array();
+        $this->segments->conf = array();
+        $itfile = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($docpath, FilesystemIterator::SKIP_DOTS));
+        foreach($itfile as $file) {
+            if (fnmatch("*.yaml",$file)) {
+                $this->segments->conf[] = $file;
+            }
+            if (fnmatch("*.yamd",$file) || fnmatch("*.html",$file)) {
+                $this->segments->text[] = $file->getPathName();
+            }
+        }
+        $texts = $this->segments->text;
+        sort($texts);
+        $this->segments->text = $texts;
+        
+        $sectiontemplate = $pcfg['template']['section'];
+        $documenttemplate = $pcfg['template']['document'];
+
+        $sects = array();        
+        foreach($texts as $text) {
+            printf("Parsing %s ...", $text);
+            list($meta,$md,$html) = $this->readSection($text);
+            $sects[] = $this->parseTemplate($sectiontemplate,$html);
+            printf("%d bytes\n", strlen($html));
+        }
+        
+        $outhtml = $pcfg['output']['html'];
+        $outpdf = $pcfg['output']['pdf'];
+        $mantitle = $pcfg['cherrydoc']['title'];
+        $booktemplate = $pcfg['template']['book'];
+
+        $html = $this->parseTemplate($documenttemplate,join("\n\n", $sects));
+
+        if ($outhtml) {
+            $fout = fopen($outhtml,'w');
+            assert($fout);
+            fwrite($fout,$html);
+            fclose($fout);
+            if ($outpdf) {        
+                $cmd = sprintf("wkhtmltopdf %s %s", $outhtml, $outpdf );
+                exec($cmd);
+            }
+        } else {
+            if ($outpdf) {        
+                $outhtml = tempnam(TMP_PATH,'cdhtml');
+                $fout = fopen($outhtml,'w');
+                assert($fout);
+                fwrite($fout,$html);
+                fclose($fout);
+                $cmd = sprintf("wkhtmltopdf %s %s", $outhtml, $outpdf );
+                exec($cmd);
+                unlink($outhtml);
+            }
+        }
+    
+    }
+    
+    function parseTemplate($file,$content) {
+        $tpl = file_get_contents($file);
+        return str_replace('<@content>',$content,$tpl);
+    }
+    
+    function readSection($file) {
+    
+        if (fnmatch('*.yamd',$file)) {
+            $header = yaml_parse_file($file,0);
+            $text = file_get_contents($file);
+            $text = trim(substr($text,strpos($text,'---')+3));
+            $html = markdown($text);
+        } else {
+            $header = array();
+            $text = file_get_contents($file);
+            $html = $text;
+        }
+        
+        return array($header, $text, $html);
+    
+    }
+    
+}
+
+$lepton->runApplication(new CherryDocApplication());

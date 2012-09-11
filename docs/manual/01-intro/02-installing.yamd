@@ -1,0 +1,59 @@
+title: Installing CherryPHP
+description: What are controllers and what do they do?
+author: Christopher Vagnetoft
+keywords:
+---
+
+# Installing CherryPHP
+
+## Linux
+
+Unpack the tarball or check out the git tree. Move the entire cherryphp folder
+into `/usr/lib/cherryphp`. Proceed by adding the path to the `lib` subfolder to
+your php include path in `/etc/php5/cli/php.ini` and/or `/etc/php5/apache2/php.ini`.
+
+Restart Apache, and you should be good to go.
+
+Alternatively, you can navigate into the `bin` folder that you just downloaded
+and invoke the cherry tool:
+
+    $ sudo ./cherry install-all
+
+To set up the utility scripts, navigate to `/usr/lib/cherryphp/bin` and invoke
+the command `./cherry install-tools`:
+
+    $ cd /usr/lib/cherryphp/bin
+    $ ./cherry install-tools
+    Installing tools...
+    Done
+    $
+
+The cherry tool should now be available from anywhere.
+
+# The Cherry util
+
+## Creating, scaffolding and initializing
+
+Creating projects is as easy as invoking `cherry create` followed by the project template and the project namespace to create.
+
+    $ cherry create cli-service MyService
+    Creating new project MyService...
+    Generating UUID...
+    Applying templates...
+    $
+
+If you want to re-create a project, overwriting all existing files you can add the `-f` switch (for **force**)
+to the command, and additionally, to remove all files that doesn't exist in the template, use the
+`-p` switch (for **p**urge).
+
+    $ cherry -fp create cli-service MyService
+
+The templates for creating projects can be found in the `share/projects` folder.
+
+## Creating loaders
+
+    $ cherry init-loader mvcloader
+    Installing Cherry MVC Stock Loader into public/index.php
+    $
+    
+

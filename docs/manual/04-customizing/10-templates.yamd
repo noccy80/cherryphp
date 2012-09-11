@@ -1,0 +1,58 @@
+title: Templates
+description: Creating and managing templates
+---
+
+# Templates
+
+The templates can be found in the `share` directory. They come in a few different
+flavors depending on what they are used for. Single file templates, such as the
+ones found in the `loaders` directory come with a companion file having an `.ini`
+extension. This ini-file contains the metadata for the loader. Multi-file templates
+have a similar file, except its name is fixed depending on the kind of template.
+
+Don't worry, it is easy to remember once you know how they are arranged.
+
+## Loader templates
+
+Loader templates install the code stub needed to bootstrap a specific project.
+Let's take a look at the `mvcloader.ini`-file.
+
+    [loader]
+    name=Cherry MVC Stock Loader
+    target=APP_PATH.'/public/index.php
+
+Simple, huh? The source file name isn't needed, since it is the same as the
+ini-file containing it's metadata. So what remains is the name of the loader
+and where it should be deployed.
+
+## Project templates
+
+Project templates are used by the `create` action to initialize the application.
+Their metadata is stored in a file named `project.ini` (see, I told you it would
+not be too hard, I think you are getting the idea now) located in the
+`share/projects/` directory.
+
+    [project]
+    name=Cherry MVC Application
+    source=mvc
+    
+    [hooks]
+    after=bin/postsetup
+
+But why do we have to specify the source now? Well, the projects are a little bit
+more complex than loaders, and as such they reap some additional benefits. One
+of them being the ability to package a template into a .phar archive and using
+that as the source. To keep things tidy however, the source should be in a
+directory carrying the same name as the template, or in a .phar archive with the
+same name as the template but with a .phar extension.
+
+To create a .phar archive, you use the package command of the cherry util:
+
+    $ cherry package myapp to myapp.phar
+    Scanning myapp... application, 89 files
+    Preparing to archive MyApplication 1.0
+    Cleaning up temporary files...
+    Compressing package...
+    Done
+    $
+    

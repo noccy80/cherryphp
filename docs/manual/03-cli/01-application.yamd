@@ -1,0 +1,101 @@
+title: The Console Application
+description: Writing console application with CherryPHP
+---
+
+
+# A typical CLI application
+
+Note that the application startup code has been omitted. As usual, you should
+take steps to try to extract the library path from the environment variables
+before attempting to load the `lib/bootstrap.php` file.
+
+After the bootstrap code, you need to implement two methods although three
+are recommended (the `initialize` method is optional):
+
+    namespace MyApplication;
+    class Application extends \cherry\cli\Application {
+
+        // Should return an array with application info, consisting at a minimum
+        // of the keys appname, version and description.    
+        function getApplicationInfo() { }
+
+        // Perform your initialization here. This function is called before the
+        // command line arguments have been parsed.
+        function initialize() { }
+
+        // This is the main function. Any arguments registered in the initialize
+        // function will be available to us here.
+        function main() { }
+    
+    }
+    
+    $lepton = new \Lepton\Lepton(__FILE__);
+    $lepton->runApplication(new CherryApplication());
+
+## Interacting with the command line
+
+The command line arguments are parsed automatically. All you have to do is
+define them. This is done in the `initialize()` method:
+
+    function initialize() {
+
+        // Add the argument -h (and --help). No magic performed here.
+        $this->addArgument('h','help','Show this help');
+        
+        // Add the argument -p (and --param) taking an argument. As param 4 is
+        // included, $this->param will be updated with this value if present.
+        $this->addArgument('p:','param','Parameter having a value',array($this,'param'));
+        
+        // Add the argument -v (and --verbose). If present, $this->verbose will
+        // be set to true.
+        $this->addArgument('v','verbose','Verbose operation',array($this,'verbose'));
+        
+    }
+
+You can still manually query the arguments if you don't want to bind them to a
+specific property:
+
+    function main() {
+    
+        // Check if the -h parameter was specified
+        if ($this->hasArgument('h')) { }
+    
+        // Get the value of the -p parameter if present
+        if ($this->hasArgument('p')) {
+            $param = $this->getArgument('p');
+        }
+        
+    }
+
+The remaining parameters passed that were not parsed will be made available via
+the protected property `parameters`. Be careful not to overwrite this value.
+
+    // This would output "Hello, world" if the command was invoked with the
+    // parameter 'world'.
+    if (count($this->parameters) == 1) {
+        printf("Hello, %s\n", $this->parameters[0]);
+    }
+
+## Reading and Writing
+
+The console is available via `\cherry\cli\Console` offering a number of handy
+functions to control your output.
+
+    $con = \cherry\cli\Console::getConsole();
+    $con->update('Fixing things...');
+    $this->fixThings();
+    $con->update('Doing something else...');
+    $this->doSomethingElse();
+    $con->write("All done!\n");
+
+Make sure that you use the singleton getter `getConsole()` to get the application
+instance.
+
+<dl>
+<dt><code>write(<em>fmt</em>[,<em>arg..</em>])</code></dt>
+    <dd>Write something to the console. Syntax identical to <code>printf()</code></dd>
+<dt><code>update(<em>fmt</em>[,<em>arg..</em>])</code></dt>
+    <dd>This method works like write, except it clears and updates the current line.</dd>
+<dt><code>prompt(<em>prompt</em>[,<em>default</em>])</code></dt>
+    <dd>Prompt for input (while offering a default value)</dd>
+</dl>

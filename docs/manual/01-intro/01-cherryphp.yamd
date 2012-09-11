@@ -1,0 +1,34 @@
+title: CherryPHP
+description: It's Lepton, just way more yummy!
+author: Christopher Vagnetoft
+keywords:
+---
+# CherryPHP: Lepton with extra yum!
+
+If you are reading this you are probably interested in CherryPHP. That is
+awesome, and this section will give you some more information that might
+be handy when diving into CherryPHP.
+
+## It's basically Lepton
+
+Back in the days, you know, a long time ago in a galaxy far away, I actually
+wrote webpages in ASP as if there was no tomorrow. During that time I
+assembled a whole lot of code in a library to avoid rewriting it, and that
+library came to be known as Lepton.
+
+As I finally grew up and sank my teeth into PHP, I slowly started rebuilding
+the same set of classes and methods that I used in ASP. Now, two evolutions
+later you are reading the documentation to CherryPHP. It's based on Lepton.
+Or rather, whatever could be ported from Lepton will be. It does however
+make good use of the more recent PHP functionality such as namespaces, and
+as such is more likely to play along well with other code.
+
+<div class="note">
+<p>Note that since CherryPHP and Lepton are quite differently organized, you can't
+simply replace Lepton with CherryPHP and pray that things will work. In order
+to port a Lepton application to CherryPHP you need to organize your code and
+function calls into namespaces as used in CherryPHP.</p>
+<p>There is a possibility there will be a `upgrade` option added to the cherry
+script at one time, but when and if is still an unknown.</p>
+</div>
+

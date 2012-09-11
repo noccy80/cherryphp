@@ -1,0 +1,12 @@
+This action installs the complete \b CherryPHP framework onto the system. It will
+be installed into a few different locations:
+
+ * Global configuration is installed to /etc/cherryphp/
+ * The lib, share and bin folders are installed to /opt/cherryphp/
+ 
+The options accepted by this command are:
+
+ +tools      Causes the install-tools action to be executed after the install.
+ +replace    Overwrite any files that already exist in the destination.
+ +verbose    Show a little more information
+ to <dest>   Change the destination folder (from /opt/cherryphp)

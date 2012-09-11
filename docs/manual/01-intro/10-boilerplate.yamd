@@ -1,0 +1,77 @@
+title: Project Bootstrapping
+description: Getting your project off the ground
+author: Christopher Vagnetoft
+keywords:
+---
+# Project Bootstrapping
+
+
+## Locations
+
+The path to the application can be resolved in several different ways.
+
+ * You can explicitly define the path to the framework with the environment variable
+   `CHERRY_LIB`.
+ * You can explicitly define the path to the framework in your application by `define`:ing
+   the define `CHERRY_LIB`.
+ * The path can be automatically detected from the path of the invoking script.
+ * The framework can be added to the PHP include path, making it available to all instances
+   of PHP. This is the recommended solution.
+
+The automatic detection works as such:
+
+ 1. The path of the script is stripped of it's filename and stored as P.
+ 2. Does the path P contain an `application` directory? If so, save the final path and break.
+ 3. Strip the last component of the path P and update it.
+ 4. Go to 2.
+
+## Starting up
+
+    <?php
+
+        namespace MyApp;
+
+        define('APP_CLASS','Application');
+        define('APP_NS','MyApp');
+    
+        if (!( @include_once "lib/bootstrap.php" )) {
+            $libpath = getenv('CHERRY_LIB');
+            if (!$libpath) {
+                fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+                exit(1);
+            }
+            require_once($libpath.'/lib/bootstrap.php');
+        }
+        
+        // Create the main lepton instance as well as a new MVC application
+        $lepton = new \Lepton\Lepton(__FILE__);
+        $app = new \Lepton\Mvc\Application();
+        
+        // Set the application, then run it
+        $lepton->setApplication($app);
+        $app->run();
+        
+        // Or you can run it at once. This is handy if you don't need to
+        // change anything after the application has been set.
+        $lepton->runApplication($app);
+
+That is all you need for the stub (index.php)
+
+You can always create (or upgrade) application loaders using the cherry tool.
+The command `init-loader` will deploy the desired loader in the appropriate
+place. For example, if you for some reason need to recreate your mvc loader
+(which resides in public/index.html) you can simply issue:
+
+    $ cherry init-loader mvcloader
+
+You can see what loaders are available using the list-loaders command:
+
+    $ cherry list-loaders
+    mvcloader .. Cherry MVC Stock Loader
+    
+
+## Applications
+
+### \Lepton\Mvc\Application
+
+### \Lepton\Cli\Application

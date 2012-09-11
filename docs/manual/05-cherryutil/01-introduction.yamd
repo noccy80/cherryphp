@@ -1,0 +1,163 @@
+title: Introduction to the Cherry Util
+---
+# The Cherry utility
+
+We already covered bits of this earlier, but here is a more extensive introduction
+to the cherry utility, and to its inner workings.
+
+## Installing
+
+If you haven't installed the cherry utility script yet, you need to navigate to
+the directory `bin` in the directory where cherry was downloaded to (or installed
+to). Then, you can install the script using:
+
+    $ cherry install-tools
+    Installing tools...
+    Done
+    $
+
+Or, if you have not installed CherryPHP onto your system yet (the tool doesn't do
+much good without the actual library), go ahead and invoke:
+
+    $ sudo cherry install-all +tools
+    [sudo] password for user:
+    Installing CherryPHP...
+    Building documentation...
+    The CherryPHP Documentation can be found at /opt/cherryphp/docs/manual.html
+    Done
+    
+The utility scripts are installed into `$HOME/bin` and should thus be available
+from everywhere. The `bin` folder is normally automatically added to your path.
+If you can't access the script after installing it, try closing and opening the
+terminal window or reloading your profile.
+
+The `install-all` command takes some different parameters. We have already used
+one of them, "`+tools`". You can also specify `+replace` to force any existing
+files to be overwriten, and `+verbose` to see more information about what the
+script is doing.
+
+## Help!
+
+If you want to know more about a command, you can use the `help` command followed
+by the command:
+
+    $ ./cherry help install-all
+    Command:
+        install-all - Install CherryPHP to the system.
+        
+    Synopsis:
+        install-all [+tools] [+verbose] [+replace] [+yes] [to <dest>]
+            
+    Description:
+        This action installs the complete \b CherryPHP framework onto the system. It will
+        be installed into a few different locations:
+                       
+         * Global configuration is installed to /etc/cherryphp/
+         * The lib, share and bin folders are installed to /opt/cherryphp/
+                                       
+        The options accepted by this command are:
+                                              
+         +tools      Causes the install-tools action to be executed after the install.
+         +replace    Overwrite any files that already exist in the destination.
+         +verbose    Show a little more information
+         to <dest>   Change the destination folder (from /opt/cherryphp)
+                                                                       
+    $                                                                  
+
+Invoking `help` on its own will display a list of the available commands.
+
+## Packaging, Deploying and Installing...
+
+CherryPHP let's you **package** applications and extensions into .phar archives that
+can later be restored, either by **deploying** the application or by **installing**
+the extension from the archive.
+
+    $ ./cherry package myapp
+    Scanning test... application, 8 files
+    Preparing to archive My MVC Application 1.0.0
+    Cleaning up temporary files...
+    Creating package...
+    Done
+    $
+
+Arguments valid to `package` are:
+
+<dl>
+<dt><code><strong>to</strong> <em>dest.phar</em></code></dt>
+    <dd>Destination where the package file will be created.</dd>
+<dt><code><strong>compress</strong> <em>{<strong>bz2</strong>|<strong>gzip</strong>}</em></code></dd>
+    <dd>Compresses the package. if the appropriate extension (.bz2 or .gz) isn't present in the destination, it will be appended.</dd>
+<dt><code><strong>with-stub</strong> <em>stubname</em></code></dd>
+    <dd>Adds a custom stub to the package, to make it interact better with PHP. To see the available stubs, use the <code>list-stubs</code> command.</dd>
+<dt><code><strong>+template</strong></code></dt>
+    <dd>Compresses this package as a template.</dd>
+<dt><code><strong>+extension</strong></code></dt>
+    <dd>Forces package to be handled as an extension.</dd>
+<dt><code><strong>+standalone</strong></code></dt>
+    <dd>Includes a copy of the CherryPHP lib folder in the package.</dd>
+</dl>
+
+The package information can be displayed with the `packageinfo` command:
+
+    $ cherry packageinfo myapp.phar
+    Package: My MVC Application 1.0.0
+    Type: application
+    $
+
+This application arpackage can be restored using `deploy`:
+
+    $ cherry deploy myapp.phar
+    Reading package manifest...
+    Deploying My MVC Application 1.0.0
+    Extracting files...
+    Configuring databases...
+    Done
+    $
+
+Archives containing extensions can be restored using `install` from
+with in the applications root directory.
+
+    $ cherry install myextension.phar
+    Reading package manifest...
+    Installing My Extension 1.0.0
+    Extracting files...
+    Done
+    $
+
+### Executable packages
+
+First, make sure you got the cli-posix stub installed:
+
+    $ cherry list-stubs
+    Available stubs:
+        default          PHP Default Stub 1.0.0
+        cli-posix        Posix CLI Shell Stub 1.0.0
+
+Then, proceed by creating a package using this stub:
+
+    $ cherry package helloworld to helloworld.phar with-stub cli-posix
+    Scanning helloworld... archive, 1 files
+    Cleaning up temporary files...
+    Creating package...
+    Embedding loader stub...
+    Done
+
+Make the package executable, and invoke it.
+
+    $ chmod +x helloworld.phar
+    $ ./helloworld.phar
+    HELLO WORLD!
+    $
+
+## Creating and Scaffolding
+
+Creating an application is as simple as calling `create` followed by the template
+that you wish to employ for your application and your desired application name.
+
+    $ cherry create mvc MyMvcApp
+    Creating new project MyMvcApp...
+    Generating UUID...
+    Applying templates...
+    $
+
+Scaffolding

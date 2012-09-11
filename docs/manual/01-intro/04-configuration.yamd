@@ -1,0 +1,74 @@
+title: Configuring CherryPHP
+author: Christopher Vagnetoft
+---
+# Configuring CherryPHP
+
+## Environment Variables
+
+These can be set in the shell, in your web server configuration file etc.
+
+<dl>
+<dt><code>CHERRY_LIB</code></dt>
+    <dd>Should be set to the folder that ''contains'' the CherryPHP `lib`
+    folder.</dd>
+<dt><code>CHERRY_APP</code></dt>
+    <dd>The path to the application root. If left out, it is assumed to be the
+    same as `CHERRY_LIB`.
+</dl>
+
+## Global configuration file
+
+The global configuration file is expected to be found in 
+`/etc/cherryphp/global.ini`
+
+    [cherryphp]
+    version=1.0.0
+    tempdir=/tmp/
+
+## Application configuration file
+
+The application configuration file is searched for in two locations; 
+If `CHERRY_APP` is defined (via envvar or with `define()`) it is searched for
+in `CHERRY_APP/app/config/application.ini`, and if it is not found or if `CHERRY_APP` is not defined
+it is searched for in the current folder as `application.ini`. This is to support
+standalone applications in a more flexible manner.
+
+    [application]
+    ; What environment are we in
+    env=development
+    ; The namespace of the application
+    namespace=MyApp
+    
+    [database]
+    db.type=sqlite
+    
+    [production : database]
+    db.file=APP_DATA.'/production.sqlite'
+    
+    [development : database]
+    db.file=APP_DATA.'/production.sqlite'
+
+The `:` in the sections are for inheritance. Hence, the `[production]` section will
+contain all keys from the `[database]` section as well. You can nest that so that
+sections inherit sections that inherit sections. You can however not inherit
+from two sections at once. At least not yet.
+
+The only explicitly required section is the `[application]` section. From there,
+you need to at least have one more section with a name that match the `env`
+setting of your application.
+
+### The [application] section
+
+<dl>
+<dt><code><strong>env=</strong><em>EnvName</em></code></dt>
+    <dd>Selects the environment that is to be used.</dd>
+<dt><code><strong>namespace=</strong><em>AppNameSpace</em></code></dt>
+    <dd>Should be set to the namespace of the application.</dd>
+<dt><code><strong>webindex=</strong><em>/public/index.php</em></code></dt>
+    <dd>The web site index file. Optional, and defaults to <code>/public/index.php</code> in <code>\cherry\mvc\Application</code>.</dd>
+<dt><code><strong>name=</strong><em>Application Name</em></code></dt>
+    <dd>The application name.</dd>
+<dt><code><strong>version=</strong><em>version</em></strong></code></dt>
+    <dd>The version of the application.</dd>
+</dl>
+ 

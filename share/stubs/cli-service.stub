@@ -1,0 +1,25 @@
+#!/usr/bin/php
+<?php
+
+if (strpos(__FILE__,'.phar')===false) {
+    $tmpf = '/tmp/cherryphar'.md5(__FILE__).'.phar';
+    copy(__FILE__,$tmpf);
+    $base = 'phar://'.$tmpf.DIRECTORY_SEPARATOR;
+    set_include_path('phar://'.$tmpf.PATH_SEPARATOR.get_include_path());
+} else {
+    $base = 'phar://'.__FILE__.DIRECTORY_SEPARATOR;
+    set_include_path('phar://'.__FILE__.PATH_SEPARATOR.get_include_path());
+}
+
+$cfg = json_decode(file_get_contents($base.'manifest.json'));
+if (empty($cfg->loader)) {
+    $loader = 'loader.php';
+} else {
+    $loader = $cfg->loader;
+}
+
+include($base.$loader);
+
+if (!empty($tmpf)) unlink($tmpf);
+
+__HALT_COMPILER();

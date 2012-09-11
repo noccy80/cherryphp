@@ -1,0 +1,115 @@
+<!DOCTYPE HTML>
+<html>
+<style>
+@font-face {
+    font-family: Sansation;
+    src: url('fonts/Sansation_Bold.ttf');
+}
+@font-face {
+    font-family: DroidSerif;
+    src: url('fonts/DroidSerif-Normal.ttf');
+    font-weight: normal;
+}
+@font-face {
+    font-family: DroidSerif;
+    src: url('fonts/DroidSerif-Bold.ttf');
+    font-weight: bold;
+}
+
+body {
+    background-color:#FFF;
+    font:14px helvetica;
+    line-height:18px;
+}
+p {
+    text-align:justify;
+    line-height:160%;
+}
+h1 {
+    font:bold 28px sans-serif;
+    border-bottom:solid 1px #AAA;
+}
+h2 {
+    font:bold 20px sans-serif;
+}
+h3 {
+    font:bold 18px sans-serif;
+}
+h4 {
+    font:14px sans-serif;
+    font-style:italic;
+}
+#content {
+    width:920px;
+    margin:20px auto;
+    background-color:#FFF;
+}
+pre {
+    padding:5px 5px 5px 15px;
+    page-break-inside: avoid;
+    background-color:#EEE;
+    border:solid 1px #CCC;
+    box-shadow:3px 3px 0px #DDD;
+    margin:0px 5px 0px 5px;
+}
+.chapterheader {
+    color:#333;
+    font:bold 22px sans-serif;
+}
+.chaptername {
+    color:#111;
+    font:38px Sansation;
+
+}
+.pageheader {
+    padding-bottom:25px;
+    border-bottom:solid 5px #AAA;
+    margin-bottom:25px;
+    page-break-before:always;
+}
+div.note {
+    margin-left:90px;
+    margin-right:70px;
+    background-color:#F8F8FF;
+    border:solid 1px #DDD;
+    border-radius:4px;
+    padding:5px 15px 5px 65px;
+    box-shadow: 3px 3px 0px #AAA;
+    background:url('images/info.png') 10px 20px no-repeat #e0e0f8;
+}
+.chapter a:link:after, #content a:visited:after {
+   content: " (" attr(href) ") ";
+   font-size: 90%;
+}
+    .chapter a {
+        color:#222;
+        text-decoration:none;
+    }
+dl {
+    margin-left:50px;
+dt {
+    margin-top:10px;
+    margin-bottom:5px;
+}
+dd {
+    margin-bottom:5px;
+}
+/*
+ol {
+    counter-reset:li;
+    list-style:none;
+    margin-left:0px;
+}
+ol > li:before {
+    content:counter(li) ". ";
+    counter-increment:li;
+    font-size:11px;
+}
+*/
+</style>
+<body>
+<div id="content">
+<@content>
+</div>
+</body>
+</html>
