@@ -23,7 +23,8 @@ class SysInfoCommands extends CommandBundle {
     }
     
     function phpextensions() {
-        \var_dump(\get_loaded_extensions());
+        $con = \cherry\cli\Console::getConsole();
+        $con->putColumns(\get_loaded_extensions(),25);
     }
 
 }

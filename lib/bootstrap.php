@@ -24,6 +24,11 @@ if (file_exists(CHERRY_APPROOT.'/application.ini')) {
     define('CHERRY_CFGDIR',CHERRY_APPDIR.'/config');
 }
 
+$_os = strtolower(PHP_OS);
+define('_IS_LINUX', ($_os=='linux'));
+define('_IS_WINDOWS',(substr($_os,0,3)=='win'));
+define('_IS_MACOS',($_os=='darwin'));
+
 /*
 printf("CHERRY_APPROOT: %s\n", CHERRY_APPROOT);
 printf("CHERRY_APPDIR: %s\n", CHERRY_APPDIR);
@@ -138,7 +143,7 @@ abstract class Application {
             $this->cfgsets[$set] = parse_ini_file($path,true);
         } else {
             $this->cfgsets[$set] = array();
-            throw new ApplicationException(_('Configuration file could not be found'), ApplicationException::ERR_CONFIG_FILE_MISSING);
+            // throw new ApplicationException(_('Configuration file could not be found'), ApplicationException::ERR_CONFIG_FILE_MISSING);
         }
     }
     

@@ -71,5 +71,33 @@ class Console {
         return $default;
     
     }
+    
+    public function putColumns(array $data, $colwidth) {
+        list($drows,$dcols) = $this->getSize();
+        $cols = floor($dcols / $colwidth) - 2;
+        for($n = 0; $n < count($data); $n++) {
+            $this->write("%-".$colwidth."s",$data[$n]);
+            if ((($n+1) % $cols) == 0) { $fl = true; $this->write("\n"); } else { $fl = false; }
+        }
+        if (!$fl) $this->write("\n");
+    }
+
+    public function getSize() { 
+        if (_IS_LINUX) {
+            preg_match_all("/rows.([0-9]+);.columns.([0-9]+);/", strtolower(exec('stty -a |grep columns')), $output);
+            if(sizeof($output) == 3) {
+                $dh = $output[1][0];
+                $dw = $output[2][0];
+            }
+        } elseif (_IS_WINDOWS) {
+        } elseif (_IS_MACOS) {
+        } else {
+        }
+        if (!($dw && $dh)) {
+            $dw = 80;
+            $dh = 25;
+        }
+        return array($dh,$dw);
+    }
 
 }
