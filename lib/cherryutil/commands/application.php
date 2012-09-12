@@ -18,7 +18,26 @@ class ApplicationCommands extends CommandBundle {
             new Command('create','<apptemplate> <appns> [name <appname>]',
                     'Creates a new application from an application template. Appns is required',
                     array($this,'createapp')),
+            new Command('create-config','<type> [to <dest>]',
+                    'Creates a new configuration template',
+                    array($this,'createcfg')),
         );
+    }
+    
+    function createcfg($type=null) {
+        $args = func_get_args();
+        $type = $args[0];
+        $opts = $this->parseOpts(array_slice($args,1),array(
+            'verbose' => '+verbose',
+            'dest' => 'to:'
+        ));
+        if ($type) {
+            $this->data = new \stdclass();
+            $this->data->htmlroot = exec('pwd');
+            $this->data->environment = 'prodution';
+            $tpl = require CHERRY_LIB.'/share/configs/'.$type.'.php';
+            var_dump($tpl);
+        }
     }
 
     function listloaders() {
