@@ -61,7 +61,24 @@ class ApplicationCommands extends CommandBundle {
             return 1;
         }
         printf("Creating new project %s...\n", $appns);
-        printf("Generating UUID...\n");
+        $tpath = CHERRY_LIB.'/share/projects/'.$template.'/';
+
+        $rdi = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($tpath, \FilesystemIterator::SKIP_DOTS));
+        foreach($rdi as $file) {
+            $dest = str_replace($tpath,'./',$file);
+            // Check paths
+            $path = dirname($dest);
+            if (!file_exists($path)) {
+                mkdir($path,0777,true);
+            }
+            // Copy file
+            copy($file,$dest);
+        }
+        printf("Generating UUID...");
+        //$uuid = \cherry\crypto\Uuid::getInstance()->generate(\cherry\crypto\UUID_V4);
+        $uuid = trim(exec('uuidgen'));
+        printf("%s\n", $uuid);
+        // Do the actual configuration
         printf("Applying templates...\n");
         printf("Done\n");
     }
