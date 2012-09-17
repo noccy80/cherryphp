@@ -2,6 +2,11 @@
 
 namespace cherry\base;
 
+/**
+ * @brief Class to wrap a callback.
+ *
+ * Might be obsolete.
+ */
 class Callable {
     private $cb = null;
     function __construct($cb) {

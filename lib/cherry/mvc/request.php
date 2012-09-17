@@ -12,7 +12,7 @@ class Request {
     // Private properties
     private $context = null;
 
-    public function __construct($context) {
+    public function __construct($context=null) {
         $this->context = $context;
     }
     

@@ -66,7 +66,7 @@ class Lepton {
         $app->loadConfiguration('application',CHERRY_CFGDIR.'/application.ini');
         try {
             $extn = $app->getConfiguration('application','extensions');
-            foreach($extn as $ext=>$on) {
+            foreach((array)$extn as $ext=>$on) {
                 if ($on) {
                     $extdir = CHERRY_EXTDIR.DIRECTORY_SEPARATOR.$ext.DIRECTORY_SEPARATOR;
                     require_once $extdir.'extension.php';
@@ -148,12 +148,14 @@ abstract class Application {
     }
     
     public function getConfiguration($set,$group=null) {
+        \cherry\log(\cherry\LOG_DEBUG, __CLASS__."->GetConfiguration: (set=%s, group=%s)",$set,$group);
         if (empty($this->cfgsets[$set])) {
             throw new ApplicationException(_('Configuration set could not be found'), ApplicationException::ERR_CONFIG_NOT_FOUND);
         }
         $ret = $this->cfgsets[$set];
         if ($group) {
             $groups = array_keys($ret);
+            $out = null;
             foreach($groups as $g) {
                 if (strpos($g,':')!==false) {
                     list($gn,$gp) = explode(':',$g);
