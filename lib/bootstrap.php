@@ -36,7 +36,25 @@ printf("CHERRY_CFGDIR: %s\n", CHERRY_CFGDIR);
 printf("CHERRY_EXTDIR: %s\n", CHERRY_EXTDIR);
 */
 
+require_once CHERRY_LIB.'/lib/cherry/base/config.php';
+require_once CHERRY_LIB.'/lib/cherry/base/event.php';
+require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
+
+// Register the autoloader for the base library
+use Cherry\Autoloader\Autoloader;
+use Cherry\Autoloader\Autoloaders;
+Autoloaders::register(new Autoloader(CHERRY_LIB.'/lib'));
+
 const LOG_DEBUG = 0x01;
+
+function unipath($path) {
+    if (DIRECTORY_SEPARATOR != '/') {
+        $path = str_replace('\\',DIRECTORY_SEPARATOR,$path);
+    }
+    while(strpos($path,DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR)!==false)
+        $path = str_replace(DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $path);
+    return $path;
+}
 
 function log($type,$fmt,$args=null) {
     $arg = func_get_args();
@@ -95,23 +113,7 @@ class Lepton {
 
         $path = get_include_path();
         set_include_path($this->conf->libpath . PATH_SEPARATOR . $path);
-        spl_autoload_register(array($this,'_spl_autoload'),true,true);
 
-    }
-
-    public function _spl_autoload($class) {
-        \cherry\log(\cherry\LOG_DEBUG,'Autoload request: %s', $class);
-        $file = 'lib'.DIRECTORY_SEPARATOR.strtolower(str_replace('\\',DIRECTORY_SEPARATOR,$class)).'.php';
-        if ( @include_once $file ) {
-            \cherry\log(\cherry\LOG_DEBUG,'Included %s',$file);
-            return;
-        }
-        $file = dirname('lib'.DIRECTORY_SEPARATOR.strtolower(str_replace('\\',DIRECTORY_SEPARATOR,$class))).'.php';
-        if ( @include_once $file ) {
-            \cherry\log(\cherry\LOG_DEBUG,'Included %s',$file);
-            return;
-        }
-        \cherry\log(\cherry\LOG_DEBUG,'No matching file found for autoload of %s', $class);
     }
 
 }

@@ -1,4 +1,6 @@
 <?php
+
+// Define the template
 $tpl = <<<EOF
 <VirtualHost *:80>
     ServerName %s
@@ -12,6 +14,8 @@ $tpl = <<<EOF
     </Directory>
 </VirtualHost>
 EOF;
+
+// Return the complete configuration chunk
 return sprintf($tpl,
     $this->data->servername,
     $this->data->htmlroot,
