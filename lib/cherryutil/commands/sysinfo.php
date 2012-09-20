@@ -15,6 +15,9 @@ class SysInfoCommands extends CommandBundle {
             new Command('php-extensions','',
                     'Show available PHP extensions',
                     array($this,'phpextensions')),
+            new Command('php-defines','',
+                    'Show set PHP defines',
+                    array($this,'phpdefines')),
         );
     }
     
@@ -25,6 +28,25 @@ class SysInfoCommands extends CommandBundle {
     function phpextensions() {
         $con = \cherry\cli\Console::getConsole();
         $con->putColumns(\get_loaded_extensions(),25);
+    }
+
+    function phpdefines() {
+        $args = func_get_args();
+        $type = $args[0];
+        $opts = $this->parseOpts($args,array(
+            'like' => 'like:'
+        ));
+        $con = \cherry\cli\Console::getConsole();
+        $defs = \get_defined_constants();
+        foreach($defs as $k=>$v) {
+            if (
+                empty($opts['like'])
+                || 
+                fnmatch($opts['like'],$k,\FNM_CASEFOLD)
+            ) {
+                $con->write("%s => %s\n", $k, $v);
+            }
+        }
     }
 
 }

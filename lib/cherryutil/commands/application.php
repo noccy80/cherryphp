@@ -15,6 +15,9 @@ class ApplicationCommands extends CommandBundle {
             new Command('list-templates','',
                     'List the available application templates.', 
                     array($this,'listtemplates')),
+            new Command('list-configs','',
+                    'List the available configuration templates.', 
+                    array($this,'listconfigs')),
             new Command('create','<apptemplate> <appns> [name <appname>]',
                     'Creates a new application from an application template. Appns is required',
                     array($this,'createapp')),
@@ -25,18 +28,36 @@ class ApplicationCommands extends CommandBundle {
     }
     
     function createcfg($type=null) {
+        if (!$type) {
+            fprintf(STDERR,"No such config. Try list-configs.\n");
+            return 1;
+        }
         $args = func_get_args();
         $type = $args[0];
         $opts = $this->parseOpts(array_slice($args,1),array(
             'verbose' => '+verbose',
-            'dest' => 'to:'
+            'dest' => 'to:',
+            'force' => '+force'
         ));
         if ($type) {
-            $this->data = new \stdclass();
+            $this->data = new TemplateStrings();
             $this->data->htmlroot = exec('pwd');
             $this->data->environment = 'prodution';
             $tpl = require CHERRY_LIB.'/share/configs/'.$type.'.php';
-            var_dump($tpl);
+            $meta = parse_ini_file(CHERRY_LIB.'/share/configs/'.$type.'.ini',true);
+            if (empty($opts['dest'])) {
+                $out = $meta['config']['dest'];
+            } else {
+                $out = $opts['dest'];
+            }
+            fprintf(STDOUT,"Writing %s...\n", $out);
+            if (file_exists($out)) {
+                if (empty($opts['force']) || $opts['force'] == 0) {
+                    fprintf(STDERR,"Error: File already exists! To replace use +force\n");
+                    return 1;
+                }
+            }
+            file_put_contents($out,trim($tpl)."\n");
         }
     }
 
@@ -98,6 +119,35 @@ class ApplicationCommands extends CommandBundle {
         }
     }
 
+    function listconfigs() {
+        $loaderpath = CHERRY_LIB.'/share/configs';
+        $it = new \FileSystemIterator($loaderpath,\FileSystemIterator::SKIP_DOTS);
+        printf("Available configuration templates:\n");
+        foreach($it as $loader) {
+            $fn = $loader->__toString();
+            if (fnmatch('*.ini',$fn)) {
+                $meta = parse_ini_file($fn,true);
+                $ename = (empty($meta['config']['name']))?basename($fn,'.ini'):$meta['config']['name'];
+                $eversion = (empty($meta['config']['version']))?'(Unknown version)':$meta['config']['version'];
+                printf("    %-16s %s %s\n", basename($fn,'.ini'), $ename, $eversion);
+            }
+        }
+    }
+    
+}
+
+class TemplateStrings {
+    private $data = array();
+    public function __get($key) {
+        if (array_key_exists($key,$this->data)) return $this->data[$key];
+        return sprintf('<%s>',$key);
+    }
+    public function __set($key,$value) {
+        $this->data[$key] = $value;
+    }
+    public function __unset($key) {
+        if (array_key_exists($key,$this->data)) unset($this->data[$key]);
+    }
 }
 
 CommandList::getInstance()->registerBundle(new ApplicationCommands());
