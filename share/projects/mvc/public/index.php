@@ -16,5 +16,9 @@ $lepton = new \cherry\Lepton(__FILE__);
 
 $app = new \cherry\Mvc\Application();
 
+require_once('lib/cherry/mvc/view/lipsum.php');
 $lepton->runApplication($app);
 
+
+//$lv = new \cherry\mvc\view\LipsumView();
+//echo $lv->getViewcontents();

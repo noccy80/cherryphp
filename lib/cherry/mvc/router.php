@@ -8,6 +8,15 @@ abstract class Base {
 
 }
 
+class Static extends Base {
+
+    function init();
+    function route(\cherry\Mvc\Request $request) {
+    
+    }
+
+}
+
 class Simple extends Base {
 
     function route(\cherry\Mvc\Request $request) {

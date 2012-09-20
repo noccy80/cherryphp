@@ -2,6 +2,8 @@
 
 namespace cherry;
 
+define('_DS_',DIRECTORY_SEPARATOR);
+
 define('CHERRY_VERSION','1.0.0-alpha');
 if ($_app = getenv("CHERRY_APP")) define('CHERRY_APP',$_app);
 if ($_lib = getenv("CHERRY_LIB")) define('CHERRY_LIB',$_lib);
@@ -36,7 +38,25 @@ printf("CHERRY_CFGDIR: %s\n", CHERRY_CFGDIR);
 printf("CHERRY_EXTDIR: %s\n", CHERRY_EXTDIR);
 */
 
+require_once CHERRY_LIB.'/lib/cherry/base/config.php';
+require_once CHERRY_LIB.'/lib/cherry/base/event.php';
+require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
+
+// Register the autoloader for the base library
+use Cherry\Autoloader\Autoloader;
+use Cherry\Autoloader\Autoloaders;
+Autoloaders::register(new Autoloader(CHERRY_LIB.'/lib'));
+
 const LOG_DEBUG = 0x01;
+
+function unipath($path) {
+    if (DIRECTORY_SEPARATOR != '/') {
+        $path = str_replace('\\',DIRECTORY_SEPARATOR,$path);
+    }
+    while(strpos($path,DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR)!==false)
+        $path = str_replace(DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $path);
+    return $path;
+}
 
 function log($type,$fmt,$args=null) {
     $arg = func_get_args();
@@ -66,7 +86,7 @@ class Lepton {
         $app->loadConfiguration('application',CHERRY_CFGDIR.'/application.ini');
         try {
             $extn = $app->getConfiguration('application','extensions');
-            foreach($extn as $ext=>$on) {
+            foreach((array)$extn as $ext=>$on) {
                 if ($on) {
                     $extdir = CHERRY_EXTDIR.DIRECTORY_SEPARATOR.$ext.DIRECTORY_SEPARATOR;
                     require_once $extdir.'extension.php';
@@ -95,23 +115,7 @@ class Lepton {
 
         $path = get_include_path();
         set_include_path($this->conf->libpath . PATH_SEPARATOR . $path);
-        spl_autoload_register(array($this,'_spl_autoload'),true,true);
 
-    }
-
-    public function _spl_autoload($class) {
-        \cherry\log(\cherry\LOG_DEBUG,'Autoload request: %s', $class);
-        $file = 'lib'.DIRECTORY_SEPARATOR.strtolower(str_replace('\\',DIRECTORY_SEPARATOR,$class)).'.php';
-        if ( @include_once $file ) {
-            \cherry\log(\cherry\LOG_DEBUG,'Included %s',$file);
-            return;
-        }
-        $file = dirname('lib'.DIRECTORY_SEPARATOR.strtolower(str_replace('\\',DIRECTORY_SEPARATOR,$class))).'.php';
-        if ( @include_once $file ) {
-            \cherry\log(\cherry\LOG_DEBUG,'Included %s',$file);
-            return;
-        }
-        \cherry\log(\cherry\LOG_DEBUG,'No matching file found for autoload of %s', $class);
     }
 
 }
@@ -148,12 +152,14 @@ abstract class Application {
     }
     
     public function getConfiguration($set,$group=null) {
+        \cherry\log(\cherry\LOG_DEBUG, __CLASS__."->GetConfiguration: (set=%s, group=%s)",$set,$group);
         if (empty($this->cfgsets[$set])) {
             throw new ApplicationException(_('Configuration set could not be found'), ApplicationException::ERR_CONFIG_NOT_FOUND);
         }
         $ret = $this->cfgsets[$set];
         if ($group) {
             $groups = array_keys($ret);
+            $out = null;
             foreach($groups as $g) {
                 if (strpos($g,':')!==false) {
                     list($gn,$gp) = explode(':',$g);

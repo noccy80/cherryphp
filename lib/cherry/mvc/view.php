@@ -9,5 +9,3 @@ abstract class Base {
     abstract function load($view);
 
 }
-
-class 

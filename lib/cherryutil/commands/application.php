@@ -18,7 +18,7 @@ class ApplicationCommands extends CommandBundle {
             new Command('list-configs','',
                     'List the available configuration templates.', 
                     array($this,'listconfigs')),
-            new Command('create','<apptemplate> <appns> [name <appname>]',
+            new Command('create','<apptemplate> <appns> [name <appname>] [+replace]',
                     'Creates a new application from an application template. Appns is required',
                     array($this,'createapp')),
             new Command('create-config','<type> [to <dest>]',
@@ -77,31 +77,45 @@ class ApplicationCommands extends CommandBundle {
     }
     
     function createapp($template=null,$appns=null) {
+        $con = \Cherry\Cli\Console::getConsole();
         if (!$appns) {
             printf("Use: create <template> <appns>\n");
             return 1;
         }
-        printf("Creating new project %s...\n", $appns);
+
+        $args = func_get_args();
+        $opts = $this->parseOpts(array_slice($args,2),array(
+            'replace' => '+replace',
+        ));
+        if (empty($opts['replace'])) $opts['replace'] = false;
+        
+        $con->write("Creating new project %s...\n", $appns);
         $tpath = CHERRY_LIB.'/share/projects/'.$template.'/';
 
         $rdi = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($tpath, \FilesystemIterator::SKIP_DOTS));
         foreach($rdi as $file) {
-            $dest = str_replace($tpath,'./',$file);
-            // Check paths
-            $path = dirname($dest);
-            if (!file_exists($path)) {
-                mkdir($path,0777,true);
+            if (strpos((string)$file,'PKG-META')!==false) {
+                $sub = explode(DIRECTORY_SEPARATOR,substr($file,strpos((string)$file,'PKG-META')+9));
+                if ($sub[0] == 'triggers') {
+                    require $file;
+                }
+            } else {
+                $dest = str_replace($tpath,'./',$file);
+                // Check paths
+                $path = dirname($dest);
+                if (!file_exists($path)) {
+                    mkdir($path,0777,true);
+                }
+                // Copy file
+                copy($file,$dest);
             }
-            // Copy file
-            copy($file,$dest);
         }
-        printf("Generating UUID...");
-        //$uuid = \cherry\crypto\Uuid::getInstance()->generate(\cherry\crypto\UUID_V4);
-        $uuid = trim(exec('uuidgen'));
-        printf("%s\n", $uuid);
-        // Do the actual configuration
-        printf("Applying templates...\n");
-        printf("Done\n");
+        \Cherry\Base\Event::invoke('cherryutil.application.post-setup', array(
+            'approot' => \getcwd(),
+            'appns' => $appns,
+            'replace' => $opts['replace']
+        ), $con);
+        $con->write("Done\n");
     }
     
     function listtemplates() {
