@@ -1,0 +1,4 @@
+This action deploys a package from a local phar archive.
+ 
+ +dry
+    Dry run, only show what would be done.

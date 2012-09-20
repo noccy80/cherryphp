@@ -1,0 +1,17 @@
+This is the simple but effective Cherry Package Repository, CPR.
+
+cpr sub-commands:
+
+    add <repourl>  - Add a repository to CPR
+    remove <repourl>  - Remove a repository from CPR
+    update  - Update the package lists from the added remote repositories
+    upgrade [<package>] [to <version>] [+keep]  - Upgrade (or add the latest version) of a package
+    install <package>  - Install a package
+    remove <package>  - Remove an installed package
+    find "<pattern>"  - Find packages with names matching the pattern
+    list  - List all packages
+
+All commands take these options:
+
+    +global  - Operate on the global configuration (/var/cherryphp)
+    +local  - Operate on local configuration (~/.cherryphp) (default)

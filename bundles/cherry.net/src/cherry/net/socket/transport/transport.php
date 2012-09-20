@@ -2,9 +2,6 @@
 
 namespace cherry\net\socket\transport;
 
-require_once('lib/cherry/base/event.php');
-require_once('lib/cherry/net/socket.php');
-
 use cherry\base\Event;
 use cherry\base\EventEmitter;
 
