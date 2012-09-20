@@ -44,7 +44,7 @@ class CpaCommands extends CommandBundle {
                 }
                 break;
             default:
-                $con->warn("No such comand: %s\n", $cmd);
+                $con->warn("No such cpr sub-comand: %s, try 'help cpr'\n", $cmd);
                 break;
         }
     }
