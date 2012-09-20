@@ -1,0 +1,8 @@
+{
+    "name": "Cherry MVC Application",
+    "version": "1.0.0",
+    "namespace": "cherry\mvc",
+    "depends": [
+        "cherry.utils"
+    ]
+}

@@ -2,6 +2,8 @@
 
 namespace cherry;
 
+define('_DS_',DIRECTORY_SEPARATOR);
+
 define('CHERRY_VERSION','1.0.0-alpha');
 if ($_app = getenv("CHERRY_APP")) define('CHERRY_APP',$_app);
 if ($_lib = getenv("CHERRY_LIB")) define('CHERRY_LIB',$_lib);
