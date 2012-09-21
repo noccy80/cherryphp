@@ -1,4 +1,5 @@
 <?php
+
 return array(
     'autoload' => array(
         'Cherry\Net\Socket\Socket',

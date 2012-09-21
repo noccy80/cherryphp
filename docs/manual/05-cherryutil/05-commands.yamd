@@ -1,0 +1,74 @@
+Title: Writing custom commands
+---
+# Writing custom commands
+
+## Boilerplate
+
+All bundles extend the `CherryUtil\Commands\CommandBundle` class. The class
+then have to implement at least the `getCommands()` method returning an array
+of `Command` objects.
+
+The `Command` object constructor has the following signature:
+
+    new Command( commandname , options , description, callback [, helpfile] );
+
+The helpfiles are currently located in `share/help/commands/` for CLI applications.
+
+    <?php
+    
+    namespace cherryutil\commands;
+    use cherryutil\commands\Command;
+    use cherryutil\commands\CommandBundle;
+    use cherryutil\commands\CommandList;
+    
+    class MyCommandBundle extends CommandBundle {
+        
+        function getCommands() {
+            return array(
+                new Command('cmdname','[+option] [color <color>]',
+                        'This is the command cmdname.', 
+                        array($this,'cmdname'),
+                        'mycommand.cmdname.txt')
+            );
+        }
+        
+        function cmdname() {
+        
+        }
+        
+        
+    }
+
+
+## Registering your bundle
+
+    CommandList::getInstance()->registerBundle(new MyCommandBundle());
+
+## Parsing arguments
+
+Arguments to the cli commands are given through the unparsed parameters at the
+end of the command line. They come in two flavors, boolean and value. Boolean
+arguments are prefixed with a +, while value arguments consist of a keyword
+and a value.
+
+    $ cherry create mvcapplication MyApp name "My Application" +replace
+     '-------.-----'------.-------------'---------.-----------'----.---'
+             |            |                       |                |
+     Cherry command       |                   Value argument       |
+                    Fixed arguments                     Boolean argument
+
+To parse the arguments, prepare a list of the arguments as an assoc array with
+the keys representing the available arguments and the value containing the
+pattern to match. Arguments prefixed with a plus sign (`+`) will be returned
+as either `true` or `false`, while arguments suffixed with a colon (`:`) will
+be returned as the argument directly following the keyword.
+
+    $opts = $this->parseOpts(array_slice($args,1),array(
+        'verbose' => '+verbose',
+        'dest' => 'to:',
+        'force' => '+force'
+    ));
+
+This would return an array having three keys, verbose and force would be booleans
+while dest would be the target folder as specified with `... to <foo>` on the
+command line.

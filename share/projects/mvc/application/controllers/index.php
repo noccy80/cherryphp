@@ -1,8 +1,6 @@
 <?php
 namespace MyApp\Controllers;
 
-require_once('lib/cherry/mvc/view/frame.php');
-
 class IndexController extends \cherry\Mvc\Controller\Base {
 
     protected function initialize() {

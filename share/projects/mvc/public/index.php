@@ -14,9 +14,22 @@ if (!( @include_once "lib/bootstrap.php" )) {
 
 $lepton = new \cherry\Lepton(__FILE__);
 
+use cherry\base\Event;
+use cherry\base\EventEmitter;
+use cherry\BundleManager;
+use Cherry\Extension\ExtensionManager;
+
+require_once('lib/bundles.php');
+require_once('lib/cherry/base/autoloader.php');
+
+BundleManager::load('cherry.net');
+BundleManager::load('cherry.mvc');
+BundleManager::load('cherry.crypto');
+
+//ExtensionManager::load('uuidextension');
+
 $app = new \cherry\Mvc\Application();
 
-require_once('lib/cherry/mvc/view/lipsum.php');
 $lepton->runApplication($app);
 
 

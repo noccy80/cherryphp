@@ -1,5 +1,11 @@
 <?php
 
+namespace cherry\Mvc\View;
+
+class View extends Base {
+
+<?php
+
 namespace cherry\mvc\view;
 require_once('lib/cherry/mvc/view.php');
 
@@ -28,10 +34,23 @@ class Frame extends Base {
             if (substr($s_tag,strlen($s_tag)-1,1) == '/') {
                 $s_tag = trim(substr($s_tag,0,strlen($s_tag)-1));
             }
+            $parts = explode(' ',$s_tag);
+            $tag = $parts[0];
+            $attr = array();
+            for($n = 1;$n<count($parts);$n++) {
+                $attrsep = strpos($parts[$n],'=');
+                if ($attrsep===false) {
+                    $this->attr[$parts[$n]] = true;   
+                } else {
+                    $aname = substr($parts[$n],0,$attrsep-1);
+                    $aval = substr($parts[$n],$attrsep);
+                    $attr[$aname] = $aval;
+                }
+            }
             if ($s_tag == '@content') {
                 $cont = $this->content;
             } else {
-                $cont = $s_tag;
+                $cont = Event::invoke('onspecialtag',$s_tag,$attr);
             }
             return $s_pre.$cont.$s_aft;
         }
@@ -66,3 +85,6 @@ class Frame extends Base {
     }
 
 }
+    
+}
+

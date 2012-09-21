@@ -1,0 +1,6 @@
+{
+    "name": "Cherry Authentication and User management",
+    "description": "Handles user authentication of all forms.",
+    "version": "1.0.0",
+    "depends": []
+}

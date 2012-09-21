@@ -1,0 +1,12 @@
+{
+    "name": "FooExtension",
+    "description": "This is an example extension for CherryPHP that replaces <@uuid /> tags with an UUID",
+    "version": "1.0.0",
+    "requires": [
+        "cherry.mvc"
+    ],
+    "depends": [
+        "cherry.crypto"
+    ],
+    "type": "cherry:bundle"
+}

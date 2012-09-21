@@ -1,8 +1,10 @@
 {
     "name": "Cherry MVC Application",
+    "description": "Core components for a MVC application",
     "version": "1.0.0",
-    "namespace": "cherry\mvc",
+    "namespace": "cherry\\mvc",
     "depends": [
-        "cherry.utils"
-    ]
+        "cherry.crypto"
+    ],
+    "type": "cherry:bundle"
 }

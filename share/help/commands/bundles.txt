@@ -1,0 +1,3 @@
+The bundles command list all installed bundles. Bundles can be added and removed from the system using the cpr command.
+
+Bundles that are installed in an application are called extensions.
