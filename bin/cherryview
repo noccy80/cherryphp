@@ -1,0 +1,17 @@
+#!/bin/bash
+PWD=`pwd`
+PPWD=`pwd`
+while [ ! -d public ]; do
+    cd ..
+    PPWD=`pwd`
+    echo "Testing $PPWD"
+    if [ $PPWD = / ]; then
+        echo "No cherry MVC project found."
+        exit 1
+    fi
+done
+
+echo "Application: $PPWD"
+cd public
+CHERRY_APP="$PPWD" REQUEST_URI="$1" php index.php
+cd $PWD

@@ -1,0 +1,12 @@
+{
+    "name": "CherryMVC Website",
+    "bundles": [
+        "cherry.user",
+        "cherry.mvc",
+        "cms.blog"
+    ],
+    "extensions": [
+        "cherrypanel",
+        "cherrybar"
+    ]
+}

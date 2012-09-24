@@ -33,6 +33,7 @@ abstract class Base {
     }
     
     public function invoke() {
+        if (!$this->cmethod) $this->cmethod = 'index';
         if (!is_callable(array($this,$this->cmethod))) {
             printf("No such method: %s", $this->cmethod); die();
         } else {
@@ -41,13 +42,14 @@ abstract class Base {
     }
     
     static function factory($cn, \cherry\Mvc\Request $req) {
+        \Cherry\Log(\Cherry\LOG_DEBUG,"Invoking controller: %s", $cn);
         // Check the namespace
         $app = \cherry\Application::getInstance();
         $cfg = $app->getConfiguration('application','application');
         $ns = $cfg['namespace'];
         if (substr($cn,0,strlen($ns)) == $ns) {
             $cpath = explode('\\',strToLower($cn));
-            $fpath = CHERRY_APP . DIRECTORY_SEPARATOR . 'application/' . join(DIRECTORY_SEPARATOR, array_slice($cpath,2));
+            $fpath = CHERRY_APP . _DS_ . 'application' . _DS_ . join(_DS_, array_slice($cpath,2));
         } else {
             $fpath = strToLower($cn);
         }

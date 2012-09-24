@@ -9,9 +9,10 @@ abstract class Base {
         $rt = StaticRoutes::getInstance();
         $dest = $rt->checkRoute($request);
         if (is_object($dest)) {
-            $dest->invoke();
+            \Cherry\Log(\Cherry\LOG_DEBUG,"Static route found for request: %s", $request);
+            return $dest;
         }
-        return true;
+        return null;
     }
     
 }

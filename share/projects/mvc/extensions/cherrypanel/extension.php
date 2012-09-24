@@ -6,19 +6,13 @@ use Cherry\Extension\Extension;
 class CherryPanelExtension extends Extension {
 
     function initialize() {
-        Event::observe('cherry:mvc.render.specialtag', array($this,'onTag'));
-        /*
-        $app = Application::getInstance();
-        $rt = $app->mvc->routes;
-        */
+        
+        // Event observers
+
+        // Set up routing for our controller
         $rt = \Cherry\Mvc\Router\StaticRoutes::getInstance();
         $rt->addRoute('/cherrypanel/:method/:args', '\CherryPanel\Controller');
-    }
-
-    function onTag($tag,array $props) {
-        if ($tag == '@uuid') {
-            return \Cherry\Crypto\Uuid::getInstance()->generate();
-        }
+        
     }
 
 }
