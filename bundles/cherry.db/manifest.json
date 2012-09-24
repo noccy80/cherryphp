@@ -2,5 +2,6 @@
     "name": "Cherry Database Layer",
     "description": "Provides an abstracted interface to one or more databases",
     "version": "1.0.0",
-    "depends": []
+    "depends": [],
+    "type": "cherry:bundle"
 }

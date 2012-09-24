@@ -26,7 +26,7 @@ BundleManager::load('cherry.net');
 BundleManager::load('cherry.mvc');
 BundleManager::load('cherry.crypto');
 
-//ExtensionManager::load('uuidextension');
+//ExtensionManager::load('cherrybar');
 
 $app = new \cherry\Mvc\Application();
 

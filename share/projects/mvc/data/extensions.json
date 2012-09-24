@@ -1,5 +1,7 @@
 {
     "enabled": [
-        "uuidextension"
+        "uuidextension",
+        "cherrybar",
+        "cherrypanel"
     ]
 }

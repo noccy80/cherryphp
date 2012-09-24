@@ -25,7 +25,19 @@ class Callable {
 
 class Event {
 
+    const EP_FULL_INVOCATION = 'full';
+
     private static $handlers = array();
+    private static $eventprops = array();
+    /**
+     *
+     *
+     *
+     * @param string $event The event name.
+     * @param callable $callback The callback to handle the event.
+     * @param bool $full Invoke (and concatenate) all the event handlers, not just
+     *      the first handlers up to where one returns a non-null value.
+     */
     static function observe($event,$callback) {
         if (!is_callable($callback)) throw new \cherry\Base\EventException(_('Callback function is not callable'));
         if (!array_key_exists($event,self::$handlers)) {
@@ -38,6 +50,21 @@ class Event {
         self::$handlers[$event][] = $handler;
         return $handler->uid;
     }
+    
+    static function setEventProp($event,$prop,$value) {
+        if (empty(self::$eventprops[$event])) {
+            self::$eventprops = array();
+        }
+        self::$eventprops[$prop] = $value;
+    }
+
+    static function getEventProp($event,$prop) {
+        if (empty(self::$eventprops[$event])) {
+            return null;
+        }
+        return self::$eventprops[$prop];
+    }
+    
     static function invoke($event,$args=null) {
         // Extract only the args
         $args = func_get_args();
@@ -46,10 +73,19 @@ class Event {
         if (!array_key_exists($event,self::$handlers))
             return;
         // Find the handlers and call them
+        $out = array();
+        $full = self::getEventProp($event,self::EP_FULL_INVOCATION);
         foreach(self::$handlers[$event] as $handler) {
-            if (call_user_func_array($handler->callback,$args) === true)
-                return true;
+            $ret = call_user_func_array($handler->callback,$args);
+            if ($full) {
+                $out[] = $ret;
+            } else {
+                if ($ret)
+                    return $ret;
+            }
         }
+        if ($full)
+            return $out;
     }
 
 }

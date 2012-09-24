@@ -1,0 +1,12 @@
+{
+    "name": "CherryBar",
+    "description": "A snug bar that resides at the top of the page",
+    "version": "1.0.0",
+    "requires": [
+        "cherry.mvc"
+    ],
+    "depends": [
+        "cherry.crypto"
+    ],
+    "type": "cherry:extension"
+}

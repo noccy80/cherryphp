@@ -17,39 +17,61 @@ class Frame extends Base {
     }
     
     function __ob_callback($str) {
-        $pos = strpos($str,'<@');
-        if ($pos === false) {
-            return $str;
-        }
-        $end = strpos($str,'>',$pos);
-        if ($end > $pos) {
-            $s_pre = substr($str,0,$pos);
-            $s_tag = substr($str,$pos+1,($end-$pos)-1);
-            $s_aft = substr($str,$end+1);
-            if (substr($s_tag,strlen($s_tag)-1,1) == '/') {
-                $s_tag = trim(substr($s_tag,0,strlen($s_tag)-1));
+        $out = '';
+        $offs = 0;
+        do {
+            $pos = strpos($str,'<@');
+            if ($pos === false) {
+                $out.= $str;
+                $str = '';
             }
-            $parts = explode(' ',$s_tag);
-            $tag = $parts[0];
-            $attr = array();
-            for($n = 1;$n<count($parts);$n++) {
-                $attrsep = strpos($parts[$n],'=');
-                if ($attrsep===false) {
-                    $this->attr[$parts[$n]] = true;   
-                } else {
-                    $aname = substr($parts[$n],0,$attrsep-1);
-                    $aval = substr($parts[$n],$attrsep);
-                    $attr[$aname] = $aval;
+            $end = strpos($str,'>',$pos);
+            $out.= substr($str,0,$pos);
+            if ($end > $pos) {
+                $s_tag = trim(substr($str,$pos+1,($end-$pos)-1));
+                $str = substr($str,$end+1);
+                if (substr($s_tag,strlen($s_tag)-1,1) == '/') {
+                    $s_tag = trim(substr($s_tag,0,strlen($s_tag)-1));
                 }
+                $parts = explode(' ',$s_tag);
+                $tag = $parts[0];
+                $attr = array();
+                for($n = 1;$n<count($parts);$n++) {
+                    $attrsep = strpos($parts[$n],'=');
+                    if ($attrsep===false) {
+                        $this->attr[$parts[$n]] = true;   
+                    } else {
+                        $aname = substr($parts[$n],0,$attrsep);
+                        $aval = substr($parts[$n],$attrsep+1);
+                        if ($aval[0] == '"') {
+                            if ($aval[strlen($aval)-1] == '"') {
+                                // Just unquote it
+                                $attr[$aname] = substr($aval,1,strlen($aval)-2);
+                            } else {
+                                $fvals = array(substr($aval,1));
+                                do {
+                                    $n++;
+                                    if (strpos($parts[$n],'"')!==false) {
+                                        $fvals[] = $parts[$n];
+                                    } else {
+                                        $fvals[] = substr($parts[$n],strlen($parts[$n]-1));
+                                        break;
+                                    }
+                                } while(true);
+                                $attr[$aname] = join(" ",$fvals);
+                            }
+                        }
+                    }
+                }
+                if ($tag == '@content') {
+                    $cont = $this->content;
+                } else {
+                    $cont = Event::invoke('onspecialtag',$tag,$attr);
+                }
+                $out.= $cont;
             }
-            if ($tag == '@content') {
-                $cont = $this->content;
-            } else {
-                $cont = Event::invoke('onspecialtag',$tag,$attr);
-            }
-            return $s_pre.$cont.$s_aft;
-        }
-        return $str;
+        } while ($str);
+        return $out;
     }
 
     function load($view) {
@@ -74,7 +96,23 @@ class Frame extends Base {
         $fout = ob_get_contents();
         ob_end_clean();
 
-        printf("%s", $fout);
+        printf("%s",$fout);
+        
+        /*
+        // Specify configuration
+        $config = array(
+            'doctype' => 'HTML',
+            'indent'         => true,
+            'output-xhtml'   => false,
+            'wrap'           => 120
+        );
+
+        // Tidy
+        $tidy = new \tidy();
+        $tidy->parseString($fout, $config, 'utf8');
+        $tidy->cleanRepair();
+        printf("%s", $tidy);
+        */
 
         // Load frame
     }

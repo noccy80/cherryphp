@@ -1,0 +1,12 @@
+{
+    "name": "CherryPanel",
+    "description": "Plug-in based control panel for Cherry MVC",
+    "version": "1.0.0",
+    "requires": [
+        "cherry.mvc"
+    ],
+    "depends": [
+        "cherry.crypto"
+    ],
+    "type": "cherry:extension"
+}
