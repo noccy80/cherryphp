@@ -1,8 +1,9 @@
 #!/usr/bin/php
 <?php
 
-//LOADER:BEGIN
 define('APPLICATION','LeptonApplication');
+
+//LOADER:BEGIN
 // Bootstrap
 $libpath = getenv('CHERRY_LIB');
 if (!$libpath) {

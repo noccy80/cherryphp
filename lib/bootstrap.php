@@ -38,10 +38,11 @@ define('_IS_LINUX', ($_os=='linux'));
 define('_IS_WINDOWS',(substr($_os,0,3)=='win'));
 define('_IS_MACOS',($_os=='darwin'));
 
+require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
 require_once CHERRY_LIB.'/lib/cherry/base/debug.php';
+require_once CHERRY_LIB.'/lib/bundles.php';
 require_once CHERRY_LIB.'/lib/cherry/base/config.php';
 require_once CHERRY_LIB.'/lib/cherry/base/event.php';
-require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
 require_once CHERRY_LIB.'/lib/cherry/extension.php';
 require_once CHERRY_LIB.'/lib/cherry/base/cherry.php';
 require_once CHERRY_LIB.'/lib/cherry/base/application.php';

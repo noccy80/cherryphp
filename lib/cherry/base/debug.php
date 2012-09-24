@@ -4,15 +4,42 @@ namespace Cherry;
 
 const LOG_DEBUG = 0x01;
 
-function log($type,$fmt,$args=null) {
-    $arg = func_get_args();
-    $fmts = array_splice($arg,1);
-    $so = call_user_func_array('sprintf',$fmts);
-    if (($type == LOG_DEBUG) && (getenv('DEBUG') == 1)) {
-        fputs(STDERR,$so."\n");
-    } elseif ($type != LOG_DEBUG) {
-        fputs(STDOUT,$so."\n");
+class DebugLog {
+
+    protected static $fifo = null;
+    
+    static function log($type,$fmt,$args=null) {
+        if (empty(self::$fifo) && class_exists('\Data\FifoQueue'))
+            self::$fifo = new \Data\FifoQueue(10);
+        $arg = func_get_args();
+        $fmts = array_splice($arg,1);
+        $so = call_user_func_array('sprintf',$fmts);
+        if (self::$fifo) self::$fifo->push($so);
+        if (($type == LOG_DEBUG) && (getenv('DEBUG') == 1)) {
+            fputs(STDERR,$so."\n");
+        } elseif ($type != LOG_DEBUG) {
+            fputs(STDOUT,$so."\n");
+        }
     }
+    
+    static function getDebugLog() {
+        if (empty(self::$fifo) && class_exists('\Data\FifoQueue'))
+            self::$fifo = new \Data\FifoQueue(20);
+        return self::$fifo->popAll();
+    }
+
+}
+
+
+
+function log($type,$fmt,$args=null) {
+    $args = func_get_args();
+    call_user_func_array(array('\Cherry\DebugLog','log'),$args);
+}
+function debug($fmt,$args=null) {
+    $args = func_get_args();
+    array_unshift($args,LOG_DEBUG);
+    call_user_func_array(array('\Cherry\DebugLog','log'),$args);
 }
 
 
@@ -65,6 +92,12 @@ class Debug {
         
     }
     
+    static function getTimeStamp() {
+        
+        return date('D d M h:i:s');
+        
+    }
+    
     static function getDebugLog() {
         
         // return Logger::getBuffer(Logger::BUFFER_DEBUG);
@@ -90,10 +123,12 @@ class ErrorHandler {
             return true;
         }
         
-        fprintf(STDERR,"Error:\n    %s (%d)\n",$errstr,$errno);
-        fprintf(STDERR,"File:\n    %s (line %d)\n",$errfile,$errline);
-        fprintf(STDERR,"%s\n",join("\n",self::indent(Debug::getCodePreview($errfile,$errline),4)));
-        fprintf(STDERR,"Backtrace:\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
+        $ca = \Cherry\Cli\Console::getAdapter();
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
+        $ca->error("\033[1mError:\033[22m\n    %s (%d)\n",$errstr,$errno);
+        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$errfile,$errline);
+        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($errfile,$errline),4)));
+        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
 
         exit(1);
         if (self::$oldhandler) {

@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 
-// Bootstrap
+//LOADER:BEGIN
 if (!( @include_once "lib/bootstrap.php" )) {
     $libpath = getenv('CHERRY_LIB');
     if (!$libpath) {
@@ -10,16 +10,22 @@ if (!( @include_once "lib/bootstrap.php" )) {
     }
     require_once($libpath.'/lib/bootstrap.php');
 }
+//LOADER:END
 
 $lepton = new \cherry\Lepton(__FILE__);
 
-// We need this to set up a CLI application
-require_once('lib/cherry/cli/application.php');
-
 use cherry\base\Event;
 use cherry\base\EventEmitter;
+use cherry\BundleManager;
+use Cherry\Extension\ExtensionManager;
 
-require_once('lib/cherry/net/socketserver.php');
+BundleManager::load('cherry.net');
+BundleManager::load('cherry.mvc');
+BundleManager::load('cherry.crypto');
+
+ExtensionManager::load('uuidextension');
+
+/*
 $ss = new \cherry\net\SocketServer(6667);
 $ss->on('connection', function($ip,$port) {
     printf("Creating new SocketSession for %s:%d\n", $ip, $port);
@@ -30,13 +36,31 @@ $ss->on('ready', function() {
     printf("Server is ready.\n");
 });
 $ss->start();
+*/
 
-class q {
-    function m($name) { echo "Awesome, $name!\n"; }
-}
+/*
+// Example: Crypto
+$str = 'Hello World';
+$key = 'FooBar';
 
-use \cherry\base\Callable;
-$cb = new Callable(function($name){ echo "Hello, $name\n"; });
-$cb('World');
-$cb = new Callable('q','m');
-$cb('World');
+$enc = \Cherry\Crypto\Algorithm::tripledes($key)->encrypt($str);
+$dec = \Cherry\Crypto\Algorithm::tripledes($key)->decrypt($enc);
+
+// Example: Crypto (#2)
+$str = 'Hello World';
+$key = 'FooBar';
+
+$ca = new \Cherry\Crypto\Algorithm('tripledes',$key);
+$enc = $ca->encrypt($str);
+*/
+
+//echo \Cherry\Crypto\Uuid::getInstance()->generate()."\n";
+//echo Event::invoke('cherry:mvc.render.specialtag', 'uuid', array())."\n";
+//echo Event::invoke('onspecialtag', 'foobar', array())."\n";
+
+\Cherry\debug('Whats up?');
+
+$ca = \Cherry\Cli\Console::getAdapter();
+$ca->error("Hello %s\n","World");
+
+\user_error("Fail!");
