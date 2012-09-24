@@ -25,6 +25,7 @@ require_once('lib/cherry/base/autoloader.php');
 BundleManager::load('cherry.net');
 BundleManager::load('cherry.mvc');
 BundleManager::load('cherry.crypto');
+BundleManager::load('cherry.user');
 
 //ExtensionManager::load('cherrybar');
 

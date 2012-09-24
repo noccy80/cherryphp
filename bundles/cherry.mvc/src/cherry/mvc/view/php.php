@@ -50,7 +50,7 @@ class Frame extends Base {
             if ($s_tag == '@content') {
                 $cont = $this->content;
             } else {
-                $cont = Event::invoke('onspecialtag',$s_tag,$attr);
+                $cont = Event::invoke('cherry:mvc.render.specialtag',$s_tag,$attr);
             }
             return $s_pre.$cont.$s_aft;
         }

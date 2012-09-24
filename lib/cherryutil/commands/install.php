@@ -92,7 +92,8 @@ class InstallCommands extends CommandBundle {
         $con->write("Installing tools...\n");
         $tools = array(
             'cherrydoc',
-            'cherry'
+            'cherry',
+            'cherryview'
         );
         foreach($tools as $tool) {
             $foh->install(CHERRY_LIB.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$tool,$bindir.DIRECTORY_SEPARATOR.$tool,0777);

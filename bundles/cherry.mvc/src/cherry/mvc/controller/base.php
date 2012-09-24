@@ -5,14 +5,41 @@ namespace cherry\Mvc\Controller;
 abstract class Base {
 
     protected $app = null;
-    protected $req = null;
+    protected $request = null;
+    protected $cmethod = null;
+    protected $cargs = array();
 
-    function __construct(\cherry\Mvc\Request $req) {
+    function __construct(\cherry\Mvc\Request $request) {
         $this->app = \cherry\Application::getInstance();
-        $this->req = $req;
+        $this->request = $request;
         if (is_callable(array($this,'initialize'))) $this->initialize();
+        \Cherry\Base\Event::invoke('cherry:mvc.controller.create',$this);
     }
 
+    public function __get($key) {
+        switch($key) {
+            case 'method': return $this->cmethod; break;
+            case 'args': return $this->cargs; break;
+            default: return null;
+        }
+    }
+
+    public function __set($key,$val) {
+        switch($key) {
+            case 'method': $this->cmethod = $val; break;
+            case 'args': $this->cargs = $val; break;
+            default: return null;
+        }
+    }
+    
+    public function invoke() {
+        if (!is_callable(array($this,$this->cmethod))) {
+            printf("No such method: %s", $this->cmethod); die();
+        } else {
+            call_user_func(array($this,$this->cmethod));
+        }
+    }
+    
     static function factory($cn, \cherry\Mvc\Request $req) {
         // Check the namespace
         $app = \cherry\Application::getInstance();

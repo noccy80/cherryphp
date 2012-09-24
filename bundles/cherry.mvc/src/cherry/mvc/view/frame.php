@@ -63,10 +63,22 @@ class Frame extends Base {
                         }
                     }
                 }
-                if ($tag == '@content') {
-                    $cont = $this->content;
-                } else {
-                    $cont = Event::invoke('onspecialtag',$tag,$attr);
+                switch($tag) {
+                    case '@header':
+                        $cont = Event::invoke('cherry:mvc.render.head',$tag,(array)$attr);
+                        break;
+                    case '@embed':
+                        $cont = '[EMBED]';
+                        break;
+                    case '@widget':
+                        $cont = '[WIDGET]';
+                        break;
+                    case '@content':
+                        $cont = $this->content;
+                        break;
+                    default:
+                        $cont = Event::invoke('cherry:mvc.render.specialtag',$tag,(array)$attr);
+                        break;
                 }
                 $out.= $cont;
             }

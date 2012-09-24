@@ -42,10 +42,10 @@ class Debug {
             switch($frame['type']) {
                 case '::':
                 case '->':
-                    $out[] = sprintf('%d> %s%s%s(%s) %s',$fid,$frame['class'],$frame['type'],$frame['function'],$argstr,$fileline);
+                    $out[] = sprintf('%2d> %s%s%s(%s) %s',$fid,$frame['class'],$frame['type'],$frame['function'],$argstr,$fileline);
                     break;
                 default:
-                    $out[] = sprintf('%d> %s(%s) %s',$fid,$frame['function'],$argstr,$fileline);
+                    $out[] = sprintf('%2d> %s(%s) %s',$fid,$frame['function'],$argstr,$fileline);
                     break;
             }
         }

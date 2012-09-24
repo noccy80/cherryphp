@@ -5,7 +5,7 @@ use Cherry\Base\Event;
 class UuidExtension extends \Cherry\Extension\Extension {
 
     function initialize() {
-        Event::observe('onspecialtag', array($this,'onTag'));
+        Event::observe(\Cherry\Mvc\EventsEnum::RENDER_HEAD, array($this,'onTag'));
     }
 
     function onTag($tag,array $props) {

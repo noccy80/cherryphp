@@ -6,12 +6,13 @@ use Cherry\Extension\Extension;
 class CherryPanelExtension extends Extension {
 
     function initialize() {
-        Event::observe('onspecialtag', array($this,'onTag'));
+        Event::observe('cherry:mvc.render.specialtag', array($this,'onTag'));
         /*
         $app = Application::getInstance();
         $rt = $app->mvc->routes;
-        $rt->addRoute('/cherrypanel/*', '\Extensions\CherryPanel\Controller');
         */
+        $rt = \Cherry\Mvc\Router\StaticRoutes::getInstance();
+        $rt->addRoute('/cherrypanel/:method/:args', '\CherryPanel\Controller');
     }
 
     function onTag($tag,array $props) {
