@@ -28,6 +28,8 @@ BundleManager::load('cherry.crypto');
 BundleManager::load('cherry.user');
 
 //ExtensionManager::load('cherrybar');
+$rt = \Cherry\Mvc\Router\StaticRoutes::getInstance();
+$rt->addRoute('/start/','\MyApp\Controllers\IndexController:start');
 
 $app = new \cherry\Mvc\Application();
 

@@ -22,6 +22,7 @@ class StaticRoutes {
     
     public function checkRoute(Request $request) {
         
+        \Cherry\debug('Checking static route for request: %s', $request);
         $ru = explode('/',$request->getRequestUrl());
         foreach($this->routes as $url => $target) {
             $call_controller = $target[0];
@@ -50,8 +51,12 @@ class StaticRoutes {
                 }
             }
             if ($matched) {
-                $ci = new $call_controller($request);
-                $ci->method = $call_method;
+                \Cherry\debug('Request %s matched static route %s', $request, $url);
+                // Extract method from the call if present, and if not use call_method
+                list($cclass,$cmethod) = explode(':',$call_controller.':'.$call_method);
+                \Cherry\debug('Controller: %s, Action: %s', $cclass,$cmethod);
+                $ci = \Cherry\Mvc\Controller\Base::factory($cclass,$request);
+                $ci->method = $cmethod;
                 $ci->args = $call_args;
                 return $ci;
             }

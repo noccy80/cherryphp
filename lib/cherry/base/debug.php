@@ -49,6 +49,12 @@ class Debug {
 
         $bt = debug_backtrace();
         $bt = array_slice($bt,$trim+1);
+        return self::makeBacktrace($bt);
+        
+    }
+    
+    static function makeBacktrace($bt) {
+
         $bt = array_reverse($bt);
         
         $fid = 0;
@@ -111,6 +117,7 @@ class ErrorHandler {
     private static $oldhandler = null;
     public static function register() {
         self::$oldhandler = set_error_handler(array(__CLASS__,'__php_handleError'), E_ALL);
+        \set_exception_handler(array(__CLASS__,'__php_handleException'));
     }
     public static function __php_handleError($errno,$errstr,$errfile,$errline,$errctx) {
 
@@ -137,6 +144,22 @@ class ErrorHandler {
         }
         return true;
     }
+    public static function __php_handleException(\Exception $exception) {
+
+        $ca = \Cherry\Cli\Console::getAdapter();
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
+        $ca->error("\033[1mError:\033[22m\n    %s (%d)\n",$exception->getMessage(),$exception->getCode());
+        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$exception->getFile(),$exception->getLine());
+        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($exception->getFile(),$exception->getLine()),4)));
+        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::makeBacktrace($exception->getTrace()),4)));
+
+        exit(1);
+        if (self::$oldhandler) {
+            $args = func_get_args();
+            return call_user_func_array(self::$oldhandler,$args);
+        }
+        return true;
+    }
     private static function indent(array $arr, $indent) {
         $arro = array();
         foreach($arr as $row) {
@@ -147,4 +170,3 @@ class ErrorHandler {
 }
 
 ErrorHandler::register();
-//ExceptionHandler::register();

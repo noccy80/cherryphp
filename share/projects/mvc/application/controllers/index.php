@@ -15,6 +15,10 @@ class IndexController extends \cherry\Mvc\Controller\Base {
         $this->view->load('index/index.phtml');
     }
     
+    public function start() {
+        $this->view->load('index/start.phtml');
+    }
+    
     protected function onError($error) {
         $this->view->setData('An error occured: %s',$error->getMessage());
     }
