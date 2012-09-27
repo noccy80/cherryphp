@@ -122,7 +122,8 @@ class ErrorHandler {
     public static function __php_handleError($errno,$errstr,$errfile,$errline,$errctx) {
 
         if ($errno & E_WARNING) {
-            fprintf(STDERR,"Warning: %s [from %s:%d]\n", $errstr,$errfile,$errline);
+            //fprintf(STDERR,"Warning: %s [from %s:%d]\n", $errstr,$errfile,$errline);
+            \Cherry\debug("Warning: %s [from %s:%d]\n", $errstr,$errfile,$errline);
             return true;
         }
         if ($errno & E_DEPRECATED) {
