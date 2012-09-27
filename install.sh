@@ -16,3 +16,4 @@ cd bin
 export CHERRY_LIB=../
 ./cherry install-all
 ./cherry install-tools
+export CHERRY_LIB=/opt/cherryphp
