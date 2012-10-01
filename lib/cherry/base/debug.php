@@ -118,6 +118,11 @@ class ErrorHandler {
     public static function register() {
         self::$oldhandler = set_error_handler(array(__CLASS__,'__php_handleError'), E_ALL);
         \set_exception_handler(array(__CLASS__,'__php_handleException'));
+        // Active assert and make it quiet
+        assert_options(ASSERT_ACTIVE, 1);
+        assert_options(ASSERT_WARNING, 0);
+        assert_options(ASSERT_QUIET_EVAL, 1);
+        assert_options(ASSERT_CALLBACK, array(__CLASS__,'__php_handleAssert'));     
     }
     public static function __php_handleError($errno,$errstr,$errfile,$errline,$errctx) {
 
@@ -133,10 +138,10 @@ class ErrorHandler {
         
         $ca = \Cherry\Cli\Console::getAdapter();
         $ca->error("\033[1mError:\033[22m\n    %s (%d)\n",$errstr,$errno);
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$errfile,$errline);
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($errfile,$errline),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
 
         exit(1);
         if (self::$oldhandler) {
@@ -149,10 +154,10 @@ class ErrorHandler {
 
         $ca = \Cherry\Cli\Console::getAdapter();
         $ca->error("\033[1mException:\033[22m\n    %s (%d)\n",$exception->getMessage(),$exception->getCode());
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$exception->getFile(),$exception->getLine());
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($exception->getFile(),$exception->getLine()),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::makeBacktrace($exception->getTrace()),4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
 
         exit(1);
         if (self::$oldhandler) {
@@ -160,6 +165,17 @@ class ErrorHandler {
             return call_user_func_array(self::$oldhandler,$args);
         }
         return true;
+    }
+    // Create a handler function
+    function __php_handleAssert($file, $line, $code, $desc = null) {
+        $ca = \Cherry\Cli\Console::getAdapter();
+        $ca->error("\033[1mAssertion failed:\033[22m\n    in %s on line %d\n",$file, $line );
+        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
+        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
+        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
+
+        exit(1);
     }
     private static function indent(array $arr, $indent) {
         $arro = array();

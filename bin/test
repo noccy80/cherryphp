@@ -23,8 +23,6 @@ BundleManager::load('cherry.net');
 BundleManager::load('cherry.mvc');
 BundleManager::load('cherry.crypto');
 
-ExtensionManager::load('uuidextension');
-
 /*
 $ss = new \cherry\net\SocketServer(6667);
 $ss->on('connection', function($ip,$port) {
@@ -52,15 +50,20 @@ $key = 'FooBar';
 
 $ca = new \Cherry\Crypto\Algorithm('tripledes',$key);
 $enc = $ca->encrypt($str);
+
+//ExtensionManager::load('uuidextension');
+
 */
 
 //echo \Cherry\Crypto\Uuid::getInstance()->generate()."\n";
 //echo Event::invoke('cherry:mvc.render.specialtag', 'uuid', array())."\n";
 //echo Event::invoke('onspecialtag', 'foobar', array())."\n";
 
-\Cherry\debug('Whats up?');
+\Cherry\debug('Will grab consoleadapter, and then fail gloriuosly!');
 
 $ca = \Cherry\Cli\Console::getAdapter();
-$ca->error("Hello %s\n","World");
+$ca->write("Console acquired: %s\n",get_class($ca));
 
-\user_error("Fail!");
+$foo = 'hello';
+\assert($foo != 'hello');
+\user_error("Oh Glorious Fail!");
