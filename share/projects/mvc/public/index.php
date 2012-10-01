@@ -19,9 +19,6 @@ use cherry\base\EventEmitter;
 use cherry\BundleManager;
 use Cherry\Extension\ExtensionManager;
 
-require_once('lib/bundles.php');
-require_once('lib/cherry/base/autoloader.php');
-
 BundleManager::load('cherry.net');
 BundleManager::load('cherry.mvc');
 BundleManager::load('cherry.crypto');

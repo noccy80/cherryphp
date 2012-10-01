@@ -1,0 +1,7 @@
+{
+    "name": "Blog CMS Components for CherryPHP",
+    "description": "Blog interface, APIs and pages.",
+    "version": "1.0.0",
+    "depends": [],
+    "type": "cherry:bundle"
+}

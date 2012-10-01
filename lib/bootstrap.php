@@ -47,6 +47,7 @@ require_once CHERRY_LIB.'/lib/cherry/extension.php';
 require_once CHERRY_LIB.'/lib/cherry/base/cherry.php';
 require_once CHERRY_LIB.'/lib/cherry/base/application.php';
 
+
 use Cherry\Autoloader\Autoloader;
 use Cherry\Autoloader\Autoloaders;
 

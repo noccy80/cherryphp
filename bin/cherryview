@@ -4,14 +4,13 @@ PPWD=`pwd`
 while [ ! -d public ]; do
     cd ..
     PPWD=`pwd`
-    echo "Testing $PPWD"
     if [ $PPWD = / ]; then
-        echo "No cherry MVC project found."
+        echo "No cherry MVC project found." >&2
         exit 1
     fi
 done
 
-echo "Application: $PPWD"
+echo "Application: $PPWD" >&2
 cd public
 CHERRY_APP="$PPWD" REQUEST_URI="$1" php index.php
 cd $PWD

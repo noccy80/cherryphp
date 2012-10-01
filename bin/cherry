@@ -16,9 +16,11 @@ require($libpath.'/lib/bootstrap.php');
 $lepton = new \cherry\Lepton(__FILE__);
 
 // We need this to set up a CLI application
-require_once('lib/cherry/cli/application.php');
-require_once('lib/cherryutil/command.php');
-require_once('lib/cherryutil/commands/all.php');
+//require_once('lib/cherry/cli/application.php');
+//require_once('lib/cherryutil/command.php');
+//require_once('lib/cherryutil/commands/all.php');
+
+\Cherry\BundleManager::load('cherry.util');
 
 use cherry\Base\Event;
 

@@ -1,0 +1,7 @@
+{
+    "name": "Cherry Utility",
+    "description": "Commands and utilities for the Cherry Utility",
+    "version": "1.0.0",
+    "namespace": "cherryutil",
+    "type": "cherry:bundle"
+}

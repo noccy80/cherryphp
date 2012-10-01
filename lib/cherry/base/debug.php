@@ -132,8 +132,8 @@ class ErrorHandler {
         }
         
         $ca = \Cherry\Cli\Console::getAdapter();
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
         $ca->error("\033[1mError:\033[22m\n    %s (%d)\n",$errstr,$errno);
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$errfile,$errline);
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($errfile,$errline),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
@@ -148,8 +148,8 @@ class ErrorHandler {
     public static function __php_handleException(\Exception $exception) {
 
         $ca = \Cherry\Cli\Console::getAdapter();
+        $ca->error("\033[1mException:\033[22m\n    %s (%d)\n",$exception->getMessage(),$exception->getCode());
         $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
-        $ca->error("\033[1mError:\033[22m\n    %s (%d)\n",$exception->getMessage(),$exception->getCode());
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$exception->getFile(),$exception->getLine());
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($exception->getFile(),$exception->getLine()),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::makeBacktrace($exception->getTrace()),4)));
