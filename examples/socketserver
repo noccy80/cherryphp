@@ -1,0 +1,35 @@
+#!/usr/bin/php
+<?php
+
+//LOADER:BEGIN
+if (!( @include_once "lib/bootstrap.php" )) {
+    $libpath = getenv('CHERRY_LIB');
+    if (!$libpath) {
+        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+        exit(1);
+    }
+    require_once($libpath.'/lib/bootstrap.php');
+}
+//LOADER:END
+
+$lepton = new \cherry\Lepton(__FILE__);
+
+use cherry\base\Event;
+use cherry\base\EventEmitter;
+use cherry\BundleManager;
+use Cherry\Extension\ExtensionManager;
+
+BundleManager::load('cherry.net');
+BundleManager::load('cherry.mvc');
+BundleManager::load('cherry.crypto');
+
+$ss = new \cherry\net\SocketServer(6667);
+$ss->on('connection', function($ip,$port) {
+    printf("Creating new SocketSession for %s:%d\n", $ip, $port);
+    $socksess = new \cherry\net\SocketSession();
+    $socksess->setTransport(new \cherry\net\socket\transport\HttpTransport());
+});
+$ss->on('ready', function() {
+    printf("Server is ready.\n");
+});
+$ss->start();

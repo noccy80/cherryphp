@@ -65,6 +65,8 @@ class Debug {
             foreach($frame['args'] as $arg) {
                 if (is_bool($arg)) {
                     $argout[] = ($arg)?'true':'false';
+                } elseif (is_object($arg)) {
+                    $argout[] = get_class($arg);
                 } else {
                     $argout[] = $arg;
                 }
@@ -83,10 +85,10 @@ class Debug {
             switch($frame['type']) {
                 case '::':
                 case '->':
-                    $out[] = sprintf('%2d> %s%s%s(%s) %s',$fid,$frame['class'],$frame['type'],$frame['function'],$argstr,$fileline);
+                    $out[] = sprintf('#%d. %s%s%s(%s) %s',$fid,$frame['class'],$frame['type'],$frame['function'],$argstr,$fileline);
                     break;
                 default:
-                    $out[] = sprintf('%2d> %s(%s) %s',$fid,$frame['function'],$argstr,$fileline);
+                    $out[] = sprintf('#%d. %s(%s) %s',$fid,$frame['function'],$argstr,$fileline);
                     break;
             }
         }

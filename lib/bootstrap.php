@@ -38,6 +38,7 @@ define('_IS_LINUX', ($_os=='linux'));
 define('_IS_WINDOWS',(substr($_os,0,3)=='win'));
 define('_IS_MACOS',($_os=='darwin'));
 
+require_once CHERRY_LIB.'/lib/data/fifoqueue.php';
 require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
 require_once CHERRY_LIB.'/lib/cherry/base/debug.php';
 require_once CHERRY_LIB.'/lib/bundles.php';

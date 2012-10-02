@@ -11,7 +11,7 @@ abstract class EventsEnum {
 
 require_once 'src/cherryutil/command.php';
 require_once 'src/cherryutil/fileops.php';
-require_once CHERRY_LIB.'/lib/cherry/cli/conio.php';
+//require_once CHERRY_LIB.'/lib/cherry/cli/conio.php';
 require_once 'src/cherryutil/commands/all.php';
 
 return array(

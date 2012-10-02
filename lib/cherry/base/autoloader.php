@@ -37,6 +37,8 @@ class Autoloaders {
                 }
             }
         }
+        if (!class_exists($class))
+            throw new AutoloaderException("Could not autoload class ".$class);
         return false;
     }
     
@@ -70,3 +72,5 @@ class Autoloader {
     }
     
 }
+
+class AutoloaderException extends \Exception { }
