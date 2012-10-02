@@ -12,7 +12,7 @@ class DebugLog {
         if (empty(self::$fifo) && class_exists('\Data\FifoQueue'))
             self::$fifo = new \Data\FifoQueue(10);
         $arg = func_get_args();
-        $fmts = array_splice($arg,1);
+        $fmts = array_slice($arg,1);
         $so = call_user_func_array('sprintf',$fmts);
         if (self::$fifo) self::$fifo->push($so);
         if (($type == LOG_DEBUG) && (getenv('DEBUG') == 1)) {
@@ -61,7 +61,15 @@ class Debug {
         $out = array();
         foreach($bt as $frame) {
             $fid++;
-            $argstr = '..';
+            $argout = array();
+            foreach($frame['args'] as $arg) {
+                if (is_bool($arg)) {
+                    $argout[] = ($arg)?'true':'false';
+                } else {
+                    $argout[] = $arg;
+                }
+            }
+            $argstr = join(',',$argout);
             if (!empty($frame['file'])) {
                 if (!empty($frame['line'])) {
                     $fileline = sprintf('[%s:%d]',$frame['file'],$frame['line']);
@@ -124,11 +132,11 @@ class ErrorHandler {
         assert_options(ASSERT_QUIET_EVAL, 1);
         assert_options(ASSERT_CALLBACK, array(__CLASS__,'__php_handleAssert'));     
     }
-    public static function __php_handleError($errno,$errstr,$errfile,$errline,$errctx) {
+    public static function __php_handleError($errno,$errstr,$file,$line,$errctx) {
 
         if ($errno & E_WARNING) {
             //fprintf(STDERR,"Warning: %s [from %s:%d]\n", $errstr,$errfile,$errline);
-            \Cherry\debug("Warning: %s [from %s:%d]\n", $errstr,$errfile,$errline);
+            \Cherry\debug("Warning: %s [from %s:%d]\n", $errstr,$file,$line);
             return true;
         }
         if ($errno & E_DEPRECATED) {
@@ -136,10 +144,11 @@ class ErrorHandler {
             return true;
         }
         
+        \Cherry\debug("Fatal error %s in %s on line %d", $errstr, $file, $line);
         $ca = \Cherry\Cli\Console::getAdapter();
         $ca->error("\033[1mError:\033[22m\n    %s (%d)\n",$errstr,$errno);
-        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$errfile,$errline);
-        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($errfile,$errline),4)));
+        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
+        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
         $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
 
@@ -152,6 +161,7 @@ class ErrorHandler {
     }
     public static function __php_handleException(\Exception $exception) {
 
+        \Cherry\debug("Unhandled exception %s in %s on line %d", get_class($exception), $exception->getFile(), $exception->getLine());
         $ca = \Cherry\Cli\Console::getAdapter();
         $ca->error("\033[1mException:\033[22m\n    %s (%d)\n",$exception->getMessage(),$exception->getCode());
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$exception->getFile(),$exception->getLine());
@@ -168,6 +178,7 @@ class ErrorHandler {
     }
     // Create a handler function
     function __php_handleAssert($file, $line, $code, $desc = null) {
+        \Cherry\debug("Assertion failed in %s on line %d", $file, $line);
         $ca = \Cherry\Cli\Console::getAdapter();
         $ca->error("\033[1mAssertion failed:\033[22m\n    in %s on line %d\n",$file, $line );
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);

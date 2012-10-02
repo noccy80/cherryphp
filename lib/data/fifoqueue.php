@@ -42,7 +42,7 @@ class FifoQueue implements \Countable {
     }
     
     public function popAll() {
-        return $this->queue;
+        return array_reverse($this->queue);
         $this->queue = array();
     }
 
