@@ -35,6 +35,8 @@ abstract class ConsoleAdapter {
     
     abstract protected function putMessage($string, $msgclass=null);
 
+    
+    
 }
 
 class Console {
@@ -67,5 +69,5 @@ class Console {
         return self::$adapter;
         
     }
-
+    
 }
