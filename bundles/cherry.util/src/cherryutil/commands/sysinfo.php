@@ -26,7 +26,7 @@ class SysInfoCommands extends CommandBundle {
     }
     
     function phpextensions() {
-        $con = \cherry\cli\Console::getConsole();
+        $con = \cherry\cli\Console::getAdapter();
         $con->putColumns(\get_loaded_extensions(),25);
     }
 
@@ -36,7 +36,7 @@ class SysInfoCommands extends CommandBundle {
         $opts = $this->parseOpts($args,array(
             'like' => 'like:'
         ));
-        $con = \cherry\cli\Console::getConsole();
+        $con = \cherry\cli\Console::getAdapter();
         $defs = \get_defined_constants();
         foreach($defs as $k=>$v) {
             if (

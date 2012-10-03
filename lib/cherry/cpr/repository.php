@@ -10,7 +10,7 @@ class RepositoryList implements \IteratorAggregate {
     private $repomanifest;
 
     function __construct($list='local') {
-        $this->con = \Cherry\Cli\Console::getConsole();
+        $this->con = \Cherry\Cli\Console::getAdapter();
         switch($list) {
             case 'local':
                 $reporoot = getenv('HOME').'/.cherryphp/cpa';
@@ -85,7 +85,7 @@ class Repository {
     private $con = null;
 
     function __construct($url,RepositoryList $repolist) {
-        $this->con = \Cherry\Cli\Console::getConsole();
+        $this->con = \Cherry\Cli\Console::getAdapter();
         $this->url = $url;
         $this->rl = $repolist;
     }

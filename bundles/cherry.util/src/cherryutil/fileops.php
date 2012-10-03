@@ -17,7 +17,7 @@ class FileOpHelper {
     private $con;
     
     public function __construct() {
-        $this->con = \cherry\cli\Console::getConsole();
+        $this->con = \cherry\cli\Console::getAdapter();
     }
 
     /**

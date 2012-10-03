@@ -77,7 +77,7 @@ class ApplicationCommands extends CommandBundle {
     }
     
     function createapp($template=null,$appns=null) {
-        $con = \Cherry\Cli\Console::getConsole();
+        $con = \Cherry\Cli\Console::getAdapter();
         if (!$appns) {
             printf("Use: create <template> <appns>\n");
             return 1;

@@ -26,7 +26,7 @@ class PackageCommands extends CommandBundle {
 
     function package($source=null) {
 
-        $con = \cherry\cli\Console::getConsole();
+        $con = \cherry\cli\Console::getAdapter();
 
         if (!$source) {
             $con->write("You need to at least specify the source path.\n");
@@ -175,7 +175,7 @@ class PackageCommands extends CommandBundle {
     
     function packageinfo($package=null) {
     
-        $con = \cherry\cli\Console::getConsole();
+        $con = \cherry\cli\Console::getAdapter();
 
         if (!$package) {
             $con->warn("No package specified.\n");

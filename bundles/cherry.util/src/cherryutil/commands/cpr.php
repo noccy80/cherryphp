@@ -20,7 +20,7 @@ class CpaCommands extends CommandBundle {
     
     function cprcommand($cmd=null) {
         $args = func_get_args();
-        $con = \cherry\cli\Console::getConsole();
+        $con = \cherry\cli\Console::getAdapter();
         switch($cmd) {
             case 'add':
                 $file = $args[1];
