@@ -75,9 +75,28 @@ class CmgetApplication extends \cherry\Cli\Application {
             return 1;
         }
         
-        $mpx = new \Cherry\Io\StreamMultiplexer();
-        $mpx->addStream(fopen('http://noccy.com/','r'));
-        var_dump($mpx->getReadableStreams());
+        $mpx = new \Cherry\Io\StreamMultiplexer(null,500);
+        $sopts = array(
+            'http' => array(
+                'method' => 'GET'
+            )
+        );
+        \Cherry\Debug("Creating stream context...");
+        $ctx = stream_context_create($sopts);
+        \Cherry\Debug("Adding stream to multiplexer");
+        $mpx->addStream(fopen('http://noccy.com/','r',NULL,$ctx));
+        $mpx->addStream(fopen('http://google.com/','r',NULL,$ctx));
+        \Cherry\Debug("Polling streams");
+        while(1) {
+            usleep(10000);
+            if ($mpx->select()) {
+                $streams = $mpx->getReadableStreams();
+                foreach($streams as $streamid=>$stream) {
+                    echo $streamid.": ".fread($stream,1024);
+                }
+            }
+        }
+        \Cherry\Debug("Done.");
         
     }
     
