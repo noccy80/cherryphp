@@ -9,8 +9,8 @@ class StreamMultiplexer {
     private $swrite = array();
     private $sexcept = array();
     private $timeoutns = null;
-    private $timeout = null;
-    private $timeoutu = null;
+    private $timeout = 0;
+    private $timeoutu = 0;
     
     public function __construct(array $streams = null, $timeout = null) {
         $this->streams = (array)$streams;
@@ -22,7 +22,8 @@ class StreamMultiplexer {
         $this->timeoutu = $timeout;
     }
     
-    public function addStream(\Stream $stream, $streamid = null) {
+    public function addStream($stream, $streamid = null) {
+        if (!$streamid) $streamid = uniqid('smpx');
         $this->streams[$streamid] = $stream;
     }
     
@@ -31,10 +32,24 @@ class StreamMultiplexer {
     }
     
     public function select() {
-        $sread = $this->streams; $swrite = $this->streams; $sexcept = $this->streams;
+        /* // NOTE: This part doesn't work for some weird reason involving filters.
+        $sread = array_values($this->streams); $swrite = $sread; $sexcept = $sread;
         $this->changed = stream_select($sread,$swrite,$sexcept,$this->timeout,$this->timeoutu);
         $this->sread = $sread; $this->swrite = $swrite; $this->sexcept = $sexcept;
-        return array($sread, $swrite, $sexcept);
+        */
+        $sread = array();
+        $swrite = array();
+        $sexcept = array();
+        $mod = false;
+        foreach($this->streams as $streamid=>$stream) {
+            $md = stream_get_meta_data($stream);
+            if ($md['unread_bytes'] > 0) {
+                $sread[$streamid] = $stream;
+                $mod = true;
+            }
+        }
+        $this->sread = $sread; $this->swrite = $swrite; $this->sexcept = $sexcept;
+        return $mod;
     }
     
     public function getReadableStreams() {
@@ -68,7 +83,7 @@ class StreamMultiplexer {
         return $this->streams[$streamid];
     }
     
-    public function getStreams() {
+    public function getAllStreams() {
         return $this->streams;
     }
 
