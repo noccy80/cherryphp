@@ -147,12 +147,13 @@ class ErrorHandler {
         }
         
         \Cherry\debug("Fatal error %s in %s on line %d", $errstr, $file, $line);
+        $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
         $ca->error("\033[1mError:\033[22m\n    %s (%d)\n",$errstr,$errno);
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
 
         exit(1);
         if (self::$oldhandler) {
@@ -164,12 +165,13 @@ class ErrorHandler {
     public static function __php_handleException(\Exception $exception) {
 
         \Cherry\debug("Unhandled exception %s in %s on line %d", get_class($exception), $exception->getFile(), $exception->getLine());
+        $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
         $ca->error("\033[1mException:\033[22m\n    %s (%d)\n",$exception->getMessage(),$exception->getCode());
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$exception->getFile(),$exception->getLine());
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($exception->getFile(),$exception->getLine()),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::makeBacktrace($exception->getTrace()),4)));
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
 
         exit(1);
         if (self::$oldhandler) {
@@ -181,12 +183,13 @@ class ErrorHandler {
     // Create a handler function
     function __php_handleAssert($file, $line, $code, $desc = null) {
         \Cherry\debug("Assertion failed in %s on line %d", $file, $line);
+        $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
         $ca->error("\033[1mAssertion failed:\033[22m\n    in %s on line %d\n",$file, $line );
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent(DebugLog::getDebugLog(),4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
 
         exit(1);
     }
