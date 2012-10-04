@@ -7,10 +7,10 @@ const LOG_DEBUG = 0x01;
 class DebugLog {
 
     protected static $fifo = null;
-    
+
     static function log($type,$fmt,$args=null) {
         if (empty(self::$fifo) && class_exists('\Data\FifoQueue'))
-            self::$fifo = new \Data\FifoQueue(10);
+            self::$fifo = new \Data\FifoQueue((getenv('LOG_LENGTH')?getenv('LOG_LENGTH'):10));
         $arg = func_get_args();
         $fmts = array_slice($arg,1);
         $so = call_user_func_array('sprintf',$fmts);
@@ -21,7 +21,7 @@ class DebugLog {
             fputs(STDOUT,$so."\n");
         }
     }
-    
+
     static function getDebugLog() {
         if (empty(self::$fifo) && class_exists('\Data\FifoQueue'))
             self::$fifo = new \Data\FifoQueue(20);
@@ -44,19 +44,19 @@ function debug($fmt,$args=null) {
 
 
 class Debug {
-    
+
     static function getBacktrace($trim = 0) {
 
         $bt = debug_backtrace();
         $bt = array_slice($bt,$trim+1);
         return self::makeBacktrace($bt);
-        
+
     }
-    
+
     static function makeBacktrace($bt) {
 
         $bt = array_reverse($bt);
-        
+
         $fid = 0;
         $out = array();
         foreach($bt as $frame) {
@@ -93,11 +93,11 @@ class Debug {
             }
         }
         return $out;
-        
+
     }
-    
+
     static function getCodePreview($file,$line) {
-        
+
         $lines = explode("\n",file_get_contents($file));
         $linepart = array_slice($lines,$line-5,9);
         $lineout = array();
@@ -105,22 +105,22 @@ class Debug {
             $lineout[] = sprintf('%-3s%5d | %s',($n == 4)?'=>':'',$line - 4 + $n,$linepart[$n]);
         }
         return $lineout;
-        
+
     }
-    
+
     static function getTimeStamp() {
-        
+
         return date('D d M h:i:s');
-        
+
     }
-    
+
     static function getDebugLog() {
-        
+
         // return Logger::getBuffer(Logger::BUFFER_DEBUG);
-        
+
     }
-    
-    
+
+
 }
 
 class ErrorHandler {
@@ -132,7 +132,14 @@ class ErrorHandler {
         assert_options(ASSERT_ACTIVE, 1);
         assert_options(ASSERT_WARNING, 0);
         assert_options(ASSERT_QUIET_EVAL, 1);
-        assert_options(ASSERT_CALLBACK, array(__CLASS__,'__php_handleAssert'));     
+        assert_options(ASSERT_CALLBACK, array(__CLASS__,'__php_handleAssert'));
+    }
+    private static function showError($ca,$type,$message,$file,$line,$log,$bt) {
+        $ca->error("\033[1m%s:\033[22m\n    %s\n",$type,$message);
+        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
+        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
+        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent($bt,4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
     }
     public static function __php_handleError($errno,$errstr,$file,$line,$errctx) {
 
@@ -145,51 +152,38 @@ class ErrorHandler {
             //fprintf(STDERR,"Deprecated: %s [from %s:%d]\n", $errstr,$errfile,$errline);
             return true;
         }
-        
+
         \Cherry\debug("Fatal error %s in %s on line %d", $errstr, $file, $line);
         $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
-        $ca->error("\033[1mError:\033[22m\n    %s (%d)\n",$errstr,$errno);
-        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
-        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
-        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
+        $bt = Debug::getBacktrace(1);
+        self::showError($ca,'Error',$errstr.' ('.$errno.')',$file,$line,$log,$bt);
 
         exit(1);
-        if (self::$oldhandler) {
-            $args = func_get_args();
-            return call_user_func_array(self::$oldhandler,$args);
-        }
-        return true;
+
     }
     public static function __php_handleException(\Exception $exception) {
 
         \Cherry\debug("Unhandled exception %s in %s on line %d", get_class($exception), $exception->getFile(), $exception->getLine());
         $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
-        $ca->error("\033[1mException:\033[22m\n    %s (%d)\n",$exception->getMessage(),$exception->getCode());
-        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$exception->getFile(),$exception->getLine());
-        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($exception->getFile(),$exception->getLine()),4)));
-        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::makeBacktrace($exception->getTrace()),4)));
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
+
+        $bt = Debug::makeBacktrace($exception->getTrace());
+        $errfile = $exception->getFile();
+        $errline = $exception->getLine();
+        self::showError($ca,'Exception',$exception->getMessage().' ('.$exception->getCode().')',$errfile,$errline,$log,$bt);
 
         exit(1);
-        if (self::$oldhandler) {
-            $args = func_get_args();
-            return call_user_func_array(self::$oldhandler,$args);
-        }
-        return true;
     }
     // Create a handler function
     function __php_handleAssert($file, $line, $code, $desc = null) {
         \Cherry\debug("Assertion failed in %s on line %d", $file, $line);
         $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
-        $ca->error("\033[1mAssertion failed:\033[22m\n    in %s on line %d\n",$file, $line );
-        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
-        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
-        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent(Debug::getBacktrace(1),4)));
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
+
+        $str = sprintf("in %s on line %d\n",$file, $line );
+        $bt = Debug::getBacktrace(1);
+        self::showError($ca,'Assertion failed',$str,$file,$line,$log,$bt);
 
         exit(1);
     }
@@ -199,7 +193,7 @@ class ErrorHandler {
             $arro[] = str_repeat(" ",$indent).$row;
         }
         return $arro;
-    }        
+    }
 }
 
 ErrorHandler::register();

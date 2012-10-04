@@ -3,6 +3,8 @@
 use Cherry\unipath;
 use Cherry\Base\Event;
 
+\Cherry\BundleManager::load('cherry.crypto');
+
 // Register a post-setup hook for the CherryUtil application command. This will be
 // triggered when the files have been copied.
 Event::observe('cherryutil.application.post-setup', function(array $data, $log) {
@@ -29,7 +31,6 @@ Event::observe('cherryutil.application.post-setup', function(array $data, $log) 
     if (empty($cfg['application']['version'])) $cfg['application']['version'] = '1.0.0';
     if (empty($cfg['application']['uuid']) || $data['replace']) {
         printf("Generating new UUID...");
-        require_once('lib/cherry/crypto/uuid.php');
         $uuid = \cherry\crypto\Uuid::getInstance()->generate(\cherry\crypto\Uuid::UUID_V4);
         //$uuid = trim(exec('uuidgen'));
         printf("%s\n", $uuid);

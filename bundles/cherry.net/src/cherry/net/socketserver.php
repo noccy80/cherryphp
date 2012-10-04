@@ -17,11 +17,11 @@ class SocketServer extends EventEmitter {
      * @param Mixed $bind The IP to bind to, or '*' for all
      */
     public function __construct($port,$bind='127.0.0.1') {
-    
+
     }
-    
+
     public function start() {
-        Event::observe('posix.signal',array($this,'onSignal'));
+        Event::observe('posix.signal.*',array($this,'onSignal'));
         $sock = new \cherry\net\socket\TcpSocket('127.0.0.1',8000,\cherry\net\socket\SOCK_PROXY);
         $sock->connect();
         $sess = new ServerSession();
@@ -30,7 +30,7 @@ class SocketServer extends EventEmitter {
     }
 
     public function onSignal() {
-    
+
     }
 
 }
