@@ -92,6 +92,7 @@ class CmgetApplication extends \cherry\Cli\Application {
             if ($mpx->select()) {
                 $streams = $mpx->getReadableStreams();
                 foreach($streams as $streamid=>$stream) {
+                    var_dump(stream_get_meta_data($stream)); die();
                     echo $streamid.": ".fread($stream,1024);
                 }
             }
