@@ -142,6 +142,7 @@ class ErrorHandler {
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
         $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent($bt,4)));
         $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
+        $ca->error("(Hint: Change the LOG_LENGTH envvar to set the size of the debug log buffer)\n");
     }
     public static function __php_handleError($errno,$errstr,$file,$line,$errctx) {
 
@@ -183,7 +184,7 @@ class ErrorHandler {
         $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
 
-        $str = sprintf("in %s on line %d\n",$file, $line );
+        $str = sprintf("in %s on line %d",$file, $line );
         $bt = Debug::getBacktrace(1);
         self::showError($ca,'Assertion failed',$str,$file,$line,$log,$bt);
 
