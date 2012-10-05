@@ -15,7 +15,8 @@ return array(
         'Cherry\Mvc\Session',
         'Cherry\Mvc\Response',
         'Cherry\Mvc\Request',
-        'Cherry\Mvc\Cookies'
+        'Cherry\Mvc\Cookies',
+        'Cherry\Mvc\Widget'
     ),
     'depends' => array(
         'cherry.db'

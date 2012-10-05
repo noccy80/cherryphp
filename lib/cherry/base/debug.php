@@ -67,6 +67,8 @@ class Debug {
                     $argout[] = ($arg)?'true':'false';
                 } elseif (is_object($arg)) {
                     $argout[] = get_class($arg);
+                } elseif (is_array($arg)) {
+                    $argout[] = 'array';
                 } else {
                     $argout[] = $arg;
                 }

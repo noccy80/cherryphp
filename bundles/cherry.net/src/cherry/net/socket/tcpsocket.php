@@ -4,7 +4,8 @@ namespace cherry\net\socket;
 use cherry\net\proxy\Proxy;
 
 class TcpSocket extends Socket {
-    protected $is_proxied = false;
+    protected $proxy = null;
+    protected $hsocket = null;
     protected $is_secure = false;
     public function __construct($host,$port,$flags=0x00) {
         $this->flags = $flags;
@@ -18,6 +19,10 @@ class TcpSocket extends Socket {
             $this->proxyConnect($proxy);
         }
     }
+    protected function proxyConnect(Proxy $proxy) {
+        $this->proxy = $proxy;
+        $this->hsocket = $proxy->getSocket();
+    }    protected $is_proxied = false;
     public function enableEncryption($crypto_type = \STREAM_CRYPTO_METHOD_TLS_CLIENT) {
 
     }
