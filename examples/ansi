@@ -12,32 +12,50 @@ if (!( @include_once "lib/bootstrap.php" )) {
 }
 //LOADER:END
 
-$lepton = new \cherry\Lepton(__FILE__);
-
-use cherry\base\Event;
-use cherry\base\EventEmitter;
-use cherry\BundleManager;
-use Cherry\Extension\ExtensionManager;
 use Cherry\Cli\Ansi;
 
-// BundleManager::load('cherry.net');
-// BundleManager::load('cherry.mvc');
-// BundleManager::load('cherry.crypto');
-
-\Cherry\debug('Will grab consoleadapter, and then fail gloriuosly!');
-
 $ca = \Cherry\Cli\Console::getAdapter();
+
 $ca->write(
     Ansi::pushColor(\Ansi\Color::RED,\Ansi\Color::YELLOW).
     "This should be red on yellow and span the entire line".
     Ansi::clearToEnd().
     Ansi::popColor().
-    "\nAnd this should be normal text again.\n"
+    "\n".
+    "And this should be normal text again.\n".
+    "There is also ".Ansi::setBold()."bold".Ansi::clearBold().", ".
+    Ansi::setUnderline()."underline".Ansi::clearUnderline()." and ".
+    Ansi::setReverse()."reverse".Ansi::clearReverse()." text available.\n".
+    "And take a look at these color bars, pure 256-color ANSI.\n"
 );
 
+for($m = 0; $m < 32; $m++) {
 $ca->write(
-    \Ansi\Color::color256(55,44).
-    "This is color 128.".
-    Ansi::reset().
-    "\n"
+    \Ansi\Color::color256(null,($m*8).','.($m*8).','.($m*8)).
+    "  "
 );
+}
+$ca->write(Ansi::reset()."\n");
+for($m = 0; $m < 32; $m++) {
+$ca->write(
+    \Ansi\Color::color256(null,'0,'.($m*8).',0').
+    "  "
+);
+}
+$ca->write(Ansi::reset()."\n");
+for($m = 0; $m < 32; $m++) {
+$ca->write(
+    \Ansi\Color::color256(null,('0,0,'.($m*8))).
+    "  "
+);
+}
+$ca->write(Ansi::reset()."\n");
+for($m = 0; $m < 32; $m++) {
+$ca->write(
+    \Ansi\Color::color256(null,($m*8).',0,0').
+    "  "
+);
+}
+$ca->write(Ansi::reset()."\n");
+$ca->write(Ansi::color("This is a line in green.\n", "green"));
+$ca->write(Ansi::color("And a line in red.\n", "red"));
