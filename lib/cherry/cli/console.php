@@ -54,8 +54,8 @@ class Console {
                     if (getenv("ANSI")=='1') {
                         \Cherry\Log(\Cherry\LOG_DEBUG,"Console: ANSI envvar is 1, enabling ANSI.");
                         $objadapter = new \Cherry\Cli\Adapters\AnsiConsole();
-                    } elseif (getenv("ANSI")=='0') {
-                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: ANSI envvar is 0. Falling back on simple adapter.");
+                    } elseif (getenv("NOANSI")=='1') {
+                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: NOANSI envvar is 1. Falling back on simple adapter.");
                         $objadapter = new \Cherry\Cli\Adapters\SimpleConsole();
                     } else {
                         $out = null; $ret = 0;

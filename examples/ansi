@@ -1,0 +1,43 @@
+#!/usr/bin/php
+<?php
+
+//LOADER:BEGIN
+if (!( @include_once "lib/bootstrap.php" )) {
+    $libpath = getenv('CHERRY_LIB');
+    if (!$libpath) {
+        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+        exit(1);
+    }
+    require_once($libpath.'/lib/bootstrap.php');
+}
+//LOADER:END
+
+$lepton = new \cherry\Lepton(__FILE__);
+
+use cherry\base\Event;
+use cherry\base\EventEmitter;
+use cherry\BundleManager;
+use Cherry\Extension\ExtensionManager;
+use Cherry\Cli\Ansi;
+
+// BundleManager::load('cherry.net');
+// BundleManager::load('cherry.mvc');
+// BundleManager::load('cherry.crypto');
+
+\Cherry\debug('Will grab consoleadapter, and then fail gloriuosly!');
+
+$ca = \Cherry\Cli\Console::getAdapter();
+$ca->write(
+    Ansi::pushColor(\Ansi\Color::RED,\Ansi\Color::YELLOW).
+    "This should be red on yellow and span the entire line".
+    Ansi::clearToEnd().
+    Ansi::popColor().
+    "\nAnd this should be normal text again.\n"
+);
+
+$ca->write(
+    \Ansi\Color::color256(55,44).
+    "This is color 128.".
+    Ansi::reset().
+    "\n"
+);

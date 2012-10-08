@@ -30,8 +30,6 @@ class Autoloaders {
                     if (class_exists($class)) {
                         self::$lastloader =& $loader;
                         return true;
-                    } else {
-                        throw new \Exception('Autoloaded file, but class not found.');
                     }
                 }
             }
