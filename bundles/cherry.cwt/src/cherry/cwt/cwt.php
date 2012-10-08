@@ -17,3 +17,16 @@ class Cwt extends EventEmitter {
     }
 
 }
+
+class Rect {
+    private $l, $t, $w, $h;
+    function __construct($l,$t,$w,$h) {
+        $this->l = $l;
+        $this->t = $t;
+        $this->w = $w;
+        $this->h = $h;
+    }
+}
+function rect($l,$t,$w,$h) {
+
+}
