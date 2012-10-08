@@ -28,12 +28,13 @@ class CherryApplication extends \cherry\Cli\Application {
     protected $apppath = null;
     protected $route = false;
     protected $config = 'development';
+    protected $con = null;
     /**
      * Init is called when the application is created. This is the perfect place to
      * register command line arguments, hook events and set up defaults.
      */
     function init() {
-    
+
         // Help:  -h or --help
         $this->addArgument('h','help',
                             'Show this help');
@@ -45,7 +46,7 @@ class CherryApplication extends \cherry\Cli\Application {
         // Invoke via router:  -r or --route
         // Bound to $this->router
         $this->addArgument('r','route',
-                            'Invoke request via application router', 
+                            'Invoke request via application router',
                             array($this,'route'));
         // Configuration to use:  -c or --config
         $this->addArgument('c','config',
@@ -66,9 +67,11 @@ class CherryApplication extends \cherry\Cli\Application {
         // Bind events that we can find useful
         Event::observe('onbeforeapplication',array($this,'onBefore'));
         Event::observe('onafterapplication',array($this,'onAfter'));
-        
+
         // Set some defaults (arguments are not parsed yet)
         $this->apppath = './application';
+
+        $this->con = \Cherry\Cli\Console::getAdapter();
     }
     function onBefore() {
     }
@@ -84,7 +87,7 @@ class CherryApplication extends \cherry\Cli\Application {
             $this->usage();
             return 1;
         }
-        
+
         $clicmd = $this->parameters[0];
         $clist = \cherryutil\commands\CommandList::getInstance();
         $cmd = $clist->findCommand($clicmd);
@@ -95,9 +98,9 @@ class CherryApplication extends \cherry\Cli\Application {
             fprintf(STDERR,"No such command: %s\n", $this->parameters[0]);
             return 2;
         }
-        
+
     }
-    
+
     function usagecommands() {
         $cb = \cherryutil\commands\CommandList::getInstance();
         fprintf(STDERR,"Commands:\n");
@@ -105,9 +108,9 @@ class CherryApplication extends \cherry\Cli\Application {
             fprintf(STDERR,"    %s\n", (string)$command);
         }
         fprintf(STDERR,"\n");
-        
+
     }
-    
+
     function usageinfo() {
         fprintf(STDERR,"    To create a new application, see the 'create' command.\n\n");
         fprintf(STDERR,"Environment variables:\n");
@@ -121,7 +124,7 @@ class CherryApplication extends \cherry\Cli\Application {
             fprintf(STDERR,"    %-20s %s\n", $k, $v);
         }
     }
-    
+
     /**
      * Function to return some basic application information
      */
@@ -135,4 +138,6 @@ class CherryApplication extends \cherry\Cli\Application {
     }
 }
 
-$lepton->runApplication(new CherryApplication());
+$app = new CherryApplication(dirname(__FILE__));
+$app->run();
+// $lepton->runApplication($app);

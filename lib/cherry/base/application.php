@@ -10,8 +10,12 @@ abstract class Application {
         return self::$instance;
     }
 
-    public function __construct() {
-        self::$instance = $this;
+    public function __construct($app=null) {
+        if ($app) {
+            $this->setPath($app);
+            $this->loadConfig();
+        }
+        if (!self::$instance) self::$instance = $this;
     }
 
     public function setPath($path) {
@@ -24,6 +28,15 @@ abstract class Application {
 
     private $cfgsets = array();
 
+    public function loadConfig() {
+        if (file_exists($this->path._DS_.'application.json')) {
+            $cfg = json_decode(file_get_contents($this->path._DS_.'application.json'));
+            if (!$cfg) {
+                user_error(json_last_error());
+            }
+        }
+    }
+
     public function loadConfiguration($set,$path) {
         if (file_exists($path)) {
             $this->cfgsets[$set] = parse_ini_file($path,true);
@@ -32,7 +45,7 @@ abstract class Application {
             // throw new ApplicationException(_('Configuration file could not be found'), ApplicationException::ERR_CONFIG_FILE_MISSING);
         }
     }
-    
+
     public function getConfiguration($set,$group=null) {
         \cherry\log(\cherry\LOG_DEBUG, __CLASS__."->GetConfiguration: (set=%s, group=%s)",$set,$group);
         if (empty($this->cfgsets[$set])) {

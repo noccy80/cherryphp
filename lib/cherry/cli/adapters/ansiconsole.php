@@ -2,9 +2,10 @@
 
 namespace Cherry\Cli\Adapters;
 
+\Cherry\Cli\Ansi::init();
 
 class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
-    
+
     public function putMessage($string, $msgclass=null) {
         if ($msgclass == \Cherry\Cli\ConsoleAdapter::CLASS_ERROR) {
             fwrite(STDERR,$string);
@@ -22,7 +23,7 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
         }
         return self::$instance;
     }
-    
+
     public function warn($string,$args=null) {
         $args = func_get_args();
         if ($this->updatemode || $this->linemode) {
@@ -40,7 +41,7 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
         fprintf(STDOUT,"%s", $pre);
         fprintf(STDERR,"%s", $str);
     }
-    
+
     public function write($string,$args=null) {
         $args = func_get_args();
         if ($this->updatemode) {
@@ -55,7 +56,7 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
         }
         fprintf(STDOUT,"%s", $pre.$str);
     }
-    
+
     public function update($string,$args=null) {
         $args = func_get_args();
         $pre = '';
@@ -69,16 +70,16 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
         fprintf(STDOUT,"%s", $pre.$str);
         $this->updatemode = true;
     }
-    
+
     public function prompt($prompt, $default) {
-    
+
         $prompt = sprintf("%s [%s]: ", $prompt, $default);
         $str = readline($prompt);
         if ($str) return $str;
         return $default;
-    
+
     }
-    
+
     public function putColumns(array $data, $colwidth) {
         list($drows,$dcols) = $this->getSize();
         $cols = floor($dcols / $colwidth) - 2;
@@ -89,7 +90,7 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
         if (!$fl) $this->write("\n");
     }
 
-    public function getSize() { 
+    public function getSize() {
         if (_IS_LINUX) {
             preg_match_all("/rows.([0-9]+);.columns.([0-9]+);/", strtolower(exec('stty -a |grep columns')), $output);
             if(sizeof($output) == 3) {
@@ -106,5 +107,5 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
         }
         return array($dh,$dw);
     }
-    
+
 }

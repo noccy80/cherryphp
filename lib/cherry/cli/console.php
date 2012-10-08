@@ -7,9 +7,9 @@ abstract class ConsoleAdapter {
     const CLASS_DEFAULT = null;
     const CLASS_ERROR = 1;
     const CLASS_WARNING = 2;
-    
+
     protected $errorfifo = null;
-    
+
     public function __construct() {
         $this->errorfifo = new \Data\FifoQueue(250);
     }
@@ -28,15 +28,15 @@ abstract class ConsoleAdapter {
     }
     //abstract function read();
     //abstract function readLine();
-    
+
     public function getErrorFifo() {
         return $this->errorfifo;
     }
-    
+
     abstract protected function putMessage($string, $msgclass=null);
 
-    
-    
+
+
 }
 
 class Console {
@@ -51,14 +51,22 @@ class Console {
                 $objadapter = new $adapter;
             } else {
                 if (_IS_LINUX) {
-                    $out = null; $ret = 0;
-                    exec('tty',$out,$ret);
-                    if ($ret == 0) {
-                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: Terminal seems to be a TTY, enabling ANSI.");
+                    if (getenv("ANSI")=='1') {
+                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: ANSI envvar is 1, enabling ANSI.");
                         $objadapter = new \Cherry\Cli\Adapters\AnsiConsole();
-                    } else {
-                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: No TTY. Falling back on simple adapter.");
+                    } elseif (getenv("ANSI")=='0') {
+                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: ANSI envvar is 0. Falling back on simple adapter.");
                         $objadapter = new \Cherry\Cli\Adapters\SimpleConsole();
+                    } else {
+                        $out = null; $ret = 0;
+                        exec('tty',$out,$ret);
+                        if ($ret == 0) {
+                            \Cherry\Log(\Cherry\LOG_DEBUG,"Console: Terminal seems to be a TTY, enabling ANSI.");
+                            $objadapter = new \Cherry\Cli\Adapters\AnsiConsole();
+                        } else {
+                            \Cherry\Log(\Cherry\LOG_DEBUG,"Console: No TTY. Falling back on simple adapter.");
+                            $objadapter = new \Cherry\Cli\Adapters\SimpleConsole();
+                        }
                     }
                 } elseif (_IS_WINDOWS) {
                     $objadapter = new \Cherry\Cli\Adapters\SimpleConsole();
@@ -67,7 +75,7 @@ class Console {
             self::$adapter = $objadapter;
         }
         return self::$adapter;
-        
+
     }
-    
+
 }

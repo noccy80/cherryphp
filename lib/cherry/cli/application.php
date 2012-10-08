@@ -9,8 +9,10 @@ abstract class Application extends \cherry\Application {
 
     protected $parameters = array();
 
-    function __construct() {
+    function __construct($app) {
         global $argv;
+        parent::__construct($app);
+
         \cherry\log(\cherry\LOG_DEBUG,'Spawning application');
         $this->init();
         $opts = '';

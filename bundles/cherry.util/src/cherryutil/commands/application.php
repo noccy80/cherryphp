@@ -4,19 +4,20 @@ namespace cherryutil\commands;
 use cherryutil\commands\Command;
 use cherryutil\commands\CommandBundle;
 use cherryutil\commands\CommandList;
+use Cherry\Cli\Ansi;
 
 class ApplicationCommands extends CommandBundle {
-    
+
     function getCommands() {
         return array(
             new Command('list-loaders','',
-                    'List the available loaders.', 
+                    'List the available loaders.',
                     array($this,'listloaders')),
             new Command('list-templates','',
-                    'List the available application templates.', 
+                    'List the available application templates.',
                     array($this,'listtemplates')),
             new Command('list-configs','',
-                    'List the available configuration templates.', 
+                    'List the available configuration templates.',
                     array($this,'listconfigs')),
             new Command('create','<apptemplate> <appns> [name <appname>] [+replace]',
                     'Creates a new application from an application template. Appns is required',
@@ -26,10 +27,11 @@ class ApplicationCommands extends CommandBundle {
                     array($this,'createcfg')),
         );
     }
-    
+
     function createcfg($type=null) {
+        $term = \Cherry\Cli\Console::getAdapter();
         if (!$type) {
-            fprintf(STDERR,"No such config. Try list-configs.\n");
+            fprintf(STDERR,"No such config. Try ".Ansi::setUnderline()."list-configs".Ansi::clearUnderline()."\n");
             return 1;
         }
         $args = func_get_args();
@@ -75,7 +77,7 @@ class ApplicationCommands extends CommandBundle {
             }
         }
     }
-    
+
     function createapp($template=null,$appns=null) {
         $con = \Cherry\Cli\Console::getAdapter();
         if (!$appns) {
@@ -88,7 +90,7 @@ class ApplicationCommands extends CommandBundle {
             'replace' => '+replace',
         ));
         if (empty($opts['replace'])) $opts['replace'] = false;
-        
+
         $con->write("Creating new project %s...\n", $appns);
         $tpath = CHERRY_LIB.'/share/projects/'.$template.'/';
 
@@ -117,7 +119,7 @@ class ApplicationCommands extends CommandBundle {
         ), $con);
         $con->write("Done\n");
     }
-    
+
     function listtemplates() {
         $loaderpath = CHERRY_LIB.'/share/projects';
         $it = new \FileSystemIterator($loaderpath,\FileSystemIterator::SKIP_DOTS);
@@ -147,7 +149,7 @@ class ApplicationCommands extends CommandBundle {
             }
         }
     }
-    
+
 }
 
 class TemplateStrings {
