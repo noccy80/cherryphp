@@ -2,6 +2,9 @@
 
 namespace Cherry;
 
+function loadbundle($bundle) {
+    \Cherry\BundleManager::load($bundle);
+}
 
 class Lepton {
 

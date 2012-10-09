@@ -19,9 +19,7 @@ use cherry\base\EventEmitter;
 use cherry\BundleManager;
 use Cherry\Extension\ExtensionManager;
 
-BundleManager::load('cherry.net');
-BundleManager::load('cherry.mvc');
-BundleManager::load('cherry.crypto');
+\Cherry\loadBundle('cherry.crypto');
 
 // Example: Crypto
 $str = 'Hello World';
@@ -37,3 +35,11 @@ $key = 'FooBar';
 $ca = new \Cherry\Crypto\Algorithm('tripledes',$key);
 $enc = $ca->encrypt($str);
 
+// Example. GnuPG
+
+$kr = new \Cherry\Crypto\GnuPG\KeyRing();
+$keys = $kr->getKeys();
+
+$key = $keys[0];
+
+printf("The first key in your key ring belongs to '%s'\n", $key->uids[0]->name);
