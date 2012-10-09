@@ -69,6 +69,8 @@ class Debug {
                     $argout[] = get_class($arg);
                 } elseif (is_array($arg)) {
                     $argout[] = 'array';
+                } elseif (is_string($arg)) {
+                    $argout[] = "'".$arg."'";
                 } else {
                     $argout[] = $arg;
                 }
@@ -137,6 +139,7 @@ class ErrorHandler {
         assert_options(ASSERT_CALLBACK, array(__CLASS__,'__php_handleAssert'));
     }
     private static function showError($ca,$type,$message,$file,$line,$log,$bt) {
+        if (function_exists('ncurses_end')) @ncurses_end();
         $ca->error("\033[1m%s:\033[22m\n    %s\n",$type,$message);
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
         $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
