@@ -7,11 +7,13 @@ abstract class Widget {
     protected $properties = array();
     protected $propvalues = array();
     protected $id = null;
+    protected $dom = null;
 
     public function init($id, array $properties = null, array $defaults = null) {
         $this->id = $id;
         $this->properties = (array)$properties;
         $this->propvalues = $defaults;
+        $this->dom = new \DOMDocumentFragment();
         foreach($this->properties as $k=>$v) {
             if (empty($this->propvalues[$k]))
                 $this->propvalues[$k] = null;

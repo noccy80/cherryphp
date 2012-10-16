@@ -8,5 +8,8 @@
     "extensions": [
         "cherrypanel",
         "cherrybar"
+    ],
+    "database": [
+        "dev": "pdo://cherryphp:password@127.0.0.1/cherryphp?charset=utf8"
     ]
 }
