@@ -8,9 +8,15 @@ class DebugLog {
 
     protected static $fifo = null;
 
+    static private function initqueue() {
+        if (empty(self::$fifo) && class_exists('\Data\FifoQueue')) {
+            $loglen = intval((getenv('LOG_LENGTH')!='')?getenv('LOG_LENGTH'):10);
+            self::$fifo = new \Data\FifoQueue($loglen);
+        }
+    }
+
     static function log($type,$fmt,$args=null) {
-        if (empty(self::$fifo) && class_exists('\Data\FifoQueue'))
-            self::$fifo = new \Data\FifoQueue((getenv('LOG_LENGTH')?getenv('LOG_LENGTH'):10));
+        self::initqueue();
         $arg = func_get_args();
         $fmts = array_slice($arg,1);
         $so = call_user_func_array('sprintf',$fmts);
@@ -23,8 +29,7 @@ class DebugLog {
     }
 
     static function getDebugLog() {
-        if (empty(self::$fifo) && class_exists('\Data\FifoQueue'))
-            self::$fifo = new \Data\FifoQueue(20);
+        self::initqueue();
         return self::$fifo->popAll();
     }
 
