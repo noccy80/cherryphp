@@ -3,6 +3,7 @@
 namespace Cherry\Cwt;
 
 use Cherry\Base\EventEmitter;
+use Cherry\Cwt\Widgets\Widget;
 
 class Cwt extends EventEmitter {
 
@@ -13,6 +14,10 @@ class Cwt extends EventEmitter {
 
     function __destruct() {
         ncurses_end();
+
+    }
+
+    function setDesktop(Widget $foo) {
 
     }
 

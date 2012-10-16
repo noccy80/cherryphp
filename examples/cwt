@@ -14,6 +14,7 @@ if (!( @include_once "lib/bootstrap.php" )) {
 
 \Cherry\BundleManager::load('cherry.cwt');
 
+use Cherry\Cwt\Application;
 use Cherry\Cwt\Dialog;
 use Cherry\Cwt\DialogAction;
 use Cherry\Cwt\Widgets\Label;
@@ -41,47 +42,79 @@ class DlgWelcome extends Dialog {
     }
 }
 
-//$cwt = new \Cherry\Cwt\Cwt();
-// $cwt->on(\Cherry\Cwt\Cwt::EVT_SIGINT, function(){ });
-$desk = new \Cherry\Cwt\Layouts\VerticalStack(array(
-    'menubar' => 1,
-    'body' => -1,
-    'statusbar' => 1
-));
+class CwtApplication {
 
-$desk->menubar = new MenuBar();
-$desk->statusbar = new StatusBar();
+    private $cwt = null;
 
-$file = new Menu();
-$file->addItem(new MenuItem('mnuFileNew','New...',null,'c-N'));
-$file->addItem(new MenuItem('mnuFileSave','Save',MenuItem::MENU_DISABLED,'c-S'));
-$file->addItem(new MenuItem('mnuFileSaveas','Save as...',null,'m-F9'));
-$file->addSeparator();
-$file->addItem(new MenuItem('mnuFileQuit','Quit',null,'c-Q'));
+    function __construct() {
 
-$desk->menubar->addMenu('mnuFile','File',$file);
-$desk->menubar->on(MenuBar::EVT_CLICK,function(Cwt $cwt,MenuItem $menuitem){
-    switch($menuitem->name) {
-        case 'mnuFileNew':
-            $cwt->showModal(new DlgNew());
-            break;
-        case 'mnuFileSaveas':
-            $dlg = new SaveDialog();
-            $cwt->showModal($dlg);
-            break;
-        case 'mnuFileQuit':
-            $cwt->showModal();
-            break;
+        $this->cwt = new \Cherry\Cwt\Cwt();
+
     }
-});
 
-/*
-$cwt->push('desktop',$desk);
-$cwt->on(Cwt::EVT_START,function(Cwt $cwt){
-    $cwt->showModal(new DlgWelcome());
-});
-$cwt->run();
+    function initMenus($desk) {
 
-*/
+        $desk->menubar = new MenuBar();
+        $file = new Menu();
+        $file->addItem(new MenuItem('mnuFileNew','_New...',null,'c-N'));
+        $file->addItem(new MenuItem('mnuFileSave','_Save',MenuItem::MENU_DISABLED,'c-S'));
+        $file->addItem(new MenuItem('mnuFileSaveas','Save _as...',null,'m-F9'));
+        $file->addSeparator();
+        $file->addItem(new MenuItem('mnuFileQuit','_Quit',null,'c-Q'));
 
-\cherry\debug('Cleaning up...');
+        $desk->menubar->addMenu('mnuFile','_File',$file);
+
+    }
+
+    function initUi() {
+
+        //$cwt = new \Cherry\Cwt\Cwt();
+        // $cwt->on(\Cherry\Cwt\Cwt::EVT_SIGINT, function(){ });
+        $desk = new \Cherry\Cwt\Layouts\VerticalStack(array(
+            'menubar' => 1,
+            'body' => -1,
+            'statusbar' => 1
+        ));
+
+        $this->cwt->setDesktop($desk);
+
+        $desk->statusbar = new StatusBar();
+        $this->initMenus($desk);
+
+        $desk->menubar->on(MenuBar::EVT_CLICK,function(Cwt $cwt,MenuItem $menuitem){
+            switch($menuitem->name) {
+                case 'mnuFileNew':
+                    $cwt->showModal(new DlgNew());
+                    break;
+                case 'mnuFileSaveas':
+                    $dlg = new SaveDialog();
+                    $cwt->showModal($dlg);
+                    break;
+                case 'mnuFileQuit':
+                    $cwt->showModal();
+                    break;
+            }
+        });
+
+    }
+
+    function main() {
+
+        $this->initUi();
+        /*
+        $cwt->push('desktop',$desk);
+        $cwt->on(Cwt::EVT_START,function(Cwt $cwt){
+            $cwt->showModal(new DlgWelcome());
+        });
+        $cwt->run();
+
+        */
+
+        \cherry\debug('Cleaning up...');
+
+    }
+
+}
+
+$app = new CwtApplication();
+$app->main();
