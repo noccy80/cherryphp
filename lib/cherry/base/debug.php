@@ -36,14 +36,40 @@ class DebugLog {
 }
 
 
+function getLineInfo(array $btr) {
+    $fn = (!empty($btr['file']))?$btr['file']:null;
+    $fl = (!empty($btr['line']))?$btr['line']:'??';
+    $fnp = explode(_DS_,$fn);
+    if (count($fnp)>3) {
+        $fnp = array_splice($fnp,-3);
+        array_unshift($fnp,'...');
+        $fn = join(_DS_,$fnp);
+    }
+    if (!empty($fn)) {
+        $ol = $fn.':'.$fl;
+        return $ol;
+    } else {
+        return null;
+    }
+}
 
 function log($type,$fmt,$args=null) {
     $args = func_get_args();
+    $bt = debug_backtrace();
+    if (count($bt)>0) {
+        $ol = getLineInfo($bt[0]);
+        if ($ol) $args[1] = $args[1].' (at '.$ol.')';
+    }
     call_user_func_array(array('\Cherry\DebugLog','log'),$args);
 }
 function debug($fmt,$args=null) {
     $args = func_get_args();
     array_unshift($args,LOG_DEBUG);
+    $bt = debug_backtrace();
+    if (count($bt)>0) {
+        $ol = getLineInfo($bt[0]);
+        if ($ol) $args[1] = $args[1].' (at '.$ol.')';
+    }
     call_user_func_array(array('\Cherry\DebugLog','log'),$args);
 }
 

@@ -104,7 +104,7 @@ class CwtApplication {
                       Statusbar::SBR_WIDTH_AUTO);
         $sbr->addItem('counter',
                       new BarItem(BarItem::TYPE_DATASOURCE, array(&$this,'getTicks')),
-                      15);
+                      10);
         $sbr->addItem('clock',
                       new BarItem(BarItem::TYPE_CLOCK, "h:i:s"),
                       15);
