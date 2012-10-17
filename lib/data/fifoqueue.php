@@ -3,11 +3,11 @@
 namespace Data;
 
 abstract class Queue {
-    
+
     public abstract function push($data);
     public abstract function pop();
     public abstract function popAll();
-    
+
 }
 
 class FifoQueue extends Queue implements \Countable {
@@ -20,13 +20,13 @@ class FifoQueue extends Queue implements \Countable {
     private $maxsize = 0;
     private $flags = 0x00;
     private $queue = array();
-    
+
     public function __construct($maxsize=0,$flags=0x00) {
         $this->maxsize = $maxsize;
         $this->flags = $flags;
         $this->queue = array();
     }
-    
+
     public function push($data) {
         array_unshift($this->queue, $data);
         if (($this->maxsize>0) && (count($this->queue >= $this->maxsize))) {
@@ -35,7 +35,7 @@ class FifoQueue extends Queue implements \Countable {
             $this->queue = array_slice($this->queue,0,$this->maxsize);
         }
     }
-    
+
     public function pop() {
         if (count($this->queue) == 0) {
             if ($this->flags & self::QUEUE_UNDERFLOW_EXCEPTION)
@@ -44,14 +44,19 @@ class FifoQueue extends Queue implements \Countable {
         }
         return array_pop($self->queue);
     }
-    
+
     public function count() {
         return count($this->queue);
     }
-    
+
     public function popAll() {
-        return array_reverse($this->queue);
+        $qtemp = $this->queue;
         $this->queue = array();
+        return array_reverse($qtemp);
+    }
+
+    public function peek() {
+        return array_reverse($this->queue);
     }
 
 }
@@ -66,13 +71,13 @@ class FiloQueue extends Queue implements \Countable {
     private $maxsize = 0;
     private $flags = 0x00;
     private $queue = array();
-    
+
     public function __construct($maxsize=0,$flags=0x00) {
         $this->maxsize = $maxsize;
         $this->flags = $flags;
         $this->queue = array();
     }
-    
+
     public function push($data) {
         array_push($this->queue, $data);
         if (($this->maxsize>0) && (count($this->queue >= $this->maxsize))) {
@@ -81,7 +86,7 @@ class FiloQueue extends Queue implements \Countable {
             $this->queue = array_slice($this->queue,0,$this->maxsize);
         }
     }
-    
+
     public function pop() {
         if (count($this->queue) == 0) {
             if ($this->flags & self::QUEUE_UNDERFLOW_EXCEPTION)
@@ -90,14 +95,19 @@ class FiloQueue extends Queue implements \Countable {
         }
         return array_pop($self->queue);
     }
-    
+
     public function count() {
         return count($this->queue);
     }
-    
+
     public function popAll() {
-        return array_reverse($this->queue);
+        $qtemp = $this->queue;
         $this->queue = array();
+        return array_reverse($qtemp);
+    }
+
+    public function peek() {
+        return array_reverse($this->queue);
     }
 
 }

@@ -10,7 +10,7 @@ define('_IS_MACOS',($_os=='darwin'));
 define('_IS_CLI',(php_sapi_name() == 'cli'));
 define('_IS_CLI_SERVER',(php_sapi_name() == 'cli-server'));
 define('CHERRY_VERSION','1.0.0-alpha');
-
+define('DEBUG_VERBOSE',false);
 if ($_app = getenv("CHERRY_APP")) define('CHERRY_APP',$_app);
 if ($_lib = getenv("CHERRY_LIB")) define('CHERRY_LIB',$_lib);
 
