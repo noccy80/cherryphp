@@ -14,6 +14,7 @@ if (!( @include_once "lib/bootstrap.php" )) {
 
 \Cherry\BundleManager::load('cherry.cwt');
 
+use Cherry\Cwt\Cwt;
 use Cherry\Cwt\Application;
 use Cherry\Cwt\Dialog;
 use Cherry\Cwt\DialogAction;
@@ -23,6 +24,7 @@ use Cherry\Cwt\Widgets\MenuBar;
 use Cherry\Cwt\Widgets\Menu;
 use Cherry\Cwt\Widgets\MenuItem;
 use Cherry\Cwt\Widgets\Statusbar;
+use Cherry\Cwt\Widgets\Statusbar\BarItem;
 
 class DlgWelcome extends Dialog {
     function __construct() {
@@ -46,15 +48,23 @@ class CwtApplication {
 
     private $cwt = null;
 
+    public $status = 'Welcome to CherryPad 1.0';
+
     function __construct() {
 
         $this->cwt = new \Cherry\Cwt\Cwt();
+        $this->cwt->on(Cwt::ON_RESIZE, array(&$this,'onResize'));
+
+    }
+
+    function onResize($data) {
 
     }
 
     function initMenus($desk) {
 
-        $desk->menubar = new MenuBar();
+        $menubar = new MenuBar();
+
         $file = new Menu();
         $file->addItem(new MenuItem('mnuFileNew','_New...',null,'c-N'));
         $file->addItem(new MenuItem('mnuFileSave','_Save',MenuItem::MENU_DISABLED,'c-S'));
@@ -62,7 +72,33 @@ class CwtApplication {
         $file->addSeparator();
         $file->addItem(new MenuItem('mnuFileQuit','_Quit',null,'c-Q'));
 
-        $desk->menubar->addMenu('mnuFile','_File',$file);
+        $menubar->addMenu('mnuFile','_File',$file);
+        $menubar->addMenu('mnuTools','_Tools',$file);
+        $menubar->addMenu('mnuView','_View',$file);
+        $menubar->addMenu('mnuOptions','_Options',$file);
+
+        Cwt::cwt()->desktop()->menubar = $menubar;
+    }
+
+    function getTicks() {
+        static $tick = 0;
+        return $tick++;
+    }
+
+    function initStatusbar() {
+
+        $sbr = new StatusBar();
+        $sbr->addItem('statustext',
+                      new BarItem(BarItem::TYPE_DATASOURCE, array(&$this,'status')),
+                      Statusbar::SBR_WIDTH_AUTO);
+        $sbr->addItem('counter',
+                      new BarItem(BarItem::TYPE_DATASOURCE, array(&$this,'getTicks')),
+                      15);
+        $sbr->addItem('clock',
+                      new BarItem(BarItem::TYPE_CLOCK, "h:i:s"),
+                      15);
+
+        Cwt::cwt()->desktop()->statusbar = $sbr;
 
     }
 
@@ -78,8 +114,8 @@ class CwtApplication {
 
         $this->cwt->setDesktop($desk);
 
-        $desk->statusbar = new StatusBar();
-        $this->initMenus($desk);
+        $this->initMenus();
+        $this->initStatusbar();
 
         $desk->menubar->on(MenuBar::EVT_CLICK,function(Cwt $cwt,MenuItem $menuitem){
             switch($menuitem->name) {
@@ -101,14 +137,10 @@ class CwtApplication {
     function main() {
 
         $this->initUi();
-        /*
-        $cwt->push('desktop',$desk);
-        $cwt->on(Cwt::EVT_START,function(Cwt $cwt){
+        $this->cwt->on(Cwt::ON_STARTUP,function(Cwt $cwt){
             $cwt->showModal(new DlgWelcome());
         });
-        $cwt->run();
-
-        */
+        $this->cwt->run();
 
         \cherry\debug('Cleaning up...');
 

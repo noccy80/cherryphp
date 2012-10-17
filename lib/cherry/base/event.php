@@ -50,7 +50,7 @@ class Event {
         self::$handlers[$event][] = $handler;
         return $handler->uid;
     }
-    
+
     static function setEventProp($event,$prop,$value) {
         if (empty(self::$eventprops[$event])) {
             self::$eventprops = array();
@@ -64,7 +64,7 @@ class Event {
         }
         return self::$eventprops[$prop];
     }
-    
+
     static function invoke($event,$args=null) {
         // Extract only the args
         $args = func_get_args();
@@ -100,7 +100,7 @@ abstract class EventEmitter {
             $this->handlers[$event] = array();
         }
         $this->handlers[$event][] = $callback;
-        \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Hooked event <%s>", get_class($this),$event);
+        if (DEBUG_VERBOSE) \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Hooked event <%s>", get_class($this),$event);
     }
 
     protected function emit($event,$args=null) {
@@ -113,7 +113,7 @@ abstract class EventEmitter {
                 if ($ret) return $ret;
             }
         } else {
-            \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Event <%s> has no listeners so not emited", get_class($this), $event, count($this->handlers[$event]));
+            if (DEBUG_VERBOSE) \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Event <%s> has no listeners so not emited", get_class($this), $event);
         }
     }
 

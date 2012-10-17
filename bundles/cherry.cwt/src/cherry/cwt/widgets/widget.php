@@ -7,8 +7,29 @@ namespace Cherry\Cwt\Widgets;
  */
 abstract class Widget extends \Cherry\Base\EventEmitter {
 
+    const ON_CLICK = 'cwt:mouse.click';
+    const ON_MOUSE_DOWN = 'cwt:mouse.down';
+    const ON_MOUSE_UP = 'cwt:mouse.up';
+
     protected $properties = array();
     protected $propvalues = array();
+
+    protected $left = 0;
+    protected $top = 0;
+    protected $width = null;
+    protected $height = null;
+
+    public function resize($width,$height) {
+        $this->width = $width;
+        $this->height = $height;
+    }
+
+    public function moveTo($left,$top,$width=null,$height=null) {
+        $this->left = $left;
+        $this->top = $top;
+        if ($width!==null) $this->width = $width;
+        if ($width!==null) $this->height = $height;
+    }
 
     protected function initprops(array $properties = null, array $defaults = null) {
         $this->properties = (array)$properties;
