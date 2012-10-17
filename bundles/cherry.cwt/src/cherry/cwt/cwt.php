@@ -11,15 +11,18 @@ class Cwt extends EventEmitter {
     const ON_STARTUP = 'cwt:startup';
     const ON_AFTER_DRAW = 'cwt:draw.after';
     const ON_BEFORE_DRAW = 'cwt:draw.before';
+    const ON_DEBUG = 'cwt:debug';
 
     private static $cwt;
     private $desktop = null;
     private $fps = 20;
     private $fpin = null;
     private $running = false;
+    private $buffer = null;
 
     function __construct() {
         if (!self::$cwt) self::$cwt = $this;
+        $this->buffer = new \Data\FifoQueue(50);
         ncurses_init();
         if (ncurses_has_colors()) {
             ncurses_start_color();
@@ -38,6 +41,17 @@ class Cwt extends EventEmitter {
         $this->fpin = fopen("php://stdin","r");     //open direct input stream for reading
         stream_set_blocking($this->fpin,0);        //set non-blocking mode
 
+    }
+
+    public function debug() {
+        $args = func_get_args();
+        $msg = call_user_func_array('sprintf',$args);
+        $this->buffer->push($msg);
+        $this->emit(Cwt::ON_DEBUG,$msg);
+    }
+
+    public function getDebug() {
+        return $this->buffer->peek();
     }
 
     public static function cwt() {
@@ -145,17 +159,17 @@ class Cwt extends EventEmitter {
                             call_user_func_array(array(&$ctl,$mtd),$arg);
                         }
                     }
-                    ncurses_mvaddstr(9,5,sprintf('Event at %3dx%3d. Hittest: %5s. Mtd:%-25s', $mx, $my, !empty($ctl)?'Yes':'No',$mtd));
+                    Cwt::cwt()->debug('Event at %3dx%3d. Hittest: %5s. Mtd:%-25s', $mx, $my, !empty($ctl)?'Yes':'No',$mtd);
                 }
+            }
+            ncurses_mvaddstr(5,5,"Char: ".sprintf('%02x',$ch)."             ");
+            if ($ch>=0) {
+                array_unshift($lastchars, sprintf('%02x',$ch));
+                ncurses_mvaddstr(6,5,"Last: ".join(', ',$lastchars)."             ");
+                $lastchars = array_slice($lastchars,0,6);
             }
         } while ($ch != -1);
 
-        ncurses_mvaddstr(5,5,"Char: ".sprintf('%02x',$ch)."             ");
-        if ($ch>=0) {
-            array_unshift($lastchars, sprintf('%02x',$ch));
-            ncurses_mvaddstr(6,5,"Last: ".join(', ',$lastchars)."             ");
-            $lastchars = array_slice($lastchars,0,6);
-        }
         ncurses_refresh();
         if ($ch == ' ')
             $this->quit();

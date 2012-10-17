@@ -85,6 +85,17 @@ class CwtApplication {
         return $tick++;
     }
 
+    function onDebug($str) {
+        $dbg = Cwt::cwt()->getDebug();
+        for ($n = 0; $n < 10; $n++) {
+            ncurses_move(15 + $n, 5);
+            ncurses_clrtoeol();
+            $idx = count($dbg)-10+$n;
+            if ($idx>=0) $s = $dbg[$idx]; else $s = '';
+            ncurses_mvaddstr(15 + $n, 5, $s);
+        }
+    }
+
     function initStatusbar() {
 
         $sbr = new StatusBar();
@@ -140,6 +151,7 @@ class CwtApplication {
         $this->cwt->on(Cwt::ON_STARTUP,function(Cwt $cwt){
             $cwt->showModal(new DlgWelcome());
         });
+        $this->cwt->on(Cwt::ON_DEBUG, array(&$this,'onDebug'));
         $this->cwt->run();
 
         \cherry\debug('Cleaning up...');
