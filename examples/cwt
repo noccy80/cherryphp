@@ -85,6 +85,11 @@ class CwtApplication {
         return $tick++;
     }
 
+    function getMemStats() {
+        $u = memory_get_usage();
+        return sprintf('Mem: %.1fKiB', $u/1024);
+    }
+
     function onDebug($str) {
         $dbg = Cwt::cwt()->getDebug();
         for ($n = 0; $n < 10; $n++) {
@@ -102,6 +107,9 @@ class CwtApplication {
         $sbr->addItem('statustext',
                       new BarItem(BarItem::TYPE_DATASOURCE, array(&$this,'status')),
                       Statusbar::SBR_WIDTH_AUTO);
+        $sbr->addItem('memory',
+                      new BarItem(BarItem::TYPE_DATASOURCE, array(&$this,'getMemStats')),
+                      15);
         $sbr->addItem('counter',
                       new BarItem(BarItem::TYPE_DATASOURCE, array(&$this,'getTicks')),
                       10);
