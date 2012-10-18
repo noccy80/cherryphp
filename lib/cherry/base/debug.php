@@ -7,6 +7,7 @@ const LOG_DEBUG = 0x01;
 class DebugLog {
 
     protected static $fifo = null;
+    protected static $hlog = null;
 
     static private function initqueue() {
         if (empty(self::$fifo) && class_exists('\Data\FifoQueue')) {
@@ -21,11 +22,16 @@ class DebugLog {
         $fmts = array_slice($arg,1);
         $so = call_user_func_array('sprintf',$fmts);
         if (self::$fifo) self::$fifo->push($so);
+        if (self::$hlog) fputs(self::$hlog,$so."\n");
         if (($type == LOG_DEBUG) && (getenv('DEBUG') == 1)) {
             fputs(STDERR,$so."\n");
         } elseif ($type != LOG_DEBUG) {
             fputs(STDOUT,$so."\n");
         }
+    }
+
+    static function openLog($logfile,$append=true) {
+        self::$hlog = fopen($logfile,($append)?'a+':'w+');
     }
 
     static function getDebugLog() {
@@ -35,6 +41,9 @@ class DebugLog {
 
 }
 
+if (getenv('DEBUG_LOGFILE')) {
+    DebugLog::openLog(getenv('DEBUG_LOGFILE'),false);
+}
 
 function getLineInfo(array $btr) {
     $fn = (!empty($btr['file']))?$btr['file']:null;
