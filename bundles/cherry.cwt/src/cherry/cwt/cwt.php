@@ -26,8 +26,10 @@ class Cwt extends EventEmitter {
         ncurses_init();
         if (ncurses_has_colors()) {
             ncurses_start_color();
-            ncurses_init_pair(1, NCURSES_COLOR_WHITE, NCURSES_COLOR_BLUE);
-            ncurses_init_pair(2, NCURSES_COLOR_BLACK, NCURSES_COLOR_BLUE);
+            ncurses_init_pair(1, NCURSES_COLOR_BLACK, NCURSES_COLOR_CYAN);
+            ncurses_init_pair(2, NCURSES_COLOR_BLUE, NCURSES_COLOR_CYAN);
+            ncurses_init_pair(3, NCURSES_COLOR_WHITE, NCURSES_COLOR_BLUE);
+            ncurses_init_pair(4, NCURSES_COLOR_WHITE, NCURSES_COLOR_YELLOW);
         }
         ncurses_curs_set(0);
         ncurses_noecho();
@@ -115,7 +117,7 @@ class Cwt extends EventEmitter {
                 if (ncurses_getmouse($mevent)){
                     $mx = $mevent["x"]; // Save mouse position
                     $my = $mevent["y"];
-                    $ctl = $this->desktop->hitTest($mx,$my);
+                    $ctl =& $this->desktop->hitTest($mx,$my);
                     $mtd = null;
                     if ($ctl) {
                         if ($mevent["mmask"] & NCURSES_BUTTON1_PRESSED) {
@@ -158,16 +160,18 @@ class Cwt extends EventEmitter {
                         if (($mtd) && (is_callable(array(&$ctl,$mtd)))) {
                             call_user_func_array(array(&$ctl,$mtd),$arg);
                         }
+                    //Cwt::cwt()->debug('Event at %3dx%3d. Hittest: %5s. Mtd:%-25s', $mx, $my, !empty($ctl)?'Yes':'No',$mtd);
                     }
-                    Cwt::cwt()->debug('Event at %3dx%3d. Hittest: %5s. Mtd:%-25s', $mx, $my, !empty($ctl)?'Yes':'No',$mtd);
                 }
             }
+            /*
             ncurses_mvaddstr(5,5,"Char: ".sprintf('%02x',$ch)."             ");
             if ($ch>=0) {
                 array_unshift($lastchars, sprintf('%02x',$ch));
                 ncurses_mvaddstr(6,5,"Last: ".join(', ',$lastchars)."             ");
                 $lastchars = array_slice($lastchars,0,6);
             }
+            */
         } while ($ch != -1);
 
         ncurses_refresh();

@@ -23,7 +23,7 @@ namespace Cherry\Cwt\Widgets {
 
         public function draw() {
             ncurses_color_set(1);
-            ncurses_mvaddstr($this->top,$this->left,str_repeat(" ",$this->width));
+            ncurses_mvwaddstr($this->wnd(),0,0,str_repeat(" ",$this->width));
             // Measure items
             $fullwidth = $this->width;
             $numauto = 0;
@@ -58,12 +58,12 @@ namespace Cherry\Cwt\Widgets {
                 }
                 $cstr = substr($item->item->value,0,$itemwidth);
                 ncurses_color_set(1);
-                ncurses_mvaddstr($this->top,$this->left + $cptr, $cstr);
+                ncurses_mvwaddstr($this->wnd(),0,$cptr, $cstr);
                 $idx++;
                 $cptr += $itemwidth;
                 if ($idx != count($this->items)) {
                     ncurses_color_set(2);
-                    ncurses_mvaddstr($this->top,$this->left + $cptr,' | ');
+                    ncurses_mvwaddstr($this->wnd(),0,$cptr,' | ');
                 }
                 $cptr += 3;
             }

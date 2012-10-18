@@ -11,6 +11,7 @@ abstract class Widget extends \Cherry\Base\EventEmitter {
     const ON_MOUSE_DOWN = 'cwt:mouse.down';
     const ON_MOUSE_UP = 'cwt:mouse.up';
 
+    protected $window = null;
     protected $properties = array();
     protected $propvalues = array();
 
@@ -19,9 +20,29 @@ abstract class Widget extends \Cherry\Base\EventEmitter {
     protected $width = null;
     protected $height = null;
 
+    protected function wnd($renew=false) {
+        if ($renew) {
+            if ($this->window) {
+                ncurses_delwin($this->window);
+            }
+            $this->window = null;
+        }
+        if (!$this->window) {
+            $this->window = ncurses_newwin($this->height,$this->width,$this->top,$this->left);
+            \Cherry\debug('New window: %dx%d+%d+%d', $this->left, $this->top, $this->width, $this->height);
+        }
+        return $this->window;
+    }
+
+    public function __destroy() {
+        if ($this->window)
+            ncurses_delwin($this->window);
+    }
+
     public function resize($width,$height) {
         $this->width = $width;
         $this->height = $height;
+        $this->wnd(true);
     }
 
     public function moveTo($left,$top,$width=null,$height=null) {
@@ -29,6 +50,7 @@ abstract class Widget extends \Cherry\Base\EventEmitter {
         $this->top = $top;
         if ($width!==null) $this->width = $width;
         if ($width!==null) $this->height = $height;
+        $this->wnd(true);
     }
 
     protected function initprops(array $properties = null, array $defaults = null) {

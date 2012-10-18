@@ -7,6 +7,7 @@ use Cherry\Cwt\Widgets\Widget;
 class VerticalStack extends Stack {
 
     private $curlayout = array();
+    private $resized = true;
 
     public function __construct(array $layout=null) {
 
@@ -33,26 +34,30 @@ class VerticalStack extends Stack {
     }
 
     public function draw() {
-        $alloc = 0;
-        $numfill = 0;
-        $layout = explode(',',$this->layout);
-        for ($n = 0; $n < count($layout); $n++) {
-            if ($layout[$n] == -1) {
-                $numfill++;
-            } else {
-                $alloc+= $layout[$n];
+        static $drawqueue = array();
+        if ($this->resized) {
+            \Cherry\debug("Viewport has been resized, recalculating layout...");
+            $alloc = 0;
+            $numfill = 0;
+            $layout = explode(',',$this->layout);
+            for ($n = 0; $n < count($layout); $n++) {
+                if ($layout[$n] == -1) {
+                    $numfill++;
+                } else {
+                    $alloc+= $layout[$n];
+                }
             }
-        }
-        if ($numfill>0) {
-            $sizefill = ($this->height - $alloc) / $numfill;
-        }
-        $keys = explode(',',$this->keys);
-        $drawqueue = array();
-        for ($n = 0; $n < count($layout); $n++) {
-            if ($layout[$n] == -1) {
-                $drawqueue[$keys[$n]] = $sizefill;
-            } else {
-                $drawqueue[$keys[$n]] = $layout[$n];
+            if ($numfill>0) {
+                $sizefill = ($this->height - $alloc) / $numfill;
+            }
+            $keys = explode(',',$this->keys);
+            $drawqueue = array();
+            for ($n = 0; $n < count($layout); $n++) {
+                if ($layout[$n] == -1) {
+                    $drawqueue[$keys[$n]] = $sizefill;
+                } else {
+                    $drawqueue[$keys[$n]] = $layout[$n];
+                }
             }
         }
         $row = 0;
@@ -60,11 +65,14 @@ class VerticalStack extends Stack {
             $this->curlayout[$key] = $height;
             $ctl = $this->{$key};
             if ($ctl) {
-                $ctl->moveTo(0,$row,$this->width,$height);
+                if ($this->resized) {
+                    $ctl->moveTo(0,$row,$this->width,$height);
+                }
                 $ctl->draw();
             }
             $row+= $height;
         }
+        $this->resized = false;
     }
 
     public function hitTest($x,$y) {
