@@ -49,7 +49,7 @@ abstract class Widget extends \Cherry\Base\EventEmitter {
         $this->left = $left;
         $this->top = $top;
         if ($width!==null) $this->width = $width;
-        if ($width!==null) $this->height = $height;
+        if ($height!==null) $this->height = $height;
         $this->wnd(true);
     }
 
