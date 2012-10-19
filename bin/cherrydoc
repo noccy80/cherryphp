@@ -179,4 +179,5 @@ class CherryDocApplication extends \cherry\Cli\Application {
     
 }
 
-$lepton->runApplication(new CherryDocApplication());
+$app = new CherryDocApplication(dirname(__FILE__));
+$app->run();
