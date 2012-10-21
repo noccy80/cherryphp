@@ -20,16 +20,20 @@ class Cwt extends EventEmitter {
     private $running = false;
     private $buffer = null;
 
+    function initColors() {
+        ncurses_start_color();
+        ncurses_init_pair(1, NCURSES_COLOR_BLACK, NCURSES_COLOR_CYAN);
+        ncurses_init_pair(2, NCURSES_COLOR_BLUE, NCURSES_COLOR_CYAN);
+        ncurses_init_pair(3, NCURSES_COLOR_WHITE, NCURSES_COLOR_BLUE);
+        ncurses_init_pair(4, NCURSES_COLOR_WHITE, NCURSES_COLOR_YELLOW);
+    }
+
     function __construct() {
         if (!self::$cwt) self::$cwt = $this;
         $this->buffer = new \Data\FifoQueue(50);
         ncurses_init();
         if (ncurses_has_colors()) {
-            ncurses_start_color();
-            ncurses_init_pair(1, NCURSES_COLOR_BLACK, NCURSES_COLOR_CYAN);
-            ncurses_init_pair(2, NCURSES_COLOR_BLUE, NCURSES_COLOR_CYAN);
-            ncurses_init_pair(3, NCURSES_COLOR_WHITE, NCURSES_COLOR_BLUE);
-            ncurses_init_pair(4, NCURSES_COLOR_WHITE, NCURSES_COLOR_YELLOW);
+            $this->initColors();
         }
         ncurses_curs_set(0);
         ncurses_noecho();
