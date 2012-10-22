@@ -20,9 +20,11 @@ $lepton = new \cherry\Lepton(__FILE__);
 //require_once('lib/cherryutil/command.php');
 //require_once('lib/cherryutil/commands/all.php');
 
-\Cherry\BundleManager::load('cherry.util');
-
+use Cherry\BundleManager;
 use cherry\Base\Event;
+
+BundleManager::getInstance()->load('cherry.util');
+
 
 class CherryApplication extends \cherry\Cli\Application {
     protected $apppath = null;
