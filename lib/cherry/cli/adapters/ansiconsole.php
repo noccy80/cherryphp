@@ -6,6 +6,9 @@ namespace Cherry\Cli\Adapters;
 
 class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
 
+    private $updatemode = false;
+    private $linemode = false;
+
     public function putMessage($string, $msgclass=null) {
         if ($msgclass == \Cherry\Cli\ConsoleAdapter::CLASS_ERROR) {
             fwrite(STDERR,$string);
@@ -13,9 +16,6 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
             fwrite(STDOUT,$string);
         }
     }
-
-    private $updatemode = false;
-    private $linemode = false;
 
     static function getConsole() {
         if (!self::$instance) {

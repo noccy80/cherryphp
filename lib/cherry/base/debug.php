@@ -101,21 +101,25 @@ class Debug {
         $out = array();
         foreach($bt as $frame) {
             $fid++;
-            $argout = array();
-            foreach($frame['args'] as $arg) {
-                if (is_bool($arg)) {
-                    $argout[] = ($arg)?'true':'false';
-                } elseif (is_object($arg)) {
-                    $argout[] = get_class($arg);
-                } elseif (is_array($arg)) {
-                    $argout[] = 'array';
-                } elseif (is_string($arg)) {
-                    $argout[] = "'".$arg."'";
-                } else {
-                    $argout[] = $arg;
+            if (!empty($frame['args'])) {
+                $argout = array();
+                foreach($frame['args'] as $arg) {
+                    if (is_bool($arg)) {
+                        $argout[] = ($arg)?'true':'false';
+                    } elseif (is_object($arg)) {
+                        $argout[] = get_class($arg);
+                    } elseif (is_array($arg)) {
+                        $argout[] = 'array';
+                    } elseif (is_string($arg)) {
+                        $argout[] = "'".$arg."'";
+                    } else {
+                        $argout[] = $arg;
+                    }
                 }
+                $argstr = join(',',$argout);
+            } else {
+                $argstr = '';
             }
-            $argstr = join(',',$argout);
             if (!empty($frame['file'])) {
                 if (!empty($frame['line'])) {
                     $fileline = sprintf('[%s:%d]',$frame['file'],$frame['line']);

@@ -19,9 +19,9 @@ use cherry\base\EventEmitter;
 use cherry\BundleManager;
 use Cherry\Extension\ExtensionManager;
 
-BundleManager::load('cherry.net');
-// BundleManager::load('cherry.mvc');
-BundleManager::load('cherry.crypto');
+$bm = BundleManager::getInstance();
+$bm->load('cherry.net');
+$bm->load('cherry.crypto');
 
 \Cherry\debug('Will grab consoleadapter, and then fail gloriuosly!');
 

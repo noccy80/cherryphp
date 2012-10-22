@@ -7,7 +7,7 @@ namespace cherry\base;
  *
  * Might be obsolete.
  */
-class Callable {
+class CallableStub {
     private $cb = null;
     function __construct($cb) {
         if (func_num_args()==2) {
