@@ -36,10 +36,10 @@ class Uuid {
      */
     function test($uuid) {
         $hu = null;
-        uuid_create(&$hu);
-        $status = @uuid_import(&$hu, \UUID_FMT_STR, $uuid);
+        uuid_create($hu);
+        $status = @uuid_import($hu, \UUID_FMT_STR, $uuid);
         $ret = ($status === \UUID_RC_OK);
-        uuid_destroy(&$hu);
+        uuid_destroy($hu);
         return $ret;
     }
 
@@ -56,51 +56,52 @@ class Uuid {
             $hu = null; $ustr = null;
             switch($version) {
             case self::UUID_V1:
-                \uuid_create(&$hu);
-                \uuid_make(&$hu, \UUID_MAKE_V1 | \UUID_MAKE_MC);
+                \uuid_create($hu);
+                \uuid_make($hu, \UUID_MAKE_V1 | \UUID_MAKE_MC);
                 break;
             case self::UUID_V3:
-                \uuid_create(&$hu);
+                \uuid_create($hu);
                 if (!$url)
-                    throw new Exception(_("UUID v3 requires the url parameter"));
+                    throw new \Exception(_("UUID v3 requires the url parameter"));
                 $ns = null;
-                \uuid_create(&$ns);
-                \uuid_make(&$hu, \UUID_MAKE_V3, &$ns, $url);
+                \uuid_create($ns);
+                \uuid_make($hu, \UUID_MAKE_V3, $ns, $url);
                 \uuid_destroy($ns);
                 break;
             case self::UUID_V4:
-                \uuid_create(&$hu);
-                \uuid_make(&$hu, \UUID_MAKE_V4);
+                \uuid_create($hu);
+                \uuid_make($hu, \UUID_MAKE_V4);
                 break;
             case self::UUID_V5:
-                \uuid_create(&$hu);
-                \uuid_create(&$ns);
-                \uuid_make(&$hu, \UUID_MAKE_V5, &$ns, $url);
+                \uuid_create($hu);
+                \uuid_create($ns);
+                \uuid_make($hu, \UUID_MAKE_V5, $ns, $url);
                 \uuid_destroy($ns);
                 break;
             default:
-                throw new Exception(_("Error: Invalid UUID version!"));
+                throw new \Exception(_("Error: Invalid UUID version!"));
             }
 
-            \uuid_export(&$hu, UUID_FMT_STR, &$ustr);
+            \uuid_export($hu, UUID_FMT_STR, $ustr);
             $uuid = $ustr;
         } else {
             // Implementation for pecl uuid
+            $hu = null;
             switch($version) {
             case self::UUID_V1:
-                $uuid = \uuid_create(&$hu,\UUID_TYPE_DCE);
+                $uuid = \uuid_create(\UUID_TYPE_DCE);
                 break;
             case self::UUID_V3:
-                throw new Exception(_("No support for this UUID version with pecl-uuid backend."));
+                throw new \Exception(_("No support for this UUID version with pecl-uuid backend."));
                 break;
             case self::UUID_V4:
-                $uuid = \uuid_create(&$hu,\UUID_TYPE_RANDOM);
+                $uuid = \uuid_create(\UUID_TYPE_RANDOM);
                 break;
             case self::UUID_V5:
-                throw new Exception(_("No support for this UUID version with pecl-uuid backend."));
+                throw new \Exception(_("No support for this UUID version with pecl-uuid backend."));
                 break;
             default:
-                throw new Exception(_("Error: Invalid UUID version!"));
+                throw new \Exception(_("Error: Invalid UUID version!"));
             }
         }
         return trim($uuid);
