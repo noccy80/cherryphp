@@ -31,7 +31,10 @@ class Cwt extends EventEmitter {
     function __construct() {
         if (!self::$cwt) self::$cwt = $this;
         $this->buffer = new \Data\FifoQueue(50);
-        ncurses_init();
+        if (!function_exists('\ncurses_init')) {
+            die("This application requires ncurses to work.");
+        }
+        \ncurses_init();
         if (ncurses_has_colors()) {
             $this->initColors();
         }
@@ -43,7 +46,7 @@ class Cwt extends EventEmitter {
                     NCURSES_BUTTON2_CLICKED | NCURSES_BUTTON2_RELEASED | NCURSES_BUTTON1_PRESSED |
                     NCURSES_BUTTON3_CLICKED | NCURSES_BUTTON3_RELEASED | NCURSES_BUTTON1_PRESSED |
                     NCURSES_BUTTON4_CLICKED | NCURSES_BUTTON4_RELEASED | NCURSES_BUTTON1_PRESSED;
-        $mask = ncurses_mousemask($newmask, &$oldmask);
+        $mask = ncurses_mousemask($newmask, $oldmask);
         $this->fpin = fopen("php://stdin","r");     //open direct input stream for reading
         stream_set_blocking($this->fpin,0);        //set non-blocking mode
 
@@ -66,7 +69,7 @@ class Cwt extends EventEmitter {
     }
 
     function __destruct() {
-        ncurses_end();
+        if (function_exists('\ncurses_end')) \ncurses_end();
         fclose($this->fpin);
     }
 

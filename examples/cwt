@@ -12,7 +12,10 @@ if (!( @include_once "lib/bootstrap.php" )) {
 }
 //LOADER:END
 
-\Cherry\BundleManager::load('cherry.cwt');
+use cherry\BundleManager;
+
+$bm = BundleManager::getInstance();
+$bm->load('cherry.cwt');
 
 use Cherry\Cwt\Cwt;
 use Cherry\Cwt\Application;
