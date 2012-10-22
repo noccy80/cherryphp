@@ -32,7 +32,6 @@ class SysInfoCommands extends CommandBundle {
 
     function phpdefines() {
         $args = func_get_args();
-        $type = $args[0];
         $opts = $this->parseOpts($args,array(
             'like' => 'like:'
         ));
