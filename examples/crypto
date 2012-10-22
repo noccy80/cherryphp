@@ -19,7 +19,8 @@ use cherry\base\EventEmitter;
 use cherry\BundleManager;
 use Cherry\Extension\ExtensionManager;
 
-\Cherry\loadBundle('cherry.crypto');
+$bm = BundleManager::getInstance();
+$bm->load('cherry.crypto');
 
 // Example: Crypto
 $str = 'Hello World';
@@ -40,6 +41,6 @@ $enc = $ca->encrypt($str);
 $kr = new \Cherry\Crypto\GnuPG\KeyRing();
 $keys = $kr->getKeys();
 
-$key = $keys[0];
-
-printf("The first key in your key ring belongs to '%s'\n", $key->uids[0]->name);
+foreach($keys as $key) {
+    printf("%s (%s)\n", $key->uids[0]->name, $key->uids[0]->email);
+}

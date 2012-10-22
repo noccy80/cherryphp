@@ -20,6 +20,8 @@ class KeyRing {
      * @param string $gnupghome The home directory of GnuPG.
      */
     public function __construct($gnupghome=null) {
+        if (!class_exists('\gnupg'))
+            die("GnuPG support not found. Install GnuPG and try again.");
         if (!$gnupghome) $gnupghome = getenv('HOME')._DS_.'.gnupg';
         putenv('GNUPGHOME='.$gnupghome);
         $this->home = $gnupghome;
