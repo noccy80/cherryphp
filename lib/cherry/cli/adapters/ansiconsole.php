@@ -17,7 +17,7 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
         }
     }
 
-    static function getConsole() {
+    public static function getConsole() {
         if (!self::$instance) {
             self::$instance = new Console();
         }
@@ -42,7 +42,7 @@ class AnsiConsole extends \Cherry\Cli\ConsoleAdapter {
         fprintf(STDERR,"%s", $str);
     }
 
-    public function write($string,$args=null) {
+    public function write() {
         $args = func_get_args();
         if ($this->updatemode) {
             $pre = sprintf("\033[2K\r");

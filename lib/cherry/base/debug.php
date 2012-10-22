@@ -226,7 +226,7 @@ class ErrorHandler {
         exit(1);
     }
     // Create a handler function
-    function __php_handleAssert($file, $line, $code, $desc = null) {
+    public static function __php_handleAssert($file, $line, $code, $desc = null) {
         \Cherry\debug("Assertion failed in %s on line %d", $file, $line);
         $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
