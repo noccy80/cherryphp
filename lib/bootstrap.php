@@ -53,7 +53,7 @@ require_once CHERRY_LIB.'/lib/cherry/base/config.php';
 require_once CHERRY_LIB.'/lib/cherry/base/event.php';
 require_once CHERRY_LIB.'/lib/cherry/extension.php';
 require_once CHERRY_LIB.'/lib/cherry/base/cherry.php';
-require_once CHERRY_LIB.'/lib/cherry/base/application.php';
+//require_once CHERRY_LIB.'/lib/cherry/base/application.php';
 require_once CHERRY_LIB.'/lib/app.php';
 
 use Cherry\Autoloader\Autoloader;

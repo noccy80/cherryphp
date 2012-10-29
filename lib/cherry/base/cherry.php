@@ -58,3 +58,26 @@ class Lepton {
 }
 
 class ConfigurationException extends \Exception { }
+
+function withAll() {
+    $args = func_get_args();
+    $cbargs = array();
+    $vals = array();
+    $cb = null;
+    for ($n = 0; $n < count($args); $n++) {
+        if (!$cb) {
+            if (is_callable($args[$n])) {
+                $cb = $args[$n];
+            } else {
+                $vals[] = $args[$n];
+            }
+        } else {
+            $cbargs[] = $args[$n];
+        }
+    }
+    $out = array();
+    foreach($vals as $val) {
+        $out[] = call_user_func_array($cb,array_merge(array($val),$cbargs));
+    }
+    return $out;
+}

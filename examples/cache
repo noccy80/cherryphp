@@ -1,0 +1,28 @@
+#!/usr/bin/php
+<?php
+
+//LOADER:BEGIN
+if (!( @include_once "lib/bootstrap.php" )) {
+    $libpath = getenv('CHERRY_LIB');
+    if (!$libpath) {
+        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+        exit(1);
+    }
+    require_once($libpath.'/lib/bootstrap.php');
+}
+//LOADER:END
+
+$lepton = new \cherry\Lepton(__FILE__);
+
+use cherry\base\Event;
+use cherry\base\EventEmitter;
+use cherry\BundleManager;
+use Cherry\Extension\ExtensionManager;
+use Cherry\Cache;
+
+
+BundleManager::load('cherry.net');
+
+\Cherry\debug('Attempting to access cache object...');
+\Cherry\Cache::get('foo');
+
