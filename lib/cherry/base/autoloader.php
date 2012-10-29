@@ -57,8 +57,8 @@ class Autoloader {
 
     function autoload($class) {
 
-        // \cherry\log(\cherry\LOG_DEBUG,' .. searching %s', $this->path);
-        $file = \Cherry\unipath($this->path.DIRECTORY_SEPARATOR.strtolower(str_replace('\\',DIRECTORY_SEPARATOR,$class)).'.php');
+        $file = \Cherry\unipath($this->path._DS_.strtolower(str_replace('\\',_DS_,$class)).'.php');
+        \cherry\log(\cherry\LOG_DEBUG,' .. searching %s for %s', $this->path, $file);
         if ( file_exists($file) ){
             \cherry\log(\cherry\LOG_DEBUG,'Autoload request: %s (%s)', $class, $this->path);
             // \cherry\log(\cherry\LOG_DEBUG,' .. found %s',$file);

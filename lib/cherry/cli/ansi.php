@@ -84,7 +84,7 @@ namespace Cherry\Cli {
             self::$attributes = 0x00;
         }
 
-        function pushColor($fg,$bg=null) {
+        public static function pushColor($fg,$bg=null) {
             if (self::$colorstack === null) return '';
             $seq = "\033[".($fg+30).(($bg)?';'.($bg+40):'').'m';
             if (self::$colorcur) self::$colorstack->push(self::$colorcur);
@@ -92,7 +92,7 @@ namespace Cherry\Cli {
             return self::$colorcur;
         }
 
-        function popColor() {
+        public static function popColor() {
             if (self::$colorstack === null) return '';
             if (count(self::$colorstack) > 0) {
                 self::$colorcur = self::$colorstack->pop();
@@ -102,61 +102,61 @@ namespace Cherry\Cli {
             return self::NORMAL;
         }
 
-        function setBold() {
+        public static function setBold() {
             if (self::$attributes === null) return '';
             return self::SET_BOLD;
         }
 
-        function clearBold() {
+        public static function clearBold() {
             if (self::$attributes === null) return '';
             return self::CLEAR_BOLD;
         }
 
-        function setUnderline() {
+        public static function setUnderline() {
             if (self::$attributes === null) return '';
             return self::SET_UNDERLINE;
         }
 
-        function clearUnderline() {
+        public static function clearUnderline() {
             if (self::$attributes === null) return '';
             return self::CLEAR_UNDERLINE;
         }
 
-        function setReverse() {
+        public static function setReverse() {
             return self::SET_REVERSE;
         }
 
-        function clearReverse() {
+        public static function clearReverse() {
             return self::CLEAR_REVERSE;
         }
 
-        function pushEffect($effect) {
+        public static function pushEffect($effect) {
             if (self::$attributes === null) return '';
         }
 
-        function popEffect() {
+        public static function popEffect() {
             if (self::$attributes === null) return '';
         }
 
-        function color($string,$color,$bgcolor=null) {
+        public static function color($string,$color,$bgcolor=null) {
             return self::pushColor(\Ansi\Color::color($color),\Ansi\Color::color($bgcolor)).$string.self::popColor();
         }
 
-        function uncolor($string) {
+        public static function uncolor($string) {
 
         }
 
-        function colorStrip($str) {
+        public static function colorStrip($str) {
 
         }
 
-        function reset() {
+        public static function reset() {
             if (self::$attributes === null) return '';
             self::$attributes = 0x00;
             return self::NORMAL;
         }
 
-        function clearToEnd() {
+        public static function clearToEnd() {
             return self::CLEAR_TO_END;
         }
 

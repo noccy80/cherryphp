@@ -72,7 +72,7 @@ abstract class Application extends \cherry\Application {
                 }
             }
             if ($copt) {
-                if (strlen($this->argument) > 1) {
+                if (strlen($this->arguments) > 1) {
                     $i++; // Skip the next item
                 }
             } else {

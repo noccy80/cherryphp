@@ -1,0 +1,39 @@
+#!/usr/bin/php
+<?php
+
+//LOADER:BEGIN
+if (!( @include_once "lib/bootstrap.php" )) {
+    $libpath = getenv('CHERRY_LIB');
+    if (!$libpath) {
+        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+        exit(1);
+    }
+    require_once($libpath.'/lib/bootstrap.php');
+}
+//LOADER:END
+
+class Foo {
+
+    use \Cherry\Traits\SingletonAccess;
+    use \Cherry\Traits\ImmutableProperties;
+
+    function __construct() {
+        $this->addProperty('test','defaultvalue','string',false);
+        $this->addProperty('rotest','defaultvalue','string',true);
+        echo "Constructed!\n";
+    }
+}
+
+$foo = Foo::getInstance();
+try {
+    $foo->test = 'yo';
+    echo "Set foo->test\n";
+} catch (Exception $e) { echo $e->getMessage()."\n"; }
+try {
+    $foo->test2 = 'hey';
+    echo "Set foo->test2\n";
+} catch (Exception $e) { echo $e->getMessage()."\n"; }
+try {
+    $foo->rotest = 'meow';
+    echo "Set foo->meow\n";
+} catch (Exception $e) { echo $e->getMessage()."\n"; }
