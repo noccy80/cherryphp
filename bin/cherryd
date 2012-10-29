@@ -32,10 +32,8 @@ class CherryDaemonApplication extends \cherry\Cli\Application {
     protected $config = 'development';
     protected $con = null;
     
-    protected $fsinput = null;
-    protected $fsoutput = null;
-    protected $hsinput = null;
-    protected $hsoutput = null;
+    protected $fsipc = null;
+    protected $hsipc = null;
     /**
      * Init is called when the application is created. This is the perfect place to
      * register command line arguments, hook events and set up defaults.
@@ -46,12 +44,9 @@ class CherryDaemonApplication extends \cherry\Cli\Application {
         $this->addArgument('h','help',
                             'Show this help');
 
-        $this->addArgument('i:','in',
-                            'Input socket',
-                            array($this,'fsinput'));
-        $this->addArgument('o:','out',
-                            'Output socket',
-                            array($this,'fsoutput'));
+        $this->addArgument('s:','socket',
+                            'Unix socket for communication with process',
+                            array($this,'fsipc'));
 
         $this->con = \Cherry\Cli\Console::getAdapter();
 
@@ -67,7 +62,7 @@ class CherryDaemonApplication extends \cherry\Cli\Application {
             return 1;
         }
 
-        if (!($this->hasArgument('i') && $this->hasArgument('o'))) {
+        if (!$this->hasArgument('s')) {
             echo "You are not supposed to call this tool without any arguments.\n";
             return 1;
         }
@@ -82,9 +77,8 @@ class CherryDaemonApplication extends \cherry\Cli\Application {
     
     private function initSockets() {
     
-        // Open the sockets
-        $this->hsinput = new UnixSocket($this->fsinput);
-        $this->hsoutput = new UnixSocket($this->fsoutput);
+        // Open the socket
+        $this->hsipc = new UnixSocket($this->fsipc);
     
         return true;
     
