@@ -74,6 +74,19 @@ The function itself need to return the data in a specific order:
         }
     }
 
+The function can also take parameters that does not impact the asset id:
+
+    (new CacheObject('images/12345.jpg',NULL,function($id,$var,$time){
+        // .. Do generation here ..
+        // $time will be set to time(), and thus the cached item can be tagged
+        // with the time it was generated.
+        // Also note that $id can be used to access the assets uri (in this case)
+        // or whatever is used for the asset id.
+    },[ 'color' => '#000000' ], [ time() ]))->output();;
+
+The arguments are expanded, as opposed to the variation which is passed as a
+StdClass object.
+
 ## Caching from output
 
 You can also seed the content using output buffering:

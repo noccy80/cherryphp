@@ -400,7 +400,7 @@ class CacheObject {
     }
     
     public static function getUrl($url) {
-        $co = new CacheObject($url,self::CO_USE_DISK,function($assetid,$var){
+        $co = new CacheObject($url,self::CO_USE_DISK|self::CO_COMPRESS,function($assetid,$var){
             $doc = file_get_contents($assetid);
             return [ $doc, 'text/html', '30m'];
         });
