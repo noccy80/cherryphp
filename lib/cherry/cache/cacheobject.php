@@ -50,12 +50,14 @@ class CacheObject {
     const CS_MISS           = 0x01; /// Cache miss
     const CS_HIT            = 0x02; /// Cache hit
     const CS_UPDATED        = 0x04; /// Data updated
+    const CS_EXPIRED        = 0x08; /// Data expired when checked
 
     private $cache_queried  = false,/// If the cache has been queried.
             $cache_hit      = false,/// If the cache has the data ready.
             $content        = null, /// The actual content of the object
             $contenttype    = null, /// The content type of the object
             $expires        = null, /// Unix time when the object expires.
+            $expiresecs     = null, /// Number of seconds til expiry.
             $asset          = null, ///
             $generator      = null, /// Generator, either method, file, string or null.
             $variant        = [],   /// Variant specification, f.ex. size or color.
@@ -222,8 +224,8 @@ class CacheObject {
         \Cherry\debug("Generating content...");
         // Default expiry time
         $config = App::config();
-        $def_expiry = $config->query('cache/default_expiry', '30m');
-
+        $def_expiry = $config->query('cache.default-expiry', '30m');
+        var_dump($def_expiry);
         // We don't want to call the generator function if the generator is
         // explicitly set to be a file
         if (is_callable($this->generator) && !($this->flags & (self::CO_GEN_FILE | self::CO_GEN_PHPFILE))) {
@@ -298,7 +300,7 @@ class CacheObject {
                     } else {
                         $this->content = $content;
                     }
-                    $this->expires = $header['expires'];
+                    $this->expiresecs = $header['expires'];
                     $this->contenttype = $header['content-type'];
                     $this->cache_hit = true;
                     $this->state = self::CS_HIT;
@@ -312,6 +314,13 @@ class CacheObject {
                 // check memcached
             } elseif ($cache == 'auto') {
                 // check memcached for metadata, then read entry from disk.
+            }
+            if (time() > $this->expiresecs) {
+                \Cherry\debug("Entry expired %d seconds ago: %s (%s)", (time()-$this->expiresecs), $id, $blobpath);
+                $this->state = self::CS_EXPIRED;
+                $this->cache_hit = false;
+                // TODO: This is not gonna work for memcache, so need rewrite.
+                unlink($blobpath);
             }
         }
 
@@ -329,6 +338,9 @@ class CacheObject {
 
         $key_cache = 'entry:'.$id;
         $key_meta = 'meta:'.$id;
+        
+        if (!$this->expires)
+            $this->expires = App::config()->query('cache.default-expiry','30m');
 
         if ($type == 'cache') {
             if ($cache == 'disk') {

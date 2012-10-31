@@ -1,6 +1,13 @@
 #!/usr/bin/php
 <?php
 
+/*
+//LOADER:BEGIN
+require('cherryphp.php');
+App::bootstrap(__FILE__);
+//LOADER:END
+*/
+
 //LOADER:BEGIN
 if (!( @include_once "lib/bootstrap.php" )) {
     $libpath = getenv('CHERRY_LIB');
