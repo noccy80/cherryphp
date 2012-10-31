@@ -19,10 +19,30 @@ use cherry\base\EventEmitter;
 use cherry\BundleManager;
 use Cherry\Extension\ExtensionManager;
 use Cherry\Cache;
+use Cherry\Cache\CacheObject;
+
+//BundleManager::load('cherry.net');
+
+//\Cherry\debug('Attempting to access cache object...');
+//\Cherry\Cache::get('foo');
 
 
-BundleManager::load('cherry.net');
+function doimage($var) {
+    return [ "imagedata:".$var->color, "image/jpeg", "30m" ];
+} 
 
-\Cherry\debug('Attempting to access cache object...');
-\Cherry\Cache::get('foo');
+// Shorthand method to output or cache an object via callback:
+// (new CacheObject('images/logo.png', CacheObject::CO_DELAY | CacheObject::CO_USE_DISK,'doimage',[ 'color'=>'red' ]))->output();
 
+// More hands-on approach to output or cache an object via callback:
+// $co = new CacheObject('images/logo.png', CacheObject::CO_DELAY | CacheObject::CO_USE_DISK,'doimage',[ 'color'=>'blue' ]);
+// echo $co->getContent()."\n";
+// echo $co->getContentType()."\n";
+
+// This is how the caching will mostly be used
+$html = new CacheObject('navigation.html', CacheObject::CO_DELAY | CacheObject::CO_USE_DISK);
+if (!$html->output()): $html->bufferContent(); ?>
+<html><head><title>Foo</title></head>
+<body>Hello World</body></html>
+
+<? ob_flush(); endif; ?>
