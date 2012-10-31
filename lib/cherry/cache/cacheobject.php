@@ -87,8 +87,9 @@ class CacheObject {
         $this->flags = $flags;
         $this->generator = $generator;
         $this->variant = (array)$variant;
+        $this->assetid = $assetid;
         ksort($this->variant);
-        if (!$flags & self::CO_DELAY) $this->query();
+        if (!($flags & self::CO_DELAY)) $this->query();
     }
 
     /**
@@ -119,7 +120,7 @@ class CacheObject {
         // We generate an object id from a concatenation of the sha1 hash and
         // the size of the object as 16 bits hex. This should make the key
         // unique enough.
-        $ostr = $this->asset.':'.join(';',$variantdata);
+        $ostr = $this->assetid.':'.join(';',$variantdata);
         $this->objectid = sprintf('%s%04x',sha1($ostr), strlen($ostr));
         if ($this->flags == 0) {
             $this->flags |= self::CO_USE_AUTO;
@@ -225,11 +226,11 @@ class CacheObject {
         // Default expiry time
         $config = App::config();
         $def_expiry = $config->query('cache.default-expiry', '30m');
-        var_dump($def_expiry);
         // We don't want to call the generator function if the generator is
         // explicitly set to be a file
         if (is_callable($this->generator) && !($this->flags & (self::CO_GEN_FILE | self::CO_GEN_PHPFILE))) {
-            @list($content,$contenttype,$expires) = call_user_func($this->generator,(object)$this->variant);
+            $ret = call_user_func_array($this->generator,[ $this->assetid, (object)$this->variant ]);
+            @list($content,$contenttype,$expires) = $ret;
             if (empty($contenttype)) $contenttype = 'application/octet-stream';
             if (empty($expires)) $expires = $def_expiry;
             return [$content,$contenttype,$expires];
@@ -289,7 +290,7 @@ class CacheObject {
                     if (!empty($header['compressed'])) {
                         switch ((string)$header['compressed']) {
                         case 'gzip':
-                            $this->content = gzdecode($content);
+                            $this->content = gzuncompress($content);
                             break;
                         default:
                             \Cherry\debug("Unsupported compression of cache object. Invalidating blob.");
@@ -315,12 +316,12 @@ class CacheObject {
             } elseif ($cache == 'auto') {
                 // check memcached for metadata, then read entry from disk.
             }
-            if (time() > $this->expiresecs) {
+            if ((!empty($blobpath)) && ($this->expiresecs > 0) && (time() > $this->expiresecs)) {
                 \Cherry\debug("Entry expired %d seconds ago: %s (%s)", (time()-$this->expiresecs), $id, $blobpath);
                 $this->state = self::CS_EXPIRED;
                 $this->cache_hit = false;
                 // TODO: This is not gonna work for memcache, so need rewrite.
-                unlink($blobpath);
+                @unlink($blobpath);
             }
         }
 
@@ -355,7 +356,7 @@ class CacheObject {
                 ];
                 if ($this->flags & self::CO_COMPRESS) {
                     $header['compressed'] = 'gzip';
-                    $content = gzencode($this->content);
+                    $content = gzcompress($this->content);
                 } else {
                     $content = $this->content;
                 }
@@ -394,6 +395,14 @@ class CacheObject {
     public function getContentType() {
         if ($this->flags & self::CO_DELAY) $this->query();
         return $this->contenttype;
+    }
+    
+    public static function getUrl($url) {
+        $co = new CacheObject($url,self::CO_USE_DISK,function($assetid,$var){
+            $doc = file_get_contents($assetid);
+            return [ $doc, 'text/html', '30m'];
+        });
+        return $co->getContent();
     }
 
 }
