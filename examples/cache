@@ -40,9 +40,12 @@ function doimage($var) {
 // echo $co->getContentType()."\n";
 
 // This is how the caching will mostly be used
-$html = new CacheObject('navigation.html', CacheObject::CO_DELAY | CacheObject::CO_USE_DISK);
+$html = new CacheObject(
+            'navigation.html',
+            CacheObject::CO_DELAY | CacheObject::CO_USE_DISK | CacheObject::CO_COMPRESS
+);
 if (!$html->output()): $html->bufferContent(); ?>
 <html><head><title>Foo</title></head>
 <body>Hello World</body></html>
-
-<? ob_flush(); endif; ?>
+<? $html->bufferEnd(); endif; ?>
+<? $ct = $html->getContentType(); echo "\nType: {$ct}\n" ?>
