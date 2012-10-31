@@ -60,6 +60,7 @@ class CacheObject {
             $expiresecs     = null, /// Number of seconds til expiry.
             $asset          = null, ///
             $generator      = null, /// Generator, either method, file, string or null.
+            $params         = [],
             $variant        = [],   /// Variant specification, f.ex. size or color.
                                     /// Relevant to lookup of specific variation of the
                                     /// object from the cache.
@@ -83,11 +84,12 @@ class CacheObject {
      * set to text/html) or as an array having three values for content, content-type
      * and the expiry time.
      */
-    public function __construct($assetid, $flags = self::CO_DEFAULT, $generator = null, $variant = null) {
+    public function __construct($assetid, $flags = self::CO_DEFAULT, $generator = null, array $variant = null, array $params = null) {
         $this->flags = $flags;
         $this->generator = $generator;
         $this->variant = (array)$variant;
         $this->assetid = $assetid;
+        $this->params = (array)$params;
         ksort($this->variant);
         if (!($flags & self::CO_DELAY)) $this->query();
     }
@@ -229,7 +231,7 @@ class CacheObject {
         // We don't want to call the generator function if the generator is
         // explicitly set to be a file
         if (is_callable($this->generator) && !($this->flags & (self::CO_GEN_FILE | self::CO_GEN_PHPFILE))) {
-            $ret = call_user_func_array($this->generator,[ $this->assetid, (object)$this->variant ]);
+            $ret = call_user_func_array($this->generator,array_merge([ $this->assetid, (object)$this->variant ], $this->params));
             @list($content,$contenttype,$expires) = $ret;
             if (empty($contenttype)) $contenttype = 'application/octet-stream';
             if (empty($expires)) $expires = $def_expiry;
