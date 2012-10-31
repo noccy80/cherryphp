@@ -1,0 +1,89 @@
+# Caching
+
+There are more ways than one to cache content. What they all have in common is
+that they at least require you to check something, then if the check fails to
+generate the content and then insert it, to finally return either the cached
+data or the generated data.
+
+Now, that is all good, except is a bit too much work to simply ensure that
+an object is returned faster to the visitor.
+
+That's why Cherry introduces the `\Cherry\Cache\CacheObject` class which does
+it all for you. Amazing, isn't it?
+
+## Caching a file or an asset
+
+This shouldn't be a complex task, and with the `CacheObject` it really isn't.
+
+    $file = new CacheObject('files/myfile.txt',NULL,'/var/www/somesite/files/myfile.txt');
+    $file->output();
+
+The three parameters given are `$assetid` which uniquely identifies the cached
+asset, or object if you will; `$flags` which in this case will default to
+automatic placement of the asset in either a memory cache (like memcached) or
+a disk cache; and `$generator` which takes either a filename, a callback
+function or a regular chunk o' something. Why you would throw a chunk of data
+at it in the constructor is a question on its own, since it requires the data
+to be generated before the cache is queried. In these cases you should use a
+callback.
+
+## Caching from a callback function
+
+To generate content dynamically as needed, and in other cases return the data
+from the cache you only need the following. As you can see, this example comes
+with a fourth parameter, `$variant` which defines the variation of the object.
+This could for example be the color theme used for this specific image, or an
+username or userid for data that is cached on a per-user basis.
+
+    $img = new CacheObject('images/colordot.jpg',NULL,
+        array('\Generators','colordot'),
+        array('color'=>'#FF8800')
+    );
+    $img->output();
+
+The same thing using PHP 5.4 syntax:
+
+    $img = new CacheObject('images/colordot.jpg',NULL,
+        [ '\Generators','colordot' ],
+        [ 'color'=>'#FF8800' ]
+    );
+    $img->output();
+
+And as a one-liner (although wrapped for readability):
+
+    (new CacheObject('images/colordot.jpg',NULL,
+        [ '\Generators','colordot' ],
+        [ 'color'=>'#FF8800' ])
+    )->output();
+
+The function itself need to return the data in a specific order:
+
+    class Generators {
+        function colordot($var) {
+            // Create a canvas somehow to do something on, then do it and
+            // return the data.
+            $c = new Canvas(32,32,'#FFFFFF');
+            // We got the color passed for the $variant config, let's use it.
+            $text = rgb($var->color);
+            ..
+            $data = $c->getDataBlob('image/jpeg');
+            // Return the data, the content type, and the validity.
+            return [ $data, 'image/jpeg', '30m' ];
+        }
+    }
+
+## Caching from output
+
+You can also seed the content using output buffering:
+
+    $page = new CacheObject('pages/user/helloworld.html');
+    if (!$page->output()):
+        $page->bufferContent('text/html');
+    ?> Do your HTML here. <?php
+        $page->bufferEnd();
+    endif;
+
+This snippet will return the page from cache if it's available (with the `output()`
+call, which returns true on success and false if the object does not exist in the
+cache) by calling `bufferContent()` with the content type, followed by whatever you
+wish to output, and finally having a call to `bufferEnd()` to seal the deal.
