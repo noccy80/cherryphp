@@ -44,6 +44,10 @@ class App {
         return self::$_context;
     }
 
+    public static function bundles() {
+        return \Cherry\BundleManager::getInstance();
+    }
+
 }
 
 class AppConfig {

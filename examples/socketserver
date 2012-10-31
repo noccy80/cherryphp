@@ -16,12 +16,10 @@ $lepton = new \cherry\Lepton(__FILE__);
 
 use cherry\base\Event;
 use cherry\base\EventEmitter;
-use cherry\BundleManager;
-use Cherry\Extension\ExtensionManager;
 
-BundleManager::load('cherry.net');
-BundleManager::load('cherry.mvc');
-BundleManager::load('cherry.crypto');
+App::bundles()->load('cherry.net');
+App::bundles()->load('cherry.mvc');
+App::bundles()->load('cherry.crypto');
 
 $ss = new \cherry\net\SocketServer(6667);
 $ss->on('connection', function($ip,$port) {

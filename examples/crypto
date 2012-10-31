@@ -16,11 +16,9 @@ $lepton = new \cherry\Lepton(__FILE__);
 
 use cherry\base\Event;
 use cherry\base\EventEmitter;
-use cherry\BundleManager;
 use Cherry\Extension\ExtensionManager;
 
-$bm = BundleManager::getInstance();
-$bm->load('cherry.crypto');
+App::bundles()->load('cherry.crypto');
 
 // Example: Crypto
 $str = 'Hello World';
