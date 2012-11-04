@@ -68,5 +68,17 @@ function unipath($path) {
     return $path;
 }
 
+class ScopeTimer {
+    private $info, $tstart;
+    function __construct($info) {
+        $this->info = $info;
+        $this->tstart = microtime(true);
+    }
+    function __destruct() {
+        $dur = microtime(true) - $this->tstart;
+        \Cherry\debug('%s: %fus', $this->info, $dur);
+    }
+}
+
 // Register the autoloader for the base library
 Autoloaders::register(new Autoloader(CHERRY_LIB.'/lib'));
