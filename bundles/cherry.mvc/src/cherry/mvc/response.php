@@ -2,4 +2,34 @@
 
 namespace Cherry\Mvc;
 
-class Response { }
+use Cherry\Mvc\Document;
+use Cherry\Cache\CacheObject;
+
+class Response {
+
+    private
+            $document = null,
+            $cachable = false;
+
+    public function setDocument(Document $document) {
+        $this->document = $document;
+    }
+
+    public function output() {
+        if ($this->document) {
+            $doc = $this->document->getContent();
+            echo $doc;
+        }
+    }
+
+    public function getCachable() {
+        return $this->cachable;
+    }
+
+    public function setCachable($state) {
+        // Check if the document is cachable
+        $this->cachable = $state;
+        return false;
+    }
+
+}
