@@ -25,8 +25,8 @@ use cherry\base\Event;
 use cherry\base\EventEmitter;
 use cherry\BundleManager;
 use Cherry\Extension\ExtensionManager;
-use Cherry\Cache;
 use Cherry\Cache\CacheObject;
+
 
 //BundleManager::load('cherry.net');
 
@@ -36,7 +36,7 @@ use Cherry\Cache\CacheObject;
 
 function doimage($var) {
     return [ "imagedata:".$var->color, "image/jpeg", "30m" ];
-} 
+}
 
 // Shorthand method to output or cache an object via callback:
 // (new CacheObject('images/logo.png', CacheObject::CO_DELAY | CacheObject::CO_USE_DISK,'doimage',[ 'color'=>'red' ]))->output();
@@ -46,11 +46,42 @@ function doimage($var) {
 // echo $co->getContent()."\n";
 // echo $co->getContentType()."\n";
 
-// Fetch an URL
-$doc = CacheObject::getUrl('http://live.hubea.se/css/main.less');
-echo "Got ".strlen($doc)." bytes of data!\n";
-die();
+/*
+use Cherry\Cache\Cache;
+$ci = Cache::getInstance();
+echo "Set: ".$ci->set('foo','bar')."\n";
+echo "Get: ".$ci->get('foo')."\n";
+*/
 
+/*
+$mc = \Cherry\Cache\Memcached::getInstance();
+echo "Set: ".$mc->updateValue('foo','bar')."\n";
+echo "Get: ".$mc->getValue('foo')."\n";
+*/
+
+// Fetch an URL
+
+list($tot,$single) = \Cherry\Base\Diag::benchmark(1000,function() {
+    $doc = CacheObject::getUrl('http://www.google.com',true);
+});
+printf("5 hits against url, %fs (%fs)\n", $tot, $single);
+
+list($tot,$single) = \Cherry\Base\Diag::benchmark(1000,function() {
+    $doc = CacheObject::getUrl('http://www.google.com');
+});
+printf("50 hits against cache, %fs (%fs)\n", $tot, $single);
+
+list($tot,$single) = \Cherry\Base\Diag::benchmark(1000,function() {
+    $doc = CacheObject::getUrl(__FILE__,true);
+});
+printf("5 hits against file, %fs (%fs)\n", $tot, $single);
+
+list($tot,$single) = \Cherry\Base\Diag::benchmark(1000,function() {
+    $doc = CacheObject::getUrl(__FILE__);
+});
+printf("50 hits against file cache, %fs (%fs)\n", $tot, $single);
+
+/*
 // This is how the caching will mostly be used
 $html = new CacheObject(
             'navigation.html',
@@ -60,4 +91,5 @@ if (!$html->output()): $html->bufferContent(); ?>
 <html><head><title>Foo</title></head>
 <body>Hello World</body></html>
 <? $html->bufferEnd(); endif; ?>
-<? $ct = $html->getContentType(); echo "\nType: {$ct}\n" ?>
+<? $ct = $html->getContentType(); echo "\nType: {$ct}\n"
+*/
