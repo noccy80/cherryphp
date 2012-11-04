@@ -19,7 +19,7 @@ use Cherry\DateTime\Duration;
  *  - CO_USE_AUTO - Store object metadata in memory cache while automatically
  *      determining whether to store the blob in disk or memory cache based
  *      on file size.
- *      
+ *
  * Additional flags:
  *  - CO_FLUSH - Flush the key if it exists, forcing re-generation of the content.
  *  - CO_DELAY - Don't check (or generate) the cache before the object is
@@ -227,7 +227,7 @@ class CacheObject {
         \Cherry\debug("Generating content...");
         // Default expiry time
         $config = App::config();
-        $def_expiry = $config->query('cache.default-expiry', '30m');
+        $def_expiry = $config->get('cache.default-expiry', '30m');
         // We don't want to call the generator function if the generator is
         // explicitly set to be a file
         if (is_callable($this->generator) && !($this->flags & (self::CO_GEN_FILE | self::CO_GEN_PHPFILE))) {
@@ -282,7 +282,7 @@ class CacheObject {
         if ($type == 'cache') {
             if ($cache == 'disk') {
                 // Check cache dir for object
-                $path = App::config()->query('paths.cache');
+                $path = App::config()->get('paths.cache');
                 $blobpath = $path._DS_.$id;
                 if (file_exists($blobpath)) {
                     $blob = file_get_contents($blobpath);
@@ -341,16 +341,16 @@ class CacheObject {
 
         $key_cache = 'entry:'.$id;
         $key_meta = 'meta:'.$id;
-        
+
         if (!$this->expires)
-            $this->expires = App::config()->query('cache.default-expiry','30m');
+            $this->expires = App::config()->get('cache.default-expiry','30m');
 
         if ($type == 'cache') {
             if ($cache == 'disk') {
                 // Check cache dir for object
-                $path = App::config()->query('paths.cache');
-                if (!is_dir($path))
-                    user_error("Cache directory {$path} does not exist!");
+                $path = App::config()->get('paths.cache');
+                if ((!is_dir($path)) && (!mkdir($path)))
+                    user_error("Cache directory {$path} does not exist and mkdir failed!");
                 $header = [
                     'content-type' => $this->contenttype,
                     'content-length' => strlen($this->content),
@@ -365,9 +365,11 @@ class CacheObject {
                 $blob = serialize($header)._CACHE_SEP_.$content;
                 file_put_contents($path._DS_.$id, $blob);
             } elseif ($cache == 'ram') {
-                // check memcached
+                // check memcache
             } elseif ($cache == 'auto') {
-                // check memcached for metadata, then read entry from disk.
+                // check memcache for metadata, then read entry from disk or
+                // memcache.
+                $max_blob = App::config()->get('cache.max-blob-size');
             }
         }
 
@@ -398,9 +400,11 @@ class CacheObject {
         if ($this->flags & self::CO_DELAY) $this->query();
         return $this->contenttype;
     }
-    
-    public static function getUrl($url) {
-        $co = new CacheObject($url,self::CO_USE_DISK|self::CO_COMPRESS,function($assetid,$var){
+
+    public static function getUrl($url,$refresh=false) {
+        $flags = self::CO_USE_DISK|self::CO_COMPRESS;
+        if ($refresh) $flags |= self::CO_FLUSH;
+        $co = new CacheObject($url,$flags,function($assetid,$var){
             $doc = file_get_contents($assetid);
             return [ $doc, 'text/html', '30m'];
         });

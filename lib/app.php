@@ -54,11 +54,43 @@ class AppConfig {
 
     private $cfg = [];
 
-    function query($key,$default=null) {
-        if (array_key_exists($key,$this->cfg)) {
-            return $this->cfg[$key];
+    /**
+     * @brief Query a configuration key.
+     *
+     * The keys are expanded from the structure of the json configuration file.
+     * If you have got the following:
+     *
+     *     { "foo": { "bar": [ "baz" ] }}
+     *
+     * You can get the array by querying foo.bar:
+     *
+     *     App::config()->query('foo.bar');
+     *
+     * A default value can be provided to be returned if the key can not be
+     * found.
+     *
+     * @param string $key The key
+     * @param string $default Default value
+     * @return Mixed The unmodified value of the key
+     */
+    function get($key,$default=null) {
+        new \Cherry\ScopeTimer("Key fetch {$key}");
+        \Cherry\debug("Config::get {$key}");
+        $base = $this->cfg;
+        $keyseg = explode('.',$key);
+        while (($key = array_shift($keyseg))) {
+            $hit = false;
+            if (is_array($base)) {
+                if (!array_key_exists($key,$base))
+                    return $default;
+                $base = $base[$key];
+            } elseif (is_object($base)) {
+                if (!isset($base->{$key}))
+                    return $default;
+                    $base = $base->{$key};
+            }
         }
-        return $default;
+        return $base;
     }
 
     public function addConfiguration($file) {
@@ -67,8 +99,8 @@ class AppConfig {
                 $this->addConfiguration($f);
             }
         } else {
-            \Cherry\debug("Attempting to load configuration file %s.", $file);
             if (file_exists($file)) {
+                \Cherry\debug("Attempting to load configuration file %s.", $file);
                 $cfg = json_decode(file_get_contents($file));
                 if (($err = json_last_error())) {
                     switch($err) {
@@ -82,12 +114,15 @@ class AppConfig {
                     }
                     user_error("{$msg} ({$err}) while parsing configurationn {$file}");
                 }
-                $this->apply($cfg);
+                $this->cfg = array_merge_recursive($this->cfg, (array)$cfg);
+            } else {
+                \Cherry\debug("Configuration file %s: File not found", $file);
             }
         }
     }
 
-    private function apply($config,$base=null) {
+    private function apply($config) {
+
 
         foreach((array)$config as $k=>$v) {
             $kk = ($base?$base.'.'.$k:$k);
