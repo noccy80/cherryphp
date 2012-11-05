@@ -16,6 +16,7 @@ class Response {
     }
 
     public function output() {
+        //ini_set('zlib.output_compression',1);
         if ($this->document) {
             $doc = $this->document->getContent();
             echo $doc;
