@@ -50,7 +50,9 @@ class Console {
             if ($adapter != null) {
                 $objadapter = new $adapter;
             } else {
-                if (_IS_LINUX) {
+                if (php_sapi_name() == 'cli-server')
+                    $objadapter = new \Cherry\Cli\Adapters\NullConsole();
+                elseif (_IS_LINUX) {
                     if (getenv("ANSI")=='1') {
                         \Cherry\Log(\Cherry\LOG_DEBUG,"Console: ANSI envvar is 1, enabling ANSI.");
                         $objadapter = new \Cherry\Cli\Adapters\AnsiConsole();

@@ -74,8 +74,8 @@ class AppConfig {
      * @return Mixed The unmodified value of the key
      */
     function get($key,$default=null) {
-        new \Cherry\ScopeTimer("Key fetch {$key}");
-        \Cherry\debug("Config::get {$key}");
+        // new \Cherry\ScopeTimer("Key fetch {$key}");
+        // \Cherry\debug("Config::get {$key}");
         $base = $this->cfg;
         $keyseg = explode('.',$key);
         while (($key = array_shift($keyseg))) {
@@ -112,11 +112,11 @@ class AppConfig {
                         case JSON_ERROR_STATE_MISMATCH: $msg = 'State mismatch'; break;
                         default: $msg = 'Unknown error'; break;
                     }
-                    user_error("{$msg} ({$err}) while parsing configurationn {$file}");
+                    user_error("Error #{$err} ({$msg}) while parsing configuration {$file}");
                 }
                 $this->cfg = array_merge_recursive($this->cfg, (array)$cfg);
             } else {
-                \Cherry\debug("Configuration file %s: File not found", $file);
+                \Cherry\debug("Skipping config file %s: File not found", $file);
             }
         }
     }
@@ -143,11 +143,11 @@ class AppContext {
 
     public function __construct() {
         if (file_exists('.context'))
-            $this->context = (array)json_decode(file_get_contents('.context'));
+            $this->context = unserialize(file_get_contents('.context'));
     }
 
     public function __destruct() {
-        file_put_contents('.context',json_encode($this->context));
+        file_put_contents('.context',serialize($this->context));
     }
 
     public function __get($key) {

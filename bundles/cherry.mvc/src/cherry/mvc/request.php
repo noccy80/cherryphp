@@ -15,28 +15,37 @@ class Request {
     private
             $context = null,
             $uri = null,
-            $method = null;
+            $method = null,
+            $remoteip = null,
+            $remotehost = null,
+            $remoteport = null,
+            $sapi = null;
 
     public function __construct($context=null) {
         $this->context = $context;
         Event::invoke(\Cherry\Mvc\EventsEnum::REQUEST_CREATE,$this);
-
-        if (php_sapi_name() == 'server-cli') {
-            $this->server = $_SERVER['HTTP_HOST'];
-            $this->uri = $_SERVER['REQUEST_URI'];
-            $this->method = $_SERVER['REQUEST_METHOD'];
-        } else {
-            if (empty($_SERVER['REQUEST_URI'])) {
-                if ($requri = getenv('REQUEST_URI')) {
-                    $this->uri = $requri;
-                    $this->method = 'GET';
-                }
-            } else {
+        $this->sapi = php_sapi_name();
+        switch($this->sapi) {
+            case 'cli-server':
+                $this->server = $_SERVER['HTTP_HOST'].':'.$_SERVER['HTTP_PORT'];
                 $this->uri = $_SERVER['REQUEST_URI'];
-                $this->method = (empty($_SERVER['REQUEST_METHOD']))?'GET':$_SERVER['REQUEST_METHOD'];
-            }
-            if (!$this->uri) $this->url = '/';
+                $this->method = $_SERVER['REQUEST_METHOD'];
+                $this->remoteip = $_SERVER['REMOTE_ADDR'];
+                $this->remoteport = $_SERVER['REMOTE_PORT'];
+                break;
+            default:
+                if (empty($_SERVER['REQUEST_URI'])) {
+                    if ($requri = getenv('REQUEST_URI')) {
+                        $this->uri = $requri;
+                        $this->method = 'GET';
+                    }
+                } else {
+                    $this->uri = $_SERVER['REQUEST_URI'];
+                    $this->method = (empty($_SERVER['REQUEST_METHOD']))?'GET':$_SERVER['REQUEST_METHOD'];
+                }
         }
+        $this->uri = ($this->uri)?:'/';
+        $this->method = ($this->method)?:'GET';
     }
 
     public function __toString() {

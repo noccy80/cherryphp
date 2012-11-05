@@ -51,15 +51,19 @@ use Cherry\Cache\Cache;
 $ci = Cache::getInstance();
 echo "Set: ".$ci->set('foo','bar')."\n";
 echo "Get: ".$ci->get('foo')."\n";
-*/
 
-/*
 $mc = \Cherry\Cache\Memcached::getInstance();
 echo "Set: ".$mc->updateValue('foo','bar')."\n";
 echo "Get: ".$mc->getValue('foo')."\n";
-*/
 
 // Fetch an URL
+App::context()->url = 'http://google.com';
+
+// Fetch an URL
+$doc = CacheObject::getUrl(App::context()->url);
+echo "Got ".strlen($doc)." bytes of data!\n";
+die();
+*/
 
 list($tot,$single) = \Cherry\Base\Diag::benchmark(1000,function() {
     $doc = CacheObject::getUrl('http://www.google.com',true);
