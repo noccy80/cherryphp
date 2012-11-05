@@ -67,7 +67,8 @@ class Document {
 
     public function end() {
         if ($this->ob_active) {
-            ob_end_flush();
+            $this->body .= ob_get_contents();
+            ob_end_clean();
             $this->ob_active = false;
         }
     }

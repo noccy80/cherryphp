@@ -97,7 +97,7 @@ class TestController {
             [ 'class'=>'box' ]
         );
 
-        echo html::pre(print_r($_SERVER,true));
+        echo html::pre(print_r($_SERVER,true), [ 'style'=>'background-color:#F0F0F0; border:solid 1px #808080; padding:5px;' ]);
 
     }
 }
