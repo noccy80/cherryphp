@@ -57,9 +57,7 @@ echo "Set: ".$mc->updateValue('foo','bar')."\n";
 echo "Get: ".$mc->getValue('foo')."\n";
 
 // Fetch an URL
-App::context()->url = 'http://google.com';
-
-// Fetch an URL
+App::context()->url = 'http://www.google.com';
 $doc = CacheObject::getUrl(App::context()->url);
 echo "Got ".strlen($doc)." bytes of data!\n";
 die();
