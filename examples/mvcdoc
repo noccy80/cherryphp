@@ -79,12 +79,13 @@ class TestController {
         $this->request = $request;
         $this->response = $response;
     }
-    public function invoke() {
+    public function invoke($action,$args) {
         // Begin the document, and assign it as the response document
         $doc = Document::begin(Document::DT_HTML5,'en-us','UTF-8');
         $this->response->setDocument($doc);
         $this->setup($doc);
-        $this->indexAction($doc);
+        call_user_func_array([$this,$action.'Action'], array_merge([$doc],$args));
+        //$this->indexAction($doc);
         // Output the document
         $this->response->output();
     }
@@ -100,7 +101,12 @@ class TestController {
         $js = 'function yay() { alert("Wohoo!"); }';
         $doc->addInlineScript($js);
     }
-    public function indexAction(Document $doc) {
+    public function viewAction(Document $doc, $id = null) {
+    
+        echo "Displaying ID ".$id;
+    
+    }
+    public function indexAction(Document $doc, $sub1 = null, $sub2 = null) {
 
         // Now output whatever the document should contain
         //echo "<h1>Document source:</h1>";
@@ -113,6 +119,13 @@ class TestController {
                 [
                     'link' => html::a('Here',[ 'href'=>'javascript:yay();' ]),
                     'span' => html::span('This is a text span.',[ 'style'=>'color:blue;' ]),
+                ]
+            ).
+            html::p(
+                "Arguments: 1:{first} 2:{second}", [],
+                [
+                    'first' => $sub1,
+                    'second' => $sub2
                 ]
             ).
             html::p(
@@ -134,6 +147,7 @@ class TestController {
 
 $r = AdHocRouter::getInstance();
 $r->addRoutes([
+    '/post/(.*)' => 'test/view:$1',
     '/(:str)/(:str)' => 'test/index:$1,$2',
     '/(:str)' => 'test/index:$1',
     '/' => 'test/index'
