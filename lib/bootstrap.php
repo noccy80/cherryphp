@@ -14,6 +14,9 @@ define('DEBUG_VERBOSE',false);
 if ($_app = getenv("CHERRY_APP")) define('CHERRY_APP',$_app);
 if ($_lib = getenv("CHERRY_LIB")) define('CHERRY_LIB',$_lib);
 
+if (getenv('DEBUG_ERRORS')==1)
+    error_reporting(E_ERROR | E_WARNING | E_PARSE | E_COMPILE_ERROR);
+
 // Fallbacks
 if (defined('CHERRY_APP'))
     define('CHERRY_APPROOT',CHERRY_APP);

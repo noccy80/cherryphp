@@ -27,7 +27,7 @@ class Request {
         $this->sapi = php_sapi_name();
         switch($this->sapi) {
             case 'cli-server':
-                $this->server = $_SERVER['HTTP_HOST'].':'.$_SERVER['HTTP_PORT'];
+                $this->server = $_SERVER['HTTP_HOST'];
                 $this->uri = $_SERVER['REQUEST_URI'];
                 $this->method = $_SERVER['REQUEST_METHOD'];
                 $this->remoteip = $_SERVER['REMOTE_ADDR'];

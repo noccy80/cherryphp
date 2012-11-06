@@ -23,34 +23,58 @@ use Cherry\Mvc\Document;
 use Cherry\Mvc\Response;
 use Cherry\Mvc\Request;
 use Cherry\Mvc\Html;
+use Cherry\Traits\SingletonAccess;
 
 class AdHocRouter {
+    use SingletonAccess;
     private
             $request = null,
-            $response = null;
+            $response = null,
+            $routes = [];
 
     public function __construct() {
         $this->request = new Request();
         $this->response = new Response();
     }
     public function route() {
-        echo "<pre>";
-        var_dump($this->request);
-        echo "</pre>";
-        return;
-        $ctl = new TestController($this->request, $this->response);
-        $ctl->invoke();
+        foreach($this->routes as $rule=>$route) {
+            $re = str_replace('/','\/',$rule);
+            $re = str_replace(':str','[a-zA-Z]*',$re);
+            $match = [];
+            if (preg_match("/^{$re}/",$this->request->getUri(),$match)) {
+                list($tctl,$tparms) = explode(':',$route);
+                $tcclass = explode('/',$tctl);
+                $tcmethod = array_pop($tcclass);
+                $tparms = explode(',',$tparms);
+                $tcargs = [];
+                foreach($tparms as $parm) {
+                    if ($parm[0] == '$') {
+                        $tcargs[] = $match[intval(substr($parm,1))];
+                    }
+                }
+                if (count($tcclass) == 1) {
+                    // Append app namespace
+                    $tcclass = $tcclass[0].'Controller';
+                } else {
+                    $tcclass = "\\".join("\\",$tcclass).'Controller';
+                }
+                $ctl = new $tcclass($this->request, $this->response);
+                $ctl->invoke($tcmethod,$tcargs);
+                return true;
+            }
+        }
+    }
+    public function addRoutes($routes) {
+        $routes = (array)$routes;
+        $this->routes = array_merge($this->routes,$routes);
     }
 }
-
-// Request and response is handed to the controller.
-$request = new Request();
 
 class TestController {
     private
             $request = null,
             $response = null;
-            
+
     public function __construct(Request $request, Response $response) {
         $this->request = $request;
         $this->response = $response;
@@ -60,7 +84,7 @@ class TestController {
         $doc = Document::begin(Document::DT_HTML5,'en-us','UTF-8');
         $this->response->setDocument($doc);
         $this->setup($doc);
-        $this->_index($doc);
+        $this->indexAction($doc);
         // Output the document
         $this->response->output();
     }
@@ -76,7 +100,7 @@ class TestController {
         $js = 'function yay() { alert("Wohoo!"); }';
         $doc->addInlineScript($js);
     }
-    public function _index(Document $doc) {
+    public function indexAction(Document $doc) {
 
         // Now output whatever the document should contain
         //echo "<h1>Document source:</h1>";
@@ -108,5 +132,10 @@ class TestController {
     }
 }
 
-$r = new AdHocRouter();
+$r = AdHocRouter::getInstance();
+$r->addRoutes([
+    '/(:str)/(:str)' => 'test/index:$1,$2',
+    '/(:str)' => 'test/index:$1',
+    '/' => 'test/index'
+]);
 $r->route();
