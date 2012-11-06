@@ -29,7 +29,7 @@ class FifoQueue extends Queue implements \Countable {
 
     public function push($data) {
         array_unshift($this->queue, $data);
-        if (($this->maxsize>0) && (count($this->queue >= $this->maxsize))) {
+        if (($this->maxsize > 0) && (count($this->queue >= $this->maxsize))) {
             if ($this->flags & self::QUEUE_OVERFLOW_EXCEPTION)
                 throw new \OutOfBoundsException("FIFO Queue overflow", self::ERR_OVERFLOW);
             $this->queue = array_slice($this->queue,0,$this->maxsize);
