@@ -40,7 +40,7 @@ class Router {
                     return;
                 } else {
                     \App::server()->log('%s %s == %s (%s)', $this->request->getMethod(), $uri, $file, '404');
-                    header("HTTP/1.1 404 Not found", true, 404);
+                    header($this->request->getProtocol()." 404 Not found", true, 404);
                     echo "File not found.";
                     return;
                 }
