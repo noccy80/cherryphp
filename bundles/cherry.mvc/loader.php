@@ -9,6 +9,8 @@ abstract class EventsEnum {
     const RENDER_SPECIALTAG     = 'cherry:mvc.render.specialtag';
 }
 
+use App;
+
 return array(
     'autoload' => array(
         'Cherry\Mvc\Application',

@@ -5,9 +5,16 @@ class App {
     private static $_apps = [];
     private static $_context = null;
     private static $_config = null;
+    private static $_extensions = [];
 
     public function __construct() {
         user_error("The App class is intended to be called static.");
+    }
+
+    public static function bootstrap(array $config) {
+        foreach($config as $k=>$v) {
+            define(strtoupper(str_replace('.','_',$k)), $v);
+        }
     }
 
     public static function run($app) {
@@ -46,6 +53,18 @@ class App {
 
     public static function bundles() {
         return \Cherry\BundleManager::getInstance();
+    }
+
+    public static function extend($name,$class) {
+        self::$_extensions[$name] = $class;
+    }
+
+    public static function __callStatic($mtd,$args) {
+        if (array_key_exists($mtd,self::$_extensions)) {
+            if(!is_object(self::$_extensions[$mtd]))
+                self::$_extensions[$mtd] = new self::$_extensions[$mtd];
+            return self::$_extensions[$mtd];
+        }
     }
 
 }
@@ -142,12 +161,12 @@ class AppContext {
     private $context = [];
 
     public function __construct() {
-        if (file_exists('.context'))
+        if (file_exists(APP_PATH._DS_.'.context'))
             $this->context = unserialize(file_get_contents('.context'));
     }
 
     public function __destruct() {
-        file_put_contents('.context',serialize($this->context));
+        file_put_contents(APP_PATH._DS_.'.context',serialize($this->context));
     }
 
     public function __get($key) {

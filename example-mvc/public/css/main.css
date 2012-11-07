@@ -1,0 +1,14 @@
+body {
+    background-color:#E0E0E0;
+    font:12px sans-serif;
+}
+
+pre {
+    background-color:#F0F0F0;
+    border:solid 1px #808080;
+    padding:5px;
+}
+
+.box {
+    background-color:#F0F0F0;
+}

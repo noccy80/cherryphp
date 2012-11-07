@@ -4,6 +4,11 @@ namespace cherry\Mvc;
 
 use Cherry\Extension\ExtensionManager;
 use Cherry\Extension\ExtensionException;
+use Cherry\Mvc\Router;
+use App;
+
+App::extend('server', new Server());
+App::extend('router', Router::getInstance());
 
 class Application extends \cherry\Application {
 
@@ -21,15 +26,15 @@ class Application extends \cherry\Application {
         // printf("Linking router %s\n",$router);
 
         $this->loadExtensions();
-        
+
         // Create the router object
         $robj = new $router();
         $req = new \cherry\Mvc\Request();
         $robj->route($req);
     }
-    
+
     private function loadExtensions() {
-        
+
         $sFile = CHERRY_APP._DS_.'data'._DS_.'extensions.json';
         if (file_exists($sFile)) {
             $cfg = json_decode(file_get_contents($sFile));
@@ -37,7 +42,7 @@ class Application extends \cherry\Application {
                 ExtensionManager::load($extn);
             }
         }
-        
+
     }
 
 }
