@@ -26,6 +26,8 @@ class Request {
         $this->context = $context;
         Event::invoke(\Cherry\Mvc\EventsEnum::REQUEST_CREATE,$this);
         $this->sapi = php_sapi_name();
+        if (!empty($_SERVER['SERVER_PROTOCOL']))
+            $this->protocol = $_SERVER['SERVER_PROTOCOL'];
         switch($this->sapi) {
             case 'cli-server':
                 $this->server = $_SERVER['HTTP_HOST'];
@@ -73,6 +75,10 @@ class Request {
         if (!empty($_SERVER[$key]))
             return $_SERVER[$key];
         return null;
+    }
+    
+    public function getProtocol() {
+        return $this->protocol;
     }
 
     public function getProtocol() {
