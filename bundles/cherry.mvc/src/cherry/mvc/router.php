@@ -26,6 +26,7 @@ class Router {
                     $file = APP_ROOT._DS_.$target.$uri;
                 }
                 if (file_exists($file)) {
+                    $this->response->setCacheControl('public,max-age=3600');
                     $this->response->sendFile($file);
                 } else {
                     $this->response->send404($file);
@@ -39,6 +40,9 @@ class Router {
             $re = str_replace(':str','[a-zA-Z\.,\-]*',$re);
             $match = [];
             if (preg_match("/^{$re}/",$uri,$match)) {
+                for($n = 1; $n < count($match); $n++) {
+                    $route = str_replace('$'.$n,$match[$n],$route); 
+                }
                 if (strpos($route,':')!==false)
                     list($tctl,$tparms) = explode(':',$route);
                 else
@@ -48,7 +52,7 @@ class Router {
                 $tparms = explode(',',$tparms);
                 $tcargs = [];
                 foreach($tparms as $parm) {
-                    if ($parm[0] == '$') {
+                    if (($parm) && ($parm[0] == '$')) {
                         $tcargs[] = $match[intval(substr($parm,1))];
                     }
                 }
@@ -59,7 +63,8 @@ class Router {
                 } else {
                     $tcclass = "\\".join("\\",$tcclass).'Controller';
                 }
-                $tcclass = APP_NS."\\Controllers\\".$tcclass;
+                $tcclass = str_replace("\\\\","\\",APP_NS."\\Controllers\\".$tcclass);
+                if (!$tcmethod) $tcmethod = 'index';
                 \App::server()->log('%s => %s:%s [%s]', (string)$this->request, ucwords($tcclass),$tcmethod,join(',',$tcargs));
                 $ctl = new $tcclass($this->request, $this->response);
                 $ctl->invoke($tcmethod,$tcargs);
@@ -67,12 +72,18 @@ class Router {
             }
         }
     }
-    public function addRoutes($routes) {
+    public function addRoutes($routes,$prepend=false) {
         $routes = (array)$routes;
-        $this->routes = array_merge($this->routes,$routes);
+        if ($prepend)
+            $this->routes = array_merge($routes,$this->routes);
+        else
+            $this->routes = array_merge($this->routes,$routes);
     }
-    public function addPassthru($routes) {
+    public function addPassthru($routes,$prepend=false) {
         $routes = (array)$routes;
-        $this->passthru = array_merge($this->passthru,$routes);
+        if ($prepend)
+            $this->passthru = array_merge($routes,$this->passthru);
+        else
+            $this->passthru = array_merge($this->passthru,$routes);
     }
 }

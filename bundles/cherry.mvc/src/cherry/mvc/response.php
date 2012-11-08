@@ -38,7 +38,7 @@ class Response {
     
     public function setHeader($header,$value) {
         if (headers_sent()) return false;
-        header($header.': '.$value);
+        header($header.': '.$value, true);
         return true;
     }
     
@@ -48,6 +48,10 @@ class Response {
         $this->contentlength = strlen($errstr);
         $this->contenttype = 'text/html';
         echo $errstr;
+    }
+    
+    public function setCacheControl($cachecontrol) {
+        $this->setHeader('Cache-Control', $cachecontrol);
     }
 
     public function sendFile($file) {

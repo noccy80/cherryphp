@@ -38,7 +38,9 @@ class Request {
                 $this->remoteport = $_SERVER['REMOTE_PORT'];
                 $this->protocol = $_SERVER['SERVER_PROTOCOL'];
                 $this->accept = new HttpAcceptRequestDirective($_SERVER['HTTP_ACCEPT']);
-                $this->cache_control = new HttpCacheRequestDirective($_SERVER['HTTP_CACHE_CONTROL']);
+                if (!empty($_SERVER['HTTP_CACHE_CONTROL']))
+                    $cache_control = $_SERVER['HTTP_CACHE_CONTROL'];
+                //$this->cache_control = new HttpCacheRequestDirective($cache_control?:'');
                 break;
             case 'cli':
                 $this->server = getenv('REQUEST_HOST')?:'localhost';

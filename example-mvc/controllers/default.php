@@ -1,6 +1,6 @@
 <?php
 
-namespace ExampleSite\Controllers;
+namespace CherryTree\Controllers;
 
 use Cherry\Mvc\Controller;
 use Cherry\Mvc\Request;
@@ -27,6 +27,9 @@ class DefaultController extends Controller {
     }
     public function indexAction($sub1 = null, $sub2 = null) {
 
+        //$this->response->setCacheControl('public,max-age=3600');
+        $this->document->setCachePolicy('public');
+    
         echo html::h1('Welcome to CherryPHP');
         echo html::div(
             html::p(

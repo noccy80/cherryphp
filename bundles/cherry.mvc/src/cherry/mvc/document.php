@@ -44,6 +44,7 @@ class Document {
             $meta = [],
             $scripts = [],
             $inlinescripts = [],
+            $styles = [],
             $title = null,
             $chunked = false,
             $body = '',
@@ -71,6 +72,12 @@ class Document {
             ob_end_clean();
             $this->ob_active = false;
         }
+    }
+    
+    public function setCachePolicy($policy) {
+        if (in_array($policy,[null,'public','private','private_no_expire','nocache']))
+            return session_cache_limiter($policy);
+        user_error('Invalid cache policy (cache_limiter) assign: '.$policy);
     }
 
     /**
