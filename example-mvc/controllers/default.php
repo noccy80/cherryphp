@@ -2,38 +2,15 @@
 
 namespace ExampleSite\Controllers;
 
+use Cherry\Mvc\Controller;
 use Cherry\Mvc\Request;
 use Cherry\Mvc\Response;
 use Cherry\Mvc\Document;
 use Cherry\Mvc\Html;
 
-abstract class Controller {
-    protected
-            $request = null,
-            $response = null;
-
-    public function __construct(Request $request, Response $response) {
-        $this->request = $request;
-        $this->response = $response;
-    }
-    public function invoke($action,$args) {
-        // Begin the document, and assign it as the response document
-        $doc = Document::begin(Document::DT_HTML5,'en-us','UTF-8');
-        $this->response->setDocument($doc);
-        $this->setup($doc);
-        call_user_func_array([$this,$action.'Action'], array_merge([$doc],$args));
-        //$this->indexAction($doc);
-        // Output the document
-        $this->response->output();
-    }
-    abstract function setup(Document $doc);
-    protected function show_404() {
-
-    }
-}
-
 class DefaultController extends Controller {
-    public function setup(Document $doc) {
+    public function setup() {
+        $doc = $this->document;
         // Meta headers, scripts and styles.
         $doc->setMeta('language','english');
         $doc->setMeta('noccylabs.sdip','sdip=1;hash=2;salt=2');
@@ -43,12 +20,12 @@ class DefaultController extends Controller {
         $js = 'function yay() { alert("Wohoo!"); }';
         $doc->addInlineScript($js);
     }
-    public function viewAction(Document $doc, $id = null) {
+    public function viewAction($id = null) {
 
         echo "Displaying ID ".$id;
 
     }
-    public function indexAction(Document $doc, $sub1 = null, $sub2 = null) {
+    public function indexAction($sub1 = null, $sub2 = null) {
 
         echo html::h1('Welcome to CherryPHP');
         echo html::div(
