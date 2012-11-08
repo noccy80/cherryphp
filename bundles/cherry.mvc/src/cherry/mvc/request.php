@@ -20,7 +20,8 @@ class Request {
             $remotehost = null,
             $remoteport = null,
             $sapi = null,
-            $protocol = null;
+            $protocol = null,
+            $cache_control = null;
 
     public function __construct($context=null) {
         $this->context = $context;
@@ -36,12 +37,13 @@ class Request {
                 $this->remoteip = $_SERVER['REMOTE_ADDR'];
                 $this->remoteport = $_SERVER['REMOTE_PORT'];
                 $this->protocol = $_SERVER['SERVER_PROTOCOL'];
-                $this->accept = new HttpAcceptHeader($_SERVER['HTTP_ACCEPT']);
+                $this->accept = new HttpAcceptRequestDirective($_SERVER['HTTP_ACCEPT']);
+                $this->cache_control = new HttpCacheRequestDirective($_SERVER['HTTP_CACHE_CONTROL']);
                 break;
             case 'cli':
                 $this->server = getenv('REQUEST_HOST')?:'localhost';
                 $this->protocol = 'HTTP/1.1';
-                $this->accept = new HttpAcceptHeader('*/*');
+                $this->accept = new HttpAcceptRequestDirective('*/*');
             default:
                 if (empty($_SERVER['REQUEST_URI'])) {
                     if ($requri = getenv('REQUEST_URI')) {
@@ -81,13 +83,51 @@ class Request {
         return $this->protocol;
     }
 
-    public function getProtocol() {
-        return $this->protocol;
-    }
 
 }
 
-class HttpAcceptHeader {
+class HttpCacheRequestDirective {
+    
+    private
+            $directives = [],
+            $extensions = [],
+            $header = null;
+            
+    public function __construct($string) {
+        $directives = explode(',',$string);
+        $this->header = $string;
+        foreach($directives as $directive) {
+            $directive = trim($directive);
+            if (strpos($directive,'='))
+                list($dname,$dvalue) = explode('=',$directive);
+            else
+                list($dname,$dvalue) = [ $directive, true ];
+            switch(strtolower($dname)) {
+                case 'no-cache':
+                case 'no-store':
+                case 'max-age':
+                case 'max-stale':
+                case 'min-fresh':
+                case 'no-transform':
+                case 'only-if-cached':
+                    $this->directives[$dname] = $dvalue;
+                    break;
+                default:
+                    $this->extensions[$dname] = $dvalue;
+                    break;
+            }
+            
+        }
+        
+    }
+    
+    public function __toString() {
+        return $this->header;
+    }
+    
+}
+
+class HttpAcceptRequestDirective {
 
     private
             $accept = null,
@@ -105,8 +145,12 @@ class HttpAcceptHeader {
         }
     }
 
-    public function getPreferedType(array $types) {
-
+    public function getPreferedType(array $types, array $offers) {
+        // Calculate weights, eg:
+        // Client:  text/xml;q=1.0,text/html;q=0.8
+        // Offers:  text/xml (0.5), text/html(1.0)
+        // Actual:  text/xml = 1.0*0.5 = 0.5,
+        //          text/html = 0.8*1.0 = 0.8 <- winner!
     }
 
     public function getAcceptedTypes() {

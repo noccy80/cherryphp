@@ -18,6 +18,10 @@ class Response {
     public function setDocument(Document $document) {
         $this->document = $document;
     }
+    
+    public function getDocument() {
+        return $this->document;
+    }
 
     public function __construct($protocol) {
         $this->protocol = $protocol;

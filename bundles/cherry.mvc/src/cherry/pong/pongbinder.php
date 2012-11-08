@@ -16,7 +16,7 @@ class PongBinder {
 
     public function __construct() {
 
-        $this->pongs = new Array();
+        $this->pongs = Array();
         Event::observe(\Cherry\Mvc\EVT_ON_HEADER, array($this, 'onHeader'));
 
     }
@@ -41,7 +41,6 @@ class PongBinder {
         // Write header
         $pongjs = new \Cherry\Cache\CachableFile(app::getBundle('cherry.mvc')->staticFile('js/pong.js'));
         $channels = \Cherry\Pong\Pong::getChannels();
-        $prototypes = 
 
     }
 
