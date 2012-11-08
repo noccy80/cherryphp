@@ -35,13 +35,27 @@ class Response {
         ]), true, $code);
         $this->status = $code;
     }
+    
+    public function setHeader($header,$value) {
+        if (headers_sent()) return false;
+        header($header.': '.$value);
+        return true;
+    }
+    
+    public function send404($file) {
+        $this->setStatus(404,'File not found');
+        $errstr = "<h1>File not found.</h1>\n<p>The resource could not be found.</p>\n";
+        $this->contentlength = strlen($errstr);
+        $this->contenttype = 'text/html';
+        echo $errstr;
+    }
 
     public function sendFile($file) {
         $ct = null;
         // Apply content type
         foreach([
             '*.css' => 'text/css',
-            '*.js' => 'text/javascript',
+            '*.js' => 'text/javascript'
         ] as $ptn => $ct)
             if (fnmatch($ptn,$file))
                 $ctype = $ct;

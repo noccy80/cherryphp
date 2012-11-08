@@ -82,6 +82,12 @@ class DefaultController extends Controller {
         echo html::pre(print_r($_SERVER,true), [ 'style'=>'background-color:#F0F0F0; border:solid 1px #808080; padding:5px;' ]);
 
     }
+    
+    public function testAction(Document $doc) {
+        
+        echo html::p('Hello World from '.__CLASS__.':'.__FUNCTION__.'!');
+        
+    }
 
     public function debugAction(Document $doc) {
 

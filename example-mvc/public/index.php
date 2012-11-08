@@ -25,6 +25,7 @@ App::bootstrap([
 App::bundles()->load('cherry.mvc');
 App::router()->addRoutes([
     '/debug' => 'default/debug',
+    '/test' => 'default/test',
     '/post/(.*)' => 'default/view:$1',
     '/(:str)/(:str)' => 'default/index:$1,$2',
     '/(:str)' => 'default/index:$1',

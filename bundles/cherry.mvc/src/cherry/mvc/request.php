@@ -44,16 +44,13 @@ class Request {
                 $this->server = getenv('REQUEST_HOST')?:'localhost';
                 $this->protocol = 'HTTP/1.1';
                 $this->accept = new HttpAcceptRequestDirective('*/*');
+                $this->method = getenv('REQUEST_METHOD')?:'GET';
+                $this->uri = getenv('REQUEST_URI')?:'/';
             default:
-                if (empty($_SERVER['REQUEST_URI'])) {
-                    if ($requri = getenv('REQUEST_URI')) {
-                        $this->uri = $requri;
-                        $this->method = 'GET';
-                    }
-                } else {
+                if (!empty($_SERVER['REQUEST_URI'])) {
                     $this->uri = $_SERVER['REQUEST_URI'];
-                    $this->method = (empty($_SERVER['REQUEST_METHOD']))?'GET':$_SERVER['REQUEST_METHOD'];
                 }
+                if (!$this->method) $this->method = (empty($_SERVER['REQUEST_METHOD']))?'GET':$_SERVER['REQUEST_METHOD'];
         }
         $this->uri = ($this->uri)?:'/';
         $this->method = ($this->method)?:'GET';

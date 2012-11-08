@@ -28,8 +28,7 @@ class Router {
                 if (file_exists($file)) {
                     $this->response->sendFile($file);
                 } else {
-                    $this->response->setStatus(404,'File not found');
-                    echo "File not found.";
+                    $this->response->send404($file);
                 }
                 \App::server()->log('%s: %s', (string)$this->request, (string)$this->response);
                 return;
