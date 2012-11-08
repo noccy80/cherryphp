@@ -13,8 +13,9 @@ class Router {
 
     public function __construct() {
         $this->request = new Request();
-        $this->response = new Response();
+        $this->response = new Response($this->request->getProtocol());
     }
+
     public function route() {
         $uri = $this->request->getUri();
         foreach($this->passthru as $rule=>$target) {
@@ -25,25 +26,13 @@ class Router {
                     $file = APP_ROOT._DS_.$target.$uri;
                 }
                 if (file_exists($file)) {
-                    \App::server()->log('%s %s == %s (%s)', $this->request->getMethod(), $uri, $file, '200');
-                    $ct = null;
-                    foreach([
-                        '*.css' => 'text/css',
-                        '*.js' => 'text/javascript'
-                    ] as $ptn => $ct)
-                        if (fnmatch($ptn,$file))
-                            $ctype = $ct;
-                    if (!$ct) $ct = mime_content_type($file);
-                    header('Content-Type: '.$ctype);
-                    header('Content-Length: '.filesize($file));
-                    readfile($file);
-                    return;
+                    $this->response->sendFile($file);
                 } else {
-                    \App::server()->log('%s %s == %s (%s)', $this->request->getMethod(), $uri, $file, '404');
-                    header("HTTP/1.1 404 Not found", true, 404);
+                    $this->response->setStatus(404,'File not found');
                     echo "File not found.";
-                    return;
                 }
+                \App::server()->log('%s: %s', (string)$this->request, (string)$this->response);
+                return;
             }
         }
         foreach($this->routes as $rule=>$route) {
@@ -72,7 +61,7 @@ class Router {
                     $tcclass = "\\".join("\\",$tcclass).'Controller';
                 }
                 $tcclass = APP_NS."\\Controllers\\".$tcclass;
-                \App::server()->log('%s %s -> %s:%s [%s]', $this->request->getMethod(), $uri, ucwords($tcclass),$tcmethod,join(',',$tcargs));
+                \App::server()->log('%s => %s:%s [%s]', (string)$this->request, ucwords($tcclass),$tcmethod,join(',',$tcargs));
                 $ctl = new $tcclass($this->request, $this->response);
                 $ctl->invoke($tcmethod,$tcargs);
                 return true;
