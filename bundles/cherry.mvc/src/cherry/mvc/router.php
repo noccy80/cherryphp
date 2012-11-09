@@ -17,6 +17,7 @@ class Router {
     }
 
     public function route() {
+        if (defined('IS_PROFILING')) $_so = \App::profiler()->enter('Routing request');
         $uri = $this->request->getUri();
         foreach($this->passthru as $rule=>$target) {
             if (fnmatch($rule,$uri)) {
@@ -41,7 +42,7 @@ class Router {
             $match = [];
             if (preg_match("/^{$re}/",$uri,$match)) {
                 for($n = 1; $n < count($match); $n++) {
-                    $route = str_replace('$'.$n,$match[$n],$route); 
+                    $route = str_replace('$'.$n,$match[$n],$route);
                 }
                 if (strpos($route,':')!==false)
                     list($tctl,$tparms) = explode(':',$route);
@@ -66,6 +67,7 @@ class Router {
                 $tcclass = str_replace("\\\\","\\",APP_NS."\\Controllers\\".$tcclass);
                 if (!$tcmethod) $tcmethod = 'index';
                 \App::server()->log('%s => %s:%s [%s]', (string)$this->request, ucwords($tcclass),$tcmethod,join(',',$tcargs));
+                if (defined('IS_PROFILING')) \App::profiler()->log('Calling controller');
                 $ctl = new $tcclass($this->request, $this->response);
                 $ctl->invoke($tcmethod,$tcargs);
                 return true;

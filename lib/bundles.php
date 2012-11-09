@@ -20,6 +20,7 @@ class BundleManager {
     }
 
     public function load($bundlekey) {
+        if (defined('IS_PROFILING')) \App::profiler()->log('Loading bundle '.$bundlekey);
         if (!empty(self::$bundles[$bundlekey]))
             return;
         $bpath = CHERRY_LIB._DS_.'bundles'._DS_.$bundlekey;
