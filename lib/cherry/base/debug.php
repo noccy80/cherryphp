@@ -24,10 +24,10 @@ class DebugLog {
         if (self::$fifo) self::$fifo->push($so);
         if (self::$hlog) fputs(self::$hlog,$so."\n");
         if (($type == LOG_DEBUG) && (getenv('DEBUG') == 1)) {
-            if (is_defined('STDERR'))
+            if (defined('STDERR'))
                 fputs(STDERR,$so."\n");
         } elseif ($type != LOG_DEBUG) {
-            if (is_defined('STDOUT'))
+            if (defined('STDOUT'))
                 fputs(STDOUT,$so."\n");
         }
     }
