@@ -9,15 +9,16 @@ class Router {
             $request = null,
             $response = null,
             $routes = [],
-            $passthru = [];
+            $passthru = [],
+            $so = null;
 
     public function __construct() {
         $this->request = new Request();
         $this->response = new Response($this->request->getProtocol());
+        if (defined('IS_PROFILING')) $this->so = \App::profiler()->enter('Routing request');
     }
 
     public function route() {
-        if (defined('IS_PROFILING')) $_so = \App::profiler()->enter('Routing request');
         $uri = $this->request->getUri();
         foreach($this->passthru as $rule=>$target) {
             if (fnmatch($rule,$uri)) {

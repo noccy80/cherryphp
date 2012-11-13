@@ -15,9 +15,15 @@ abstract class Controller {
         if (defined('IS_PROFILING'))
             $this->so = \App::profiler()->enter('Controller');
     }
+    
+    public function __destruct() {
+        \App::profiler()->log("Destroying Controller observer");
+        unset($this->so);
+    }
+    
     public function invoke($action,$args) {
         if (defined('IS_PROFILING'))
-            $_so = \App::profiler()->enter('Invoking controller');
+            \App::profiler()->log('Invoking controller');
         // Begin the document, and assign it as the response document
         $this->document = Document::begin(Document::DT_HTML5,'en-us','UTF-8');
         $this->response->setDocument($this->document);

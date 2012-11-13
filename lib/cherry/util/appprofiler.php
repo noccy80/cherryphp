@@ -25,7 +25,7 @@ class AppProfiler {
 
     public function enter($module) {
         $this->push($module);
-        return new \Cherry\Util\ScopedObserver([ $this, 'pop' ]);
+        return new \Cherry\Util\ScopedObserver([ $this, 'pop' ], [ $this, 'log' ]);
     }
     public function push($module) {
         $this->log[] = [ microtime(true), count($this->stack), self::LOGEVT_ENTER, $module];
@@ -36,7 +36,7 @@ class AppProfiler {
         $module = array_pop($this->stack);
         $stime = array_pop($this->times);
         $etime = microtime(true);
-        $this->log[] = [ $etime, count($this->stack), self::LOGEVT_LEAVE, $module.' done ('.number_format(($etime-$stime)*1000,4).'ms)' ];
+        $this->log[] = [ $etime, count($this->stack), self::LOGEVT_LEAVE, '('.number_format(($etime-$stime)*1000,4).'ms)' ];
     }
     public function log($msg) {
         $this->log[] = [ microtime(true), count($this->stack), self::LOGEVT_LOG, $msg];
@@ -66,7 +66,10 @@ class AppProfiler {
         foreach($this->log as $event) {
             list($time,$level,$type,$message) = $event;
             $ts = ($time - $this->start)*1000;
-            $out[] = sprintf('%10sms | %-3s %s', '+'.number_format($ts,4), $type, str_repeat(' · ',$level+1).$message);
+            if ($type == self::LOGEVT_LEAVE)
+                $out[] = sprintf('%10sms | %-3s %s', '+'.number_format($ts,4), $type, str_repeat(' | ',$level+1).' |_'.$message);
+            else
+                $out[] = sprintf('%10sms | %-3s %s', '+'.number_format($ts,4), $type, str_repeat(' | ',$level+1).$message);
         }
         $out[] = sprintf('%10sms | %-3s %s', '+'.number_format(($end-$this->start)*1000,4), self::LOGEVT_LOG, 'Application end.');
         $memend = memory_get_peak_usage();
@@ -77,6 +80,9 @@ class AppProfiler {
             sprintf('Memory usage: init=%.2fKB peak=%.2fKB (+%.2fKB) (true=%.2fKB peak=%.2fKB)',
                          $this->meminitial/1024, $memend/1024, ($memend - $this->meminitial)/1024,
                          $this->meminitialfull/1024, $memendfull/1024)];
+        if (count($this->stack)>0) {
+            $foot[] = sprintf('Warning! The following is still on the stack: %s', join(', ',$this->stack));
+        }
         $out = array_merge($out, $foot);
         $out[] = '';
         $logfile = join("\n",$out);

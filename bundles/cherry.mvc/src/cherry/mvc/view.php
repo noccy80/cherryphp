@@ -4,8 +4,20 @@ namespace Cherry\Mvc;
 
 abstract class View {
 
-    protected $subviews = array();
-    protected $isCacheable = false;
+    protected
+            $subviews = array(),
+            $isCacheable = false,
+            $observer = null;
+    
+    public function __construct() {
+        if (defined('IS_PROFILING'))
+            $this->observer = \App::profiler()->enter('Rendering view: '.__CLASS__);
+    }
+    
+    public function __destruct() {
+        \App::profiler()->log("Destroying view observer");
+        if ($this->observer) unset($this->observer);
+    }
 
     /**
      * @brief Tell the renderer that the view is cacheable.

@@ -21,6 +21,7 @@ class Php extends View {
     }
     
     public function __construct($view = null,array $options = null) {
+        parent::__construct();
         // Constructor
         $this->view = $view;
     }
@@ -63,6 +64,8 @@ class Php extends View {
 
     private function load($file) {
 
+        if (IS_PROFILING)
+            \App::profiler()->log("Loading and parsing view");
         ob_start();
         ob_start(array($this,'__ob_callback'));
         include $file;

@@ -218,6 +218,7 @@ class Document {
             } else {
                 $this->body = $this->view->render(true);
             }
+            unset($this->view);
         }
         $out =  $this->doctype._NL_.
                 $this->getDocumentHead().
