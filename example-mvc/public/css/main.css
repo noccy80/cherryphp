@@ -1,7 +1,20 @@
 body {
-    background-color:#E0E0E0;
+    background-color:#C8C8C8;
     font:12px sans-serif;
+    margin:0px;
+    padding:0px;
 }
+
+#wrap {
+    position:relative;
+    width:970px;
+    padding:7px 14px;
+    margin:7px auto;
+    min-height:100%;
+    background-color:#FFFFFF;
+    box-shadow:0px 0px 25px 5px rgba(50,50,50,0.3);
+}
+
 
 pre {
     background-color:#F0F0F0;
@@ -9,6 +22,187 @@ pre {
     padding:5px;
 }
 
-.box {
-    background-color:#F0F0F0;
+.header-container {
+    background:url(/images/header.jpg) no-repeat;
+    height:170px;
 }
+.header-text {
+    padding:20px;
+    font-size:200%;
+    color:#FFF;
+    text-shadow: 1px 1px 3px rgba(40,40,40,0.2);
+}
+.navigation-container {
+    border-bottom:solid 1px #888;
+}
+
+div.navigation {
+    height:32px;
+}
+ul.navigation {
+    margin:0px;
+    padding:0px;
+    list-style:none;
+}
+ul.navigation li {
+    display:block;
+    float:left;
+    height:28px;
+}
+ul.navigation a {
+    display:block;
+    height:28px;
+    line-height:28px;
+    padding:0px 8px;
+    text-decoration:none;
+    font-size:125%;
+    color:#444;
+}
+ul.navigation a:hover {
+    background-color:#666;
+    color:#FFF;
+    border-radius:3px;
+}
+
+#controls {
+    position:fixed;
+    left:-210px;
+    width:200px;
+    top:0px;
+    bottom:0px;
+    background-color:#666;
+    background:rgba(40,40,40,0.9);
+    box-shadow:0px 0px 5px 2px rgba(80,80,80,0.4);
+    transition: left 0.5s;
+    -webkit-transition: left 0.5s;
+    -o-transition: left 0.5s;
+    -moz-transition: left 0.5s;
+    padding:5px;
+    border-right:solid 10px #444;
+}
+#controls > #panels {
+    width:200px;
+}
+#controls > #paneltabs {
+    position:absolute;
+    top:0px;
+    left:220px;
+    width:32px;
+    float:right;
+}
+#controls > #paneltabs a {
+    display:block;
+    width:32px;
+    height:32px;
+    margin:0px;
+    background-color:#333;
+    margin-top:2px;
+    border-top-right-radius:3px;
+    border-bottom-right-radius:3px;
+    box-shadow:1px 1px 3px rgba(40,40,40,0.4);
+}
+#controls > #paneltabs a.current {
+    background-color:#444;
+}
+
+#controls > #panels a {
+    color:#888;
+    border-bottom:dotted 1px #888;
+    text-decoration:none;
+}
+#controls > #panels a:hover {
+    color:#DDD;
+    border-bottom:solid 1px #DDD;
+    text-decoration:none;
+}#controls:hover {
+    left:0px;
+}
+#controls div.group {
+
+}
+#controls div.group > .header {
+    border-bottom:solid 1px #888;
+    padding:0px 8px;
+    font-weight:bold;
+    height:24px;
+    line-height:24px;
+    color:#FFF;
+}
+#controls div.content {
+    color:#EEE;
+    padding:8px;
+}
+#controls label {
+    font-size:85%;
+    display:block;
+}
+#controls input[type=text] {
+    border:solid 1px #CCC;
+    background-color:#FFF;
+    color:#222;
+    font-size:120%;
+    width:100%;
+    padding:3px;
+    border-radius:2px;
+    box-shadow: inset 1px 1px 5px rgba(100,100,100,0.3);
+}
+
+#overlay {
+    position:fixed;
+    left:0px;
+    top:0px;
+    right:0px;
+    bottom:0px;
+    opacity: 0.0;
+    background-color:#444;
+    transition: opacity 1.5s;
+    display: none;
+    z-index:100;
+}
+#overlay.visible {
+    opacity: 0.8;
+    display:block;
+}
+div.dialog {
+    position:fixed;
+    left: 50%;
+    top: 50%;
+    width: 600px;
+    height: 400px;
+    margin-left: -300px;
+    margin-top: -200px;
+    background-color:#222;
+    border-radius:5px;
+    z-index:110;
+    color:#FFF;
+}
+
+/*
+ *  970 grid
+ *  12 columns
+ *  68 pixels column width7
+ *  14 pixels gutter width
+ */
+
+.container              { width:970px; overflow:hidden; }
+.container .col         { margin: 7px; float:left;     }
+.container .sub     { display:block; float:left; width:100%; overflow:hidden; margin: 0px 7px;}
+.container .col.w-1 { width:68px; }
+.container .col.w-2 { width:150px; }
+.container .col.w-3 { width:232px; }
+.container .col.w-quarter,
+.container .col.w-4 { width:314px; }
+.container .col.w-5 { width:396px; }
+.container .col.w-half,
+.container .col.w-6 { width:478px; }
+.container .col.w-7 { width:560px; }
+.container .col.w-8 { width:642px; }
+.container .col.w-9 { width:724px; }
+.container .col.w-10 { width:806px; }
+.container .col.w-11 { width:888px; }
+.container .col.w-full,
+.container .col.w-12 { width:970px; }
+.container .col:first-child   { margin-left: 0px; }
+.container .col:last-child    { margin-right: 0px; }
+.container .col.b-right { border-right:solid 1px #888; margin-right:6px; }
+.container .col.b-left { border-left:solid 1px #888; margin-left:6px; }
