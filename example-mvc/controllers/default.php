@@ -7,6 +7,9 @@ use Cherry\Mvc\Request;
 use Cherry\Mvc\Response;
 use Cherry\Mvc\Document;
 use Cherry\Mvc\Html;
+use Cherry\Mvc\View\TableView;
+use \Cherry\Mvc\View\StringView;
+use Cherry\Mvc\View\PhpView;
 
 class DefaultController extends Controller {
     public function setup() {
@@ -30,9 +33,20 @@ class DefaultController extends Controller {
     }
     public function indexAction($sub1 = null, $sub2 = null) {
 
+        $data = [];
+        foreach($_SERVER as $k=>$v) {
+            $data[] = [ $k, $v ];
+        }
+        
         $this->document->addInlineScript('console.log("foobar");');
-        $this->document->view = new \Cherry\Mvc\View\Php(APP_ROOT.'/views/static.phtml');
-        $this->document->view->setView('foot', new \Cherry\Mvc\View\StringView('Hello World'));
+        $this->document->view = new PhpView(APP_ROOT.'/views/static.phtml');
+        $this->document->view->setView('foot', new StringView('Hello World'));
+        $this->document->view->setView('table',
+            new TableView($data, [
+                'header-columns' => 1,
+                'items-per-page' => 5
+            ]
+        ));
 
     }
     

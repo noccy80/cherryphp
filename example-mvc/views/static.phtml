@@ -17,31 +17,42 @@
         </div>
         <div class="container">
             <div class="col sub w-9">
-                <div class="col w-3">
-                    <img src="/images/box-1.jpg">
-                    <h2>Lightweight</h2>
-                    <p>Benchmarks don't lie. Try it with the following command from
-                    within the root of your project: <code>PROFILE=1 ./server.sh</code> 
-                    and watch as every request is broken down into events.</p>
+                <div class="col sub w-9">
+                    <div class="col w-3">
+                        <img src="/images/box-1.jpg">
+                        <h2>Lightweight</h2>
+                        <p>Benchmarks don't lie. Try it with the following command from
+                        within the root of your project: <code>PROFILE=1 ./server.sh</code> 
+                        and watch as every request is broken down into events.</p>
+                    </div>
+                    <div class="col w-3">
+                        <img src="/images/box-2.jpg">
+                        <h2>Free</h2>
+                        <p><em>CherryTree</em> is Open Source. The same goes for the
+                        framework powering it, <em>Cherry</em>.</p>
+                        <p>As the source code is fully available, you are free to make
+                        modifications to the sourcecode and contribute your modifications
+                        to help build a better platform.</p>
+                    </div>
+                    <div class="col w-3">
+                        <img src="/images/box-3.jpg">
+                        <h2>Modern</h2>
+                        <p><em>CherryTree</em> has been written to use all the goodness
+                        that is introduced with not only HTML5 and CSS3 but also PHP
+                        5.4. This includes CSS animations, form validation and a lot
+                        of other awesome features.</p>
+                        <p><em>CherryTree</em> and <em>Cherry</em> thus requires PHP 5.4
+                        installed on the server to work.</p>
+                    </div>
                 </div>
-                <div class="col w-3">
-                    <img src="/images/box-2.jpg">
-                    <h2>Free</h2>
-                    <p><em>CherryTree</em> is Open Source. The same goes for the
-                    framework powering it, <em>Cherry</em>.</p>
-                    <p>As the source code is fully available, you are free to make
-                    modifications to the sourcecode and contribute your modifications
-                    to help build a better platform.</p>
-                </div>
-                <div class="col w-3">
-                    <img src="/images/box-3.jpg">
-                    <h2>Modern</h2>
-                    <p><em>CherryTree</em> has been written to use all the goodness
-                    that is introduced with not only HTML5 and CSS3 but also PHP
-                    5.4. This includes CSS animations, form validation and a lot
-                    of other awesome features.</p>
-                    <p><em>CherryTree</em> and <em>Cherry</em> thus requires PHP 5.4
-                    installed on the server to work.</p>
+                <div class="col w-9">
+                    <div>
+                        <h2>Flexibility</h2>
+                        <p>Views are flexible in CherryTree. They can be used with scripts, templates, strings
+                        and even tables. This allows for data to be displayed and paginated in a consistent
+                        fashion on your website:</p>
+                    </div>
+                    <div><@content id="table"></div>
                 </div>
             </div>
             <div class="col w-3"><@include type="widget" class="CherryTree.Widgets.Sidebar" scope="none"></div>

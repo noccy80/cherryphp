@@ -7,7 +7,7 @@ namespace Cherry\Mvc\View;
 use Cherry\Mvc\View;
 use Cherry\Base\Event;
 
-class Php extends View {
+class PhpView extends View {
 
     private
             $view = null,
@@ -55,11 +55,11 @@ class Php extends View {
             }
             if ($tag == '@content') {
                 if (empty($attr['id'])) {
-                    $cont = $this->contentview;
+                    $cont = $this->contentview->render();
                 } else {
                     $id = $attr['id'];
                     if (array_key_exists($id,$this->subviews))
-                        $cont = $this->subviews[$id];
+                        $cont = $this->subviews[$id]->render(true);
                     else
                         $cont = '<span color="red">Error: No such content id '.$id.'</span>';
                 }
@@ -72,7 +72,7 @@ class Php extends View {
                                 $cn = $attr['class'];
                                 $cn = '\\'.str_replace('.','\\',$cn);
                                 $widget = new $cn();
-                                $cont = $widget->render();
+                                $cont = $widget->render(true);
                             } else {
                                 $cont = '<div>Error: Widget requires class attribute</div>';
                             }

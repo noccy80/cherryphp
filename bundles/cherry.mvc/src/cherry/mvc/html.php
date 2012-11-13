@@ -31,6 +31,7 @@ class Html {
                 $content = str_replace('{'.$k.'}', $v, $content);
             }
         }
+        if (is_array($content)) $content = join($content);
         return sprintf('<%s%s>%s</%s>', $tag, $ao, $content, $tag);
     }
 

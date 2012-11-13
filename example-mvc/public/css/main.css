@@ -247,3 +247,17 @@ div.dialog {
 .container .col:last-child    { margin-right: 0px; }
 .container .col.b-right { border-right:solid 1px #888; margin-right:6px; }
 .container .col.b-left { border-left:solid 1px #888; margin-left:6px; }
+
+table.tableview {
+    border:solid 1px #888;
+    border-collapse:collapse;
+}
+table.tableview th {
+    text-align:left;
+    background-color:#EEE;
+}
+table.tableview th,
+table.tableview td {
+    padding:3px;
+    border:solid 1px #888;
+}

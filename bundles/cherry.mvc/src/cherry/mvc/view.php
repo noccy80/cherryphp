@@ -12,7 +12,7 @@ abstract class View {
     
     public function __construct() {
         if (defined('IS_PROFILING'))
-            $this->observer = \App::profiler()->enter('Rendering view: '.__CLASS__);
+            $this->observer = \App::profiler()->enter('Rendering view: '.get_class());
     }
     
     public function __destruct() {
@@ -23,7 +23,11 @@ abstract class View {
     }
     
     public function __toString() {
-        return $this->render(true);
+        try {
+            return $this->render(true);
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
     }
 
     /**
