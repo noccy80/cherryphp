@@ -33,7 +33,7 @@ class Php extends View {
             return $str;
         }
         $end = strpos($str,'>',$pos);
-        if ($end > $pos) {
+        while ($end > $pos) {
             $s_pre = substr($str,0,$pos);
             $s_tag = substr($str,$pos+1,($end-$pos)-1);
             $s_aft = substr($str,$end+1);
@@ -76,7 +76,12 @@ class Php extends View {
             } else {
                 $cont = Event::invoke('cherry:mvc.render.specialtag',$s_tag,$attr);
             }
-            return $s_pre.$cont.$s_aft;
+            $str = $s_pre.$cont.$s_aft;
+            $pos = strpos($str,'<@');
+            if ($pos === false) {
+                return $str;
+            }
+            $end = strpos($str,'>',$pos);
         }
         return $str;
     }

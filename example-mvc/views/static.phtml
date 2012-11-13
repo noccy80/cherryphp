@@ -1,48 +1,61 @@
 <div id="wrap">
-    <div class="container">
-        <div class="col w-full header-container">
-            <div class="header-text">CherryTree: A Light and Extensible CMS</div>
-        </div>
-    </div>
-    <div class="container navigation-container">
-        <div class="col w-8 navigation">
-            <ul class="navigation">
-                <li><a href="/">Home</a></li>
-                <li><a href="/about">About CherryTree</a></li>
-            </ul>
-        </div>
-        <div class="col w-1"></div>
-        <div class="col w-3" style="height:28px; line-height:28px;">Search</div>
-    </div>
-    <div class="container">
-        <div class="col sub w-9">
-            <div class="col w-3">
-                <img src="/images/box-1.jpg">
-                <h2>Lightweight</h2>
-            </div>
-            <div class="col w-3">
-                <img src="/images/box-2.jpg">
-                <h2>Free</h2>
-                <em>CherryTree</em> is Open Source. The same goes for the
-                framework powering it, <em>Cherry</em>.
-            </div>
-            <div class="col w-3">
-                <img src="/images/box-3.jpg">
-                <h2>Modern</h2>
-                <em>CherryTree</em> has been written to use all the goodness
-                that is HTML5 and CSS3. This includes CSS animations, form
-                validation and a lot of other awesome features.
+    <div class="inner">
+        <div class="container">
+            <div class="col w-full header-container">
+                <div class="header-text">CherryTree: A Light and Extensible CMS</div>
             </div>
         </div>
-        <div class="col w-3"><@include type="widget" class="CherryTree.Widgets.Sidebar" scope="none"></div>
+        <div class="container navigation-container">
+            <div class="col w-8 navigation">
+                <ul class="navigation">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About CherryTree</a></li>
+                </ul>
+            </div>
+            <div class="col w-1"></div>
+            <div class="col w-3" style="height:28px; line-height:28px;">Search</div>
+        </div>
+        <div class="container">
+            <div class="col sub w-9">
+                <div class="col w-3">
+                    <img src="/images/box-1.jpg">
+                    <h2>Lightweight</h2>
+                    <p>Benchmarks don't lie.</p>
+                </div>
+                <div class="col w-3">
+                    <img src="/images/box-2.jpg">
+                    <h2>Free</h2>
+                    <p><em>CherryTree</em> is Open Source. The same goes for the
+                    framework powering it, <em>Cherry</em>.</p>
+                    <p>As the source code is fully available, you are free to make
+                    modifications to the sourcecode and contribute your modifications
+                    to help build a better platform.</p>
+                </div>
+                <div class="col w-3">
+                    <img src="/images/box-3.jpg">
+                    <h2>Modern</h2>
+                    <p><em>CherryTree</em> has been written to use all the goodness
+                    that is introduced with not only HTML5 and CSS3 but also PHP
+                    5.4. This includes CSS animations, form validation and a lot
+                    of other awesome features.</p>
+                    <p><em>CherryTree</em> and <em>Cherry</em> thus requires PHP 5.4
+                    installed on the server to work.</p>
+                </div>
+            </div>
+            <div class="col w-3"><@include type="widget" class="CherryTree.Widgets.Sidebar" scope="none"></div>
+        </div>
     </div>
-    <div class="container">
-        <div class="col w-2">Foot</div>
-        <div class="col w-2">Foot</div>
-        <div class="col w-2">Foot</div>
-        <div class="col w-2">Foot</div>
-        <div class="col w-4">
-            Powered by CherryTree
+    <div class="inner foot">
+        <div class="container">
+            <div class="col w-3">
+                <a href="#">Log in</a> or <a href="#">Register</a> to post comments and subscribe to updates.
+            </div>
+            <div class="col w-2">Foot</div>
+            <div class="col w-2">Foot</div>
+            <div class="col w-2">Foot</div>
+            <div class="col w-3">
+                <@include type="widget" class="CherryTree.Widgets.AboutCherry">
+            </div>
         </div>
     </div>
 </div>

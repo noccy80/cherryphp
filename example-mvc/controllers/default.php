@@ -18,6 +18,7 @@ class DefaultController extends Controller {
         $doc->addScript('//ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js');
         $doc->addScript('//ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/scriptaculous.js');
         $doc->addScript('/js/panel.js');
+        $doc->addStyleSheet('//fonts.googleapis.com/css?family=Average+Sans|Sanchez');
         $doc->addStyleSheet('/css/main.css');
         $js = 'function yay() { alert("Wohoo!"); }';
         $doc->addInlineScript($js);
