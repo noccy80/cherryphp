@@ -29,6 +29,7 @@ class DefaultController extends Controller {
     }
     public function indexAction($sub1 = null, $sub2 = null) {
 
+        $this->document->addInlineScript('console.log("foobar");');
         $this->document->view = new \Cherry\Mvc\View\Php(APP_ROOT.'/views/static.phtml');
 
     }

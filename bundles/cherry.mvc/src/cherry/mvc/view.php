@@ -15,8 +15,10 @@ abstract class View {
     }
     
     public function __destruct() {
-        \App::profiler()->log("Destroying view observer");
-        if ($this->observer) unset($this->observer);
+        if (defined('IS_PROFILING')) {
+            \App::profiler()->log("Destroying view observer");
+            if ($this->observer) unset($this->observer);
+        }
     }
 
     /**

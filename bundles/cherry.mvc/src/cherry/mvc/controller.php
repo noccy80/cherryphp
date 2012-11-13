@@ -17,8 +17,10 @@ abstract class Controller {
     }
     
     public function __destruct() {
-        \App::profiler()->log("Destroying Controller observer");
-        unset($this->so);
+        if (defined('IS_PROFILING')) {
+            \App::profiler()->log("Destroying Controller observer");
+            unset($this->so);
+        }
     }
     
     public function invoke($action,$args) {

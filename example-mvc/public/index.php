@@ -26,12 +26,16 @@ App::bootstrap([
     ]
 ]);
 
+require_once('src/widgets/sidebar.php');
+
+/*
 use Cherry\Util\AppProfiler;
 App::extend('profiler',new AppProfiler('perf.log'));
 App::profiler()->setReporting(AppProfiler::REPORT_FULL);
 App::profiler()->push('Loading bundles...');
 App::bundles()->load('cherry.mvc');
 App::profiler()->pop();
+*/
 App::router()->addRoutes([
     '/admin/posts/(:str)' => 'admin/posts/$1',
     '/debug' => 'default/debug',

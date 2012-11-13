@@ -5,6 +5,7 @@
 namespace Cherry\Mvc\View;
 
 use Cherry\Mvc\View;
+use Cherry\Base\Event;
 
 class Php extends View {
 
@@ -47,13 +48,31 @@ class Php extends View {
                 if ($attrsep===false) {
                     $this->attr[$parts[$n]] = true;
                 } else {
-                    $aname = substr($parts[$n],0,$attrsep-1);
-                    $aval = substr($parts[$n],$attrsep);
-                    $attr[$aname] = $aval;
+                    $aname = substr($parts[$n],0,$attrsep);
+                    $aval = trim(substr($parts[$n],$attrsep+1),"\"'");
+                    $attr[strtolower($aname)] = $aval;
                 }
             }
-            if ($s_tag == '@content') {
+            if ($tag == '@content') {
                 $cont = $this->content;
+            } elseif ($tag == '@include') {
+                // Switch based on the module
+                if (!empty($attr['type'])) {
+                    switch(strtolower($attr['type'])) {
+                        case 'widget':
+                            if (!empty($attr['class'])) {
+                                $cn = $attr['class'];
+                                $cn = '\\'.str_replace('.','\\',$cn);
+                                $widget = new $cn();
+                                $cont = $widget->render();
+                            } else {
+                                $cont = '<div>Error: Widget requires class attribute</div>';
+                            }
+                            break;
+                        default:
+                            $cont = '<div>Error: Unknown include type "'.$attr['type'].'"</div>';
+                    }
+                }
             } else {
                 $cont = Event::invoke('cherry:mvc.render.specialtag',$s_tag,$attr);
             }
@@ -64,7 +83,7 @@ class Php extends View {
 
     private function load($file) {
 
-        if (IS_PROFILING)
+        if (defined('IS_PROFILING'))
             \App::profiler()->log("Loading and parsing view");
         ob_start();
         ob_start(array($this,'__ob_callback'));
