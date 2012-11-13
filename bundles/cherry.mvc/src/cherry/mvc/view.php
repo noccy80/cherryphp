@@ -1,12 +1,12 @@
 <?php
 
-namespace cherry\mvc\view;
+namespace Cherry\Mvc;
 
-abstract class Base {
+abstract class View {
 
     protected $subviews = array();
     protected $isCacheable = false;
-    
+
     /**
      * @brief Tell the renderer that the view is cacheable.
      *
@@ -21,11 +21,15 @@ abstract class Base {
         $this->isCacheable = (bool)$cacheable;
         return $old;
     }
-    
+
     public function addView($key, Base $view) {
         $this->subviews[$key] = $view;
     }
-    
-    abstract function load();
+
+    public function setContentView(View $view) {
+
+    }
+
+    abstract function render($return=false);
 
 }

@@ -18,7 +18,7 @@ class Response {
     public function setDocument(Document $document) {
         $this->document = $document;
     }
-    
+
     public function getDocument() {
         return $this->document;
     }
@@ -35,13 +35,13 @@ class Response {
         ]), true, $code);
         $this->status = $code;
     }
-    
+
     public function setHeader($header,$value) {
         if (headers_sent()) return false;
         header($header.': '.$value, true);
         return true;
     }
-    
+
     public function send404($file) {
         $this->setStatus(404,'File not found');
         $errstr = "<h1>File not found.</h1>\n<p>The resource could not be found.</p>\n";
@@ -49,7 +49,7 @@ class Response {
         $this->contenttype = 'text/html';
         echo $errstr;
     }
-    
+
     public function setCacheControl($cachecontrol) {
         $this->setHeader('Cache-Control', $cachecontrol);
     }
@@ -64,7 +64,7 @@ class Response {
             if (fnmatch($ptn,$file))
                 $ctype = $ct;
         // If no match, try to determine
-        if (!$ct) $ct = mime_content_type($file);
+        if (empty($ctype)) $ctype = mime_content_type($file);
         // Set headers
         header('Content-Type: '.$ctype);
         header('Content-Length: '.filesize($file));

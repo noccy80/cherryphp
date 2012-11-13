@@ -1,15 +1,12 @@
 <?php
+// !status; might be renamed
+// !stability; unstable
 
-namespace cherry\Mvc\View;
+namespace Cherry\Mvc\View;
 
-class View extends Base {
+use Cherry\Mvc\View;
 
-<?php
-
-namespace cherry\mvc\view;
-require_once('lib/cherry/mvc/view.php');
-
-class Frame extends Base {
+class Php extends View {
 
     private $frame = null;
     private $app = null;
@@ -20,7 +17,7 @@ class Frame extends Base {
         $this->frame = $frame;
         $this->app = \cherry\Lepton::getInstance()->getApplication();
     }
-    
+
     function __ob_callback($str) {
         $pos = strpos($str,'<@');
         if ($pos === false) {
@@ -40,7 +37,7 @@ class Frame extends Base {
             for($n = 1;$n<count($parts);$n++) {
                 $attrsep = strpos($parts[$n],'=');
                 if ($attrsep===false) {
-                    $this->attr[$parts[$n]] = true;   
+                    $this->attr[$parts[$n]] = true;
                 } else {
                     $aname = substr($parts[$n],0,$attrsep-1);
                     $aval = substr($parts[$n],$attrsep);
@@ -58,7 +55,7 @@ class Frame extends Base {
     }
 
     function load($view) {
-    
+
         $paths = $this->app->getConfiguration('application','paths');
 
         $base = CHERRY_APP . '/application/views/scripts/';
@@ -85,6 +82,3 @@ class Frame extends Base {
     }
 
 }
-    
-}
-
