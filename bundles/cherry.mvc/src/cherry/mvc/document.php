@@ -4,6 +4,16 @@ namespace Cherry\Mvc;
 
 if (!defined('_NL_')) define('_NL_',"\n");
 
+/**
+ * @brief Combines and renders views.
+ *
+ * The document is to be assigned a view to render. The document can also contain
+ * a decorator, which is basically a view that contains a default <@content />
+ * tag for where the actual document view is to be inserted.
+ *
+ * Provide an appropriate doctype to the constructor, as this will affect how the
+ * output is formatted.
+ */
 class Document {
 
     /// HTML 5
@@ -40,26 +50,39 @@ class Document {
     private
             $doctype = null,    ///< DocType of the document
             $xhtml = false,     ///< Use XHTML tags for <br/> and the likes
-            $headers = [],
-            $meta = [],
-            $scripts = [],
-            $inlinescripts = [],
-            $styles = [],
-            $title = null,
-            $chunked = false,
-            $body = '',
-            $ob_active = false,
-            $lang = null,
-            $charset = null;
+            $headers = [],      ///< 
+            $meta = [],         ///< Meta headers
+            $scripts = [],      ///< Linked scripts
+            $inlinescripts = [],///< Inline scripts
+            $styles = [],       ///< Styles
+            $title = null,      ///< Document title
+            $chunked = false,   ///< 
+            $body = '',         ///< 
+            $ob_active = false, ///< Output buffer active (TBD)
+            $lang = null,       ///< Language of the document
+            $decorator = null,  ///< The decorator if any
+            $view = null,       ///< The document view
+            $charset = null;    ///< Character set for the document
+            
     private static
             $document = null;
 
+    /**
+     * @static
+     * @brief Retrieve the current document.
+     *
+     * @return Document
+     */
     static function get() {
         return self::$document;
     }
 
     /**
+     * @static
+     * @brief Begin a new document, discarding the old document in the process if
+     * any.
      *
+     * @return Document
      */
     static function begin($doctype = Document::DT_HTML5, $lang = null, $charset = null) {
         self::$document = new Document($doctype, $lang, $charset);
@@ -73,13 +96,168 @@ class Document {
             $this->ob_active = false;
         }
     }
+
+    /**
+     * @brief Assign the decorator view.
+     *
+     * 
+     */
+    public function setDecorator(View $view) {
+        $this->decorator = $view;
+    }
     
+    /**
+     * @brief Retrieve the decorator view.
+     *
+     */
+    public function getDecorator() {
+        return $this->decorator;
+    }
+    
+    public function setView(View $view) {
+        $this->view = $view;
+    }
+    
+    public function getView() {
+        return $this->view;
+    }
+
+    /**
+     * @brief Set the document title.
+     * 
+     */
+    public function setTitle($title) {
+        $this->title = $title;
+    }
+
+    /**
+     * @brief Get the document title.
+     *
+     */
+    public function getTitle() {
+        return $this->title;
+    }
+    
+    /**
+     * @brief Set the caching policy for the document.
+     *
+     */
     public function setCachePolicy($policy) {
         if (in_array($policy,[null,'public','private','private_no_expire','nocache']))
             return session_cache_limiter($policy);
         user_error('Invalid cache policy (cache_limiter) assign: '.$policy);
     }
 
+    /**
+     * @brief Add a script url to the document.
+     * 
+     */
+    public function addScript($file,$type='text/javascript') {
+        $this->scripts[] = [ $file, $type ];
+    }
+
+    /**
+     * @brief Add an inline script to the document.
+     *
+     */
+    public function addInlineScript($string, $type='text/javascript') {
+        if (!array_key_exists($type,$this->inlinescripts)) {
+            $this->inlinescripts[$type] = '';
+        }
+        $this->inlinescripts[$type].= $string."\n";
+    }
+
+    public function addStyleSheet($file) {
+        $this->styles[] = [ 'link', $file ];
+    }
+    public function addInlineStyleSheet($string) {
+        $this->styles[] = [ 'inline', $string ];
+    }
+
+    /**
+     * @brief Set a meta header value.
+     *
+     */
+    public function setMeta($key,$value) {
+        $this->meta[$key] = [ 'meta', $value ];
+    }
+    
+    /**
+     * @brief Set a meta http-equiv header value.
+     *
+     */
+    public function setHttpEquiv($key,$value) {
+        $this->meta[$key] = [ 'http-equiv', $value ];
+    }
+    
+    /**
+     * @brief Set the documents character encoding
+     *
+     * @todo This should apply the enoding to data in the output buffer.
+     */
+    public function setCharset($charset) {
+        $charset = strtoupper($charset);
+        if ($this->doctype == self::DT_HTML5) {
+            $this->meta['charset'] = [ 'charset', $charset ];
+        } else {
+            $this->setHttpEquiv('content-type','text/html; charset='.$charset);
+        }
+        $this->charset = $charset;
+    }
+
+    /**
+     * @brief Get the document, render any views, and optionally tidy up.
+     *
+     */
+    public function getContent() {
+        $this->end();
+        if ($this->view) {
+            if ($this->decorator) {
+                $this->decorator->setContentView($this->view);
+                $this->body = $this->decorator->render(true);
+            } else {
+                $this->body = $this->view->render(true);
+            }
+        }
+        $out =  $this->doctype._NL_.
+                $this->getDocumentHead().
+                (string)$this->body.
+                $this->getDocumentFoot();
+        if (function_exists('tidy_parse_string')) {
+            $config = array('indent' => true,
+                            'output-xhtml' => $this->xhtml,
+                            'input-encoding' => $this->charset,
+                            'output-encoding' => $this->charset,
+                            'drop-empty-paras' => false,
+                            'language' => $this->lang,
+                            'vertical-space' => false,
+                            'wrap' => 200);
+            $tidy = tidy_repair_string($out, $config, strtolower(str_replace(' ','',$this->charset)));
+            $out = (string)$tidy._NL_;
+            $out = str_replace(">\n</script>","></script>",$out);
+        }
+        return  $out;
+    }
+    
+    public function __get($key) {
+        switch(strtolower($key)) {
+            case 'view':
+                return $this->view;
+            default:
+                user_error("No such property: ".__CLASS__.'->'.$key);
+        }
+    }
+
+    public function __set($key,$value) {
+        switch(strtolower($key)) {
+            case 'view':
+                $this->setView($value);
+                break;
+            default:
+                user_error("No such property: ".__CLASS__.'->'.$key);
+        }
+    }
+    
     /**
      *
      */
@@ -146,75 +324,8 @@ class Document {
         return $doc;
     }
 
-    public function addScript($file,$type='text/javascript') {
-        $this->scripts[] = [ $file, $type ];
-    }
-
-    public function addInlineScript($string, $type='text/javascript') {
-        if (!array_key_exists($type,$this->inlinescripts)) {
-            $this->inlinescripts[$type] = '';
-        }
-        $this->inlinescripts[$type].= $string."\n";
-    }
-
-    public function addStyleSheet($file) {
-        $this->styles[] = [ 'link', $file ];
-    }
-    public function addInlineStyleSheet($string) {
-        $this->styles[] = [ 'inline', $string ];
-    }
-
-    public function setMeta($key,$value) {
-        $this->meta[$key] = [ 'meta', $value ];
-    }
-    public function setHttpEquiv($key,$value) {
-        $this->meta[$key] = [ 'http-equiv', $value ];
-    }
-    public function setCharset($charset) {
-        $charset = strtoupper($charset);
-        if ($this->doctype == self::DT_HTML5) {
-            $this->meta['charset'] = [ 'charset', $charset ];
-        } else {
-            $this->setHttpEquiv('content-type','text/html; charset='.$charset);
-        }
-        $this->charset = $charset;
-    }
-
-    public function getContent() {
-        $this->end();
-        $out =  $this->doctype._NL_.
-                $this->getDocumentHead()._NL_.
-                $this->body._NL_.
-                $this->getDocumentFoot();
-        if (function_exists('tidy_parse_string')) {
-            $config = array('indent' => true,
-                            'output-xhtml' => $this->xhtml,
-                            'input-encoding' => $this->charset,
-                            'output-encoding' => $this->charset,
-                            'drop-empty-paras' => false,
-                            'language' => $this->lang,
-                            'vertical-space' => false,
-                            'wrap' => 200);
-            $tidy = tidy_repair_string($out, $config, strtolower(str_replace(' ','',$this->charset)));
-            $out = (string)$tidy._NL_;
-            $out = str_replace(">\n</script>","></script>",$out);
-        }
-        return  $out;
-    }
-
     public function __destruct() {
         $this->end();
     }
-
-    /**
-     *
-     */
-    public function setTitle($title) {
-        $this->title = $title;
-    }
-
-    public function getTitle() {
-        return $this->title;
-    }
-
+    
 }

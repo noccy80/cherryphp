@@ -8,14 +8,21 @@ use Cherry\Mvc\View;
 
 class Php extends View {
 
-    private $frame = null;
-    private $app = null;
-    private $content = null;
+    private
+            $view = null,
+            $content = null;
 
-    public function __construct($frame,array $options = null) {
+    public function render($return=false) {
+        $cont = $this->load($this->view);
+        if ($return)
+            return $cont;
+        else
+            echo $cont;
+    }
+    
+    public function __construct($view = null,array $options = null) {
         // Constructor
-        $this->frame = $frame;
-        $this->app = \cherry\Lepton::getInstance()->getApplication();
+        $this->view = $view;
     }
 
     function __ob_callback($str) {
@@ -54,31 +61,17 @@ class Php extends View {
         return $str;
     }
 
-    function load($view) {
+    private function load($file) {
 
-        $paths = $this->app->getConfiguration('application','paths');
-
-        $base = CHERRY_APP . '/application/views/scripts/';
-        $path = join(DIRECTORY_SEPARATOR,array($base,$view));
         ob_start();
         ob_start(array($this,'__ob_callback'));
-        include $path;
-        ob_end_flush();
-        $this->content = ob_get_contents();
-        ob_end_clean();
-
-        $base = CHERRY_APP . '/application/views/';
-        $path = join(DIRECTORY_SEPARATOR,array($base,$this->frame));
-        ob_start();
-        ob_start(array($this,'__ob_callback'));
-        include $path;
+        include $file;
         ob_end_flush();
         $fout = ob_get_contents();
         ob_end_clean();
+        
+        return $fout;
 
-        printf("%s", $fout);
-
-        // Load frame
     }
 
 }

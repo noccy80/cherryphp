@@ -22,17 +22,26 @@ class DefaultController extends Controller {
         $js = 'function yay() { alert("Wohoo!"); }';
         $doc->addInlineScript($js);
     }
-    public function viewAction($id = null) {
+    public function idAction($id = null) {
 
         echo "Displaying ID ".$id;
 
     }
     public function indexAction($sub1 = null, $sub2 = null) {
 
-        readfile(APP_ROOT.'/views/static.phtml');
+        $this->document->view = new \Cherry\Mvc\View\Php(APP_ROOT.'/views/static.phtml');
 
-        /*
-        //$this->response->setCacheControl('public,max-age=3600');
+    }
+    
+    public function viewAction() {
+        
+        $this->document->setView( new \Cherry\Mvc\View\Php() );
+        
+    }
+    
+    public function templatedAction() {
+
+        $this->document->setCacheControl('public,max-age=3600');
         $this->document->setCachePolicy('public');
         echo html::div(
             html::h1('Welcome to CherryPHP').
@@ -65,9 +74,8 @@ class DefaultController extends Controller {
             html::pre(print_r($_SERVER,true), [ 'style'=>'background-color:#F0F0F0; border:solid 1px #808080; padding:5px;' ]),
             [ 'id' => 'wrap' ]
         );
-        */
 
-
+        
     }
 
     public function testAction(Document $doc) {

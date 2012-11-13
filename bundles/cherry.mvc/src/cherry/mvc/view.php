@@ -22,7 +22,8 @@ abstract class View {
         return $old;
     }
 
-    public function addView($key, Base $view) {
+    public function setView(Base $view, $key = null) {
+        if (!$key) $key = self::DEFAULT_KEY;
         $this->subviews[$key] = $view;
     }
 

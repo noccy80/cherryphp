@@ -25,16 +25,19 @@ App::bootstrap([
         'cherry.mvc'
     ]
 ]);
-//App::extend('profiler',new AppProfiler('perf.log'));
-//App::profiler()->setReporting(AppProfiler::REPORT_FULL);
-//App::profiler()->push('Loading bundles...');
-//App::bundles()->load('cherry.mvc');
-//App::profiler()->pop();
+
+use Cherry\Util\AppProfiler;
+App::extend('profiler',new AppProfiler('perf.log'));
+App::profiler()->setReporting(AppProfiler::REPORT_FULL);
+App::profiler()->push('Loading bundles...');
+App::bundles()->load('cherry.mvc');
+App::profiler()->pop();
 App::router()->addRoutes([
     '/admin/posts/(:str)' => 'admin/posts/$1',
     '/debug' => 'default/debug',
     '/test' => 'default/test',
-    '/post/(.*)' => 'default/view:$1',
+    '/view' => 'default/view',
+    '/view/(.*)' => 'default/view:$1',
     '/(:str)/(:str)' => 'default/index:$1,$2',
     '/(:str)' => 'default/index:$1',
     '/' => 'default/index'
