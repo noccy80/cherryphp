@@ -9,6 +9,7 @@ class AppProfiler {
             $prestart = null,
             $log = [],
             $stack = [],
+            $times = [],
             $meminitial = null,
             $meminitialfull = null,
             $reportinglevel = null;
@@ -29,10 +30,13 @@ class AppProfiler {
     public function push($module) {
         $this->log[] = [ microtime(true), count($this->stack), self::LOGEVT_ENTER, $module];
         array_push($this->stack, $module);
+        array_push($this->times, microtime(true));
     }
     public function pop() {
         $module = array_pop($this->stack);
-        $this->log[] = [ microtime(true), count($this->stack), self::LOGEVT_LEAVE, '('.$module.')'];
+        $stime = array_pop($this->times);
+        $etime = microtime(true);
+        $this->log[] = [ $etime, count($this->stack), self::LOGEVT_LEAVE, $module.' done ('.number_format(($etime-$stime)*1000,4).'ms)' ];
     }
     public function log($msg) {
         $this->log[] = [ microtime(true), count($this->stack), self::LOGEVT_LOG, $msg];
@@ -51,6 +55,7 @@ class AppProfiler {
     }
     public function __destruct() {
         if (!$this->target) return;
+        $end = microtime(true);
         $out = [];
         $out[] = 'Profiling Log:';
         $out[] = '';
@@ -63,7 +68,7 @@ class AppProfiler {
             $ts = ($time - $this->start)*1000;
             $out[] = sprintf('%10sms | %-3s %s', '+'.number_format($ts,4), $type, str_repeat(' · ',$level+1).$message);
         }
-        $end = microtime(true);
+        $out[] = sprintf('%10sms | %-3s %s', '+'.number_format(($end-$this->start)*1000,4), self::LOGEVT_LOG, 'Application end.');
         $memend = memory_get_peak_usage();
         $memendfull = memory_get_peak_usage(true);
         $out[] = '';
