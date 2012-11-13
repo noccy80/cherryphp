@@ -20,6 +20,11 @@ class Sidebar {
             ]
         );
 
+        $nav =  html::li(html::a('First option', ['href'=>'#'] )).
+                html::li(html::a('Second option', ['href'=>'#'] )).
+                html::li(html::a('Third option', ['href'=>'#'] )).
+                html::li(html::a('Fourth option', ['href'=>'#'] ));
+
         $boxes[] = html::div(
             html::div('Navigation',[ 'style'=>'font-weight:bold;' ]).
             html::ul($nav),

@@ -14,7 +14,10 @@ class App {
     public static function bootstrap(array $config) {
         foreach($config as $k=>$v) {
             switch(strtolower($k)) {
-                case 'bundles':
+                case 'autoload.paths':
+                    // TODO: Add paths to autoloader
+                    break;
+                case 'autoload.bundles':
                     foreach((array)$v as $bundle) {
                         self::bundles()->load($bundle);
                     }

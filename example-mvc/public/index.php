@@ -21,22 +21,27 @@ App::bootstrap([
     'app.ns' => 'CherryTree',
     'app.public' => dirname(__FILE__),
     'app.root' => dirname(dirname(__FILE__)),
-    'bundles' => [
+    'autoload.bundles' => [
         'cherry.mvc'
+    ],
+    'autoload.paths' => [
+        'CherryTree'    => 'src/',
+        '*'             => 'vendor/'
     ]
 ]);
 
 require_once('src/widgets/sidebar.php');
 require_once('src/widgets/aboutcherry.php');
 
-/*
 use Cherry\Util\AppProfiler;
-App::extend('profiler',new AppProfiler('perf.log'));
-App::profiler()->setReporting(AppProfiler::REPORT_FULL);
-App::profiler()->push('Loading bundles...');
-App::bundles()->load('cherry.mvc');
-App::profiler()->pop();
-*/
+
+if (getenv('PROFILE')) {
+    App::extend('profiler',new AppProfiler('perf.log'));
+    App::profiler()->setReporting(AppProfiler::REPORT_FULL);
+    App::profiler()->push('Loading bundles...');
+    App::bundles()->load('cherry.mvc');
+    App::profiler()->pop();
+}
 App::router()->addRoutes([
     '/admin/posts/(:str)' => 'admin/posts/$1',
     '/debug' => 'default/debug',

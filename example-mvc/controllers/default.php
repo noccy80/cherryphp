@@ -32,6 +32,7 @@ class DefaultController extends Controller {
 
         $this->document->addInlineScript('console.log("foobar");');
         $this->document->view = new \Cherry\Mvc\View\Php(APP_ROOT.'/views/static.phtml');
+        $this->document->view->setView('foot', new \Cherry\Mvc\View\StringView('Hello World'));
 
     }
     

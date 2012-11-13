@@ -114,10 +114,6 @@ class Document {
         return $this->decorator;
     }
     
-    public function setView(View $view) {
-        $this->view = $view;
-    }
-    
     public function getView() {
         return $this->view;
     }
@@ -252,7 +248,7 @@ class Document {
     public function __set($key,$value) {
         switch(strtolower($key)) {
             case 'view':
-                $this->setView($value);
+                $this->view = $value;
                 break;
             default:
                 user_error("No such property: ".__CLASS__.'->'.$key);

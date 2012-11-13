@@ -6,6 +6,7 @@ abstract class View {
 
     protected
             $subviews = array(),
+            $contentview = null,
             $isCacheable = false,
             $observer = null;
     
@@ -19,6 +20,10 @@ abstract class View {
             \App::profiler()->log("Destroying view observer");
             if ($this->observer) unset($this->observer);
         }
+    }
+    
+    public function __toString() {
+        return $this->render(true);
     }
 
     /**
@@ -36,13 +41,12 @@ abstract class View {
         return $old;
     }
 
-    public function setView(Base $view, $key = null) {
-        if (!$key) $key = self::DEFAULT_KEY;
+    public function setView($key, View $view) {
         $this->subviews[$key] = $view;
     }
 
     public function setContentView(View $view) {
-
+        $this->contentview = $view;
     }
 
     abstract function render($return=false);

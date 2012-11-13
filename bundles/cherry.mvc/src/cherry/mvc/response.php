@@ -55,6 +55,14 @@ class Response {
     }
 
     public function sendFile($file) {
+        $lastmod = filemtime($file);
+        if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+            $ifmod = strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
+            if ($ifmod >= $lastmod) {
+                header('Not Modified',true,304);
+                return;
+            }            
+        }
         $ct = null;
         // Apply content type
         foreach([
@@ -68,6 +76,7 @@ class Response {
         // Set headers
         header('Content-Type: '.$ctype);
         header('Content-Length: '.filesize($file));
+        header('Last-Modified: '.gmdate('D, d M Y H:i:s \G\M\T', $lastmod));
         $this->contentlength = filesize($file);
         readfile($file);
         return;

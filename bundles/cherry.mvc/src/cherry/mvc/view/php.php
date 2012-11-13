@@ -54,7 +54,15 @@ class Php extends View {
                 }
             }
             if ($tag == '@content') {
-                $cont = $this->content;
+                if (empty($attr['id'])) {
+                    $cont = $this->contentview;
+                } else {
+                    $id = $attr['id'];
+                    if (array_key_exists($id,$this->subviews))
+                        $cont = $this->subviews[$id];
+                    else
+                        $cont = '<span color="red">Error: No such content id '.$id.'</span>';
+                }
             } elseif ($tag == '@include') {
                 // Switch based on the module
                 if (!empty($attr['type'])) {
