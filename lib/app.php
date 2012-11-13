@@ -13,7 +13,15 @@ class App {
 
     public static function bootstrap(array $config) {
         foreach($config as $k=>$v) {
-            define(strtoupper(str_replace('.','_',$k)), $v);
+            switch(strtolower($k)) {
+                case 'bundles':
+                    foreach((array)$v as $bundle) {
+                        self::bundles()->load($bundle);
+                    }
+                    break;
+                default:
+                    define(strtoupper(str_replace('.','_',$k)), $v);
+            }
         }
     }
 
