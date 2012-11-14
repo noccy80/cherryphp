@@ -2,63 +2,80 @@
 
 namespace Cherry\Mvc;
 
+use App;
+
 abstract class Widget {
 
-    protected $properties = array();
-    protected $propvalues = array();
-    protected $id = null;
-    protected $dom = null;
+    const
+            SCOPE_REQUEST   = 'request',    /// Only live through the request
+            SCOPE_SESSION   = 'session',    /// Live in the user session
+            SCOPE_USER      = 'user',       /// Attach to the user
+            SCOPE_GLOBAL    = 'global';     /// Global, shared between requests
 
-    public function init($id, array $properties = null, array $defaults = null) {
-        $this->id = $id;
-        $this->properties = (array)$properties;
-        $this->propvalues = $defaults;
-        $this->dom = new \DOMDocumentFragment();
-        foreach($this->properties as $k=>$v) {
-            if (empty($this->propvalues[$k]))
-                $this->propvalues[$k] = null;
-        \Cherry\debug('Widget: Registered property %s', $k);
+
+    private
+            $options = [
+                'scope' => self::SCOPE_REQUEST
+            ]
+    ;
+
+    public static function getWidget($id, array $options = null) {
+        switch($this->options['scope']) {
+            case self::SCOPE_GLOBAL:
+                // Save to appcontext
+                break;
+            case self::SCOPE_SESSION:
+                // Check session for object
+                if (App::session()->hasKey('cherrytree.widgets.state',$id)) {
+                    $obj = unserialize(App::session()->getKey('cherrytree.widgets.state',$id));
+                    if (!is_object($obj))
+                        $obj = new self($id, $options);
+                }
+                break;
+            case self::SCOPE_USER:
+                // Check user record for widget data, if it exists
+                // load and unserialize it.
+                break;
+            case self::SCOPE_REQUEST;
+                $obj = new self($id, $options);
+                break;
+        }
+
+    }
+
+    public function __construct($id, array $options = null) {
+        $this->options = array_merge($this->options, $options);
+    }
+
+    public function __destruct() {
+        $state = serialize($this);
+        switch($this->options['scope']) {
+            case self::SCOPE_GLOBAL:
+                // Save to appcontext
+                break;
+            case self::SCOPE_SESSION:
+                // Save to session
+                break;
+            case self::SCOPE_USER:
+                // Save to user record
+                break;
         }
     }
 
-    public function __set($key, $value) {
-        if (empty($this->properties[$key]))
-            throw new \Exception("Invalid property assignment for widget");
-        switch(strtolower($this->properties[$key])) {
-            case 'int':
-            case 'integer':
-                $this->propvalues[$key] = intval($value);
-                break;
-            case 'float':
-                $this->propvalues[$key] = floatval($value);
-                break;
-            default:
-                $this->propvalues[$key] = $value;
-                break;
-
-        }
+    protected function setRefreshTimer($seconds) {
+        $this->refreshtimer = $seconds;
     }
 
-    public function __get($key) {
-        if (empty($this->properties[$key]))
-            throw new \Exception("Invalid property assignment for widget");
-        return $this->propvalues[$key];
-    }
-
-    public function __call($name,$args) {
-        if (substr($name,0,3) == 'set') {
-            $key = strtolower(substr($name,3));
-            if (!empty($this->properties[$key]))
-                $this->{$key} = $args[0];
-            return;
-        } elseif (substr($name,0,3) == 'get') {
-            $key = strtolower(substr($name,3));
-            if (!empty($this->properties[$key]))
-                return $this->{$key};
-        }
-        throw new \BadMethodCallException("Method ".$name." is not callable");
-    }
+    abstract public function init();
 
     abstract public function render();
+
+    public function __sleep() {
+        return [];
+    }
+
+    public function __wakeup() {
+
+    }
 
 }

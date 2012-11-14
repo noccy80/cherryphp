@@ -16,13 +16,18 @@
             <div class="col w-3" style="height:28px; line-height:28px;">Search</div>
         </div>
         <div class="container">
+            <div class="col w-12">
+                <h1>CherryTree</h1>
+            </div>
+        </div>
+        <div class="container">
             <div class="col sub w-9">
                 <div class="col sub w-9">
                     <div class="col w-3">
                         <img src="/images/box-1.jpg">
                         <h2>Lightweight</h2>
                         <p>Benchmarks don't lie. Try it with the following command from
-                        within the root of your project: <code>PROFILE=1 ./server.sh</code> 
+                        within the root of your project: <code>PROFILE=1 ./server.sh</code>
                         and watch as every request is broken down into events.</p>
                     </div>
                     <div class="col w-3">
@@ -55,7 +60,7 @@
                     <div><@content id="table"></div>
                 </div>
             </div>
-            <div class="col w-3"><@include type="widget" class="CherryTree.Widgets.Sidebar" scope="none"></div>
+            <div class="col w-3"><@include type="widget" class="CherryTree.Widgets.Sidebar" id="sidebar" scope="request"></div>
         </div>
     </div>
     <div class="inner foot">

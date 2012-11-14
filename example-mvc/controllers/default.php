@@ -8,8 +8,9 @@ use Cherry\Mvc\Response;
 use Cherry\Mvc\Document;
 use Cherry\Mvc\Html;
 use Cherry\Mvc\View\TableView;
-use \Cherry\Mvc\View\StringView;
+use Cherry\Mvc\View\StringView;
 use Cherry\Mvc\View\PhpView;
+use App;
 
 class DefaultController extends Controller {
     public function setup() {
@@ -25,6 +26,17 @@ class DefaultController extends Controller {
         $doc->addStyleSheet('/css/main.css');
         $js = 'function yay() { alert("Wohoo!"); }';
         $doc->addInlineScript($js);
+    /*
+        App::panels()->register('document', [
+            'group:pagemeta' => [
+                'label' => 'Document',
+                'items' => [
+                    'textbox:title' => [ 'label' => 'Page title' ],
+                    'select:template' => [ 'label' => 'Template' ]
+                ]
+            ]
+        ]);
+    */
     }
     public function idAction($id = null) {
 
@@ -33,29 +45,30 @@ class DefaultController extends Controller {
     }
     public function indexAction($sub1 = null, $sub2 = null) {
 
-        $data = [];
+        $data = [[ 'Variable', 'Value' ]];
         foreach($_SERVER as $k=>$v) {
             $data[] = [ $k, $v ];
         }
-        
+
         $this->document->addInlineScript('console.log("foobar");');
         $this->document->view = new PhpView(APP_ROOT.'/views/static.phtml');
         $this->document->view->setView('foot', new StringView('Hello World'));
         $this->document->view->setView('table',
             new TableView($data, [
                 'header-columns' => 1,
+                'header-rows' => 1,
                 'items-per-page' => 5
             ]
         ));
 
     }
-    
+
     public function viewAction() {
-        
-        $this->document->setView( new \Cherry\Mvc\View\Php() );
-        
+
+        $this->document->setView( new StringView('Argh') );
+
     }
-    
+
     public function templatedAction() {
 
         $this->document->setCacheControl('public,max-age=3600');
@@ -92,16 +105,16 @@ class DefaultController extends Controller {
             [ 'id' => 'wrap' ]
         );
 
-        
+
     }
 
-    public function testAction(Document $doc) {
+    public function testAction() {
 
         echo html::p('Hello World from '.__CLASS__.':'.__FUNCTION__.'!');
 
     }
 
-    public function debugAction(Document $doc) {
+    public function debugAction() {
 
         echo html::h1('Debug Info');
 
@@ -110,6 +123,7 @@ class DefaultController extends Controller {
 
         echo html::h2('get_defined_constants()');
         echo html::pre(print_r(get_defined_constants(),true));
+
     }
 
 }

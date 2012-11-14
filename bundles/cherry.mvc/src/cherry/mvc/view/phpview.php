@@ -20,7 +20,7 @@ class PhpView extends View {
         else
             echo $cont;
     }
-    
+
     public function __construct($view = null,array $options = null) {
         parent::__construct();
         // Constructor
@@ -71,14 +71,24 @@ class PhpView extends View {
                             if (!empty($attr['class'])) {
                                 $cn = $attr['class'];
                                 $cn = '\\'.str_replace('.','\\',$cn);
-                                $widget = new $cn();
-                                $cont = $widget->render(true);
+                                if (empty($attr['id'])) {
+                                    $id = null;
+                                } else {
+                                    $id = $attr['id'];
+                                }
+                                try {
+                                    $widget = new $cn($id,$attr);
+                                    $cont = $widget->render(true);
+                                } catch (\Exception $e) {
+                                    $msg = $e->getMessage();
+                                    $cont = "<div>Error: {$msg}</div>";
+                                }
                             } else {
-                                $cont = '<div>Error: Widget requires class attribute</div>';
+                                $cont = '<div>Error: Widget requires "class" attribute</div>';
                             }
                             break;
                         default:
-                            $cont = '<div>Error: Unknown include type "'.$attr['type'].'"</div>';
+                            $cont = "<div>Error: Unknown include type '{$attr['type']}'</div>";
                     }
                 }
             } else {
@@ -104,7 +114,7 @@ class PhpView extends View {
         ob_end_flush();
         $fout = ob_get_contents();
         ob_end_clean();
-        
+
         return $fout;
 
     }

@@ -31,7 +31,7 @@ App::bootstrap([
 ]);
 
 require_once('src/widgets/sidebar.php');
-require_once('src/widgets/aboutcherry.php');
+//require_once('src/widgets/aboutcherry.php');
 
 use Cherry\Util\AppProfiler;
 
