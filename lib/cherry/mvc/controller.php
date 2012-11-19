@@ -15,14 +15,14 @@ abstract class Controller {
         if (defined('IS_PROFILING'))
             $this->so = \App::profiler()->enter('Controller');
     }
-    
+
     public function __destruct() {
         if (defined('IS_PROFILING')) {
             \App::profiler()->log("Destroying Controller observer");
             unset($this->so);
         }
     }
-    
+
     public function invoke($action,$args) {
         if (defined('IS_PROFILING'))
             \App::profiler()->log('Invoking controller');

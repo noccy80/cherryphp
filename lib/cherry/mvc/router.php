@@ -61,13 +61,13 @@ class Router {
                 require_once 'controllers'._DS_.strtolower(join(_DS_,$tcclass)).'.php';
                 if (count($tcclass) == 1) {
                     // Append app namespace
-                    $tcclass = $tcclass[0].'Controller';
+                    $tcclass = ucwords($tcclass[0]).'Controller';
                 } else {
                     $tcclass = "\\".join("\\",$tcclass).'Controller';
                 }
                 $tcclass = str_replace("\\\\","\\",APP_NS."\\Controllers\\".$tcclass);
                 if (!$tcmethod) $tcmethod = 'index';
-                \App::server()->log('%s => %s:%s [%s]', (string)$this->request, ucwords($tcclass),$tcmethod,join(',',$tcargs));
+                \App::server()->log('%s => %s:%s [%s] (%s)', (string)$this->request, ucwords($tcclass),$tcmethod,join(',',$tcargs),substr($this->request->getHeader('User-Agent'),0,40));
                 if (defined('IS_PROFILING')) \App::profiler()->log('Calling controller');
                 $ctl = new $tcclass($this->request, $this->response);
                 $ctl->invoke($tcmethod,$tcargs);

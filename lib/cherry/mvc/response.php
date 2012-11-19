@@ -61,7 +61,7 @@ class Response {
             if ($ifmod >= $lastmod) {
                 header('Not Modified',true,304);
                 return;
-            }            
+            }
         }
         $ct = null;
         // Apply content type
@@ -84,9 +84,15 @@ class Response {
 
     public function output() {
         //ini_set('zlib.output_compression',1);
+        $compress = false;
         if ($this->document) {
             $doc = $this->document->getContent();
             $this->contentlength = strlen($doc);
+            if ($compress) {
+                // Check if browser accepts gzip
+                header("Content-Encoding: gzip");
+                $doc = gzencode($doc,9,true);
+            }
             echo $doc;
         }
     }

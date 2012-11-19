@@ -7,6 +7,7 @@ namespace Cherry\Mvc\View;
 use Cherry\Mvc\View;
 use Cherry\Base\Event;
 use Cherry\Mvc\Html;
+use App;
 
 class TableView extends View {
 
@@ -23,6 +24,14 @@ class TableView extends View {
             ];
 
     private function buildTable($data) {
+        $id = uniqid('table');
+        $tvpag =
+<<<EOT
+function table_setpage(tableid,page) {
+    alert('Set page ' + page);
+}
+EOT;
+        App::document()->addInlineScript($tvpag,'text/javascript','tableview-pagination');
         $hc = empty($this->options['header-columns'])?0:$this->options['header-columns'];
         $hr = empty($this->options['header-rows'])?0:$this->options['header-rows'];
         $rows = [];
@@ -44,14 +53,21 @@ class TableView extends View {
         $table = html::table(join($rows),[ 'class' => $this->options['table-class'], 'style'=>'width:100%;' ]);
         $page = 0;
         $numpages = floor((count($data)-1)/$ipp) + 1;
-        $table.= html::div('Page {page} of {pages} ({items} items)',
+        $pagelinks = html::a(' &laquo; First ', [ 'href'=>'javascript:return false;' ]);
+        $pagelinks.= html::a(' &lsaquo; Prev ', [ 'href'=>'javascript:return false;' ]);
+        for ($n = 1; $n <= $numpages; $n++)
+            $pagelinks.= html::a(' {page} ', [ 'href'=>'javascript:return false;' ], [ 'page'=>$n ]);
+        $pagelinks.= html::a(' Next &rsaquo; ', [ 'href'=>'javascript:return false;' ]);
+        $pagelinks.= html::a(' Last &raquo; ', [ 'href'=>'javascript:return false;' ]);
+        $table.= html::div('Page {page} of {pages} ({items} items) {links}',
             [
                 'class' => $this->options['footer-class']
             ],
             [
                 'page' => $page + 1,
                 'pages' => $numpages,
-                'items' => count($data)
+                'items' => count($data),
+                'links' => $pagelinks
             ]
         );
         return html::div($table,['style'=>'width:99%']);

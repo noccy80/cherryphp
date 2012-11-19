@@ -8,20 +8,29 @@ abstract class View {
             $subviews = array(),
             $contentview = null,
             $isCacheable = false,
-            $observer = null;
-    
+            $observer = null,
+            $document = null;
+
+    public function setDocument(Document $document) {
+        $this->document = $document;
+    }
+
+    public function getDocument() {
+        return $this->document;
+    }
+
     public function __construct() {
         if (defined('IS_PROFILING'))
             $this->observer = \App::profiler()->enter('Rendering view: '.get_class());
     }
-    
+
     public function __destruct() {
         if (defined('IS_PROFILING')) {
             \App::profiler()->log("Destroying view observer");
             if ($this->observer) unset($this->observer);
         }
     }
-    
+
     public function __toString() {
         try {
             return $this->render(true);

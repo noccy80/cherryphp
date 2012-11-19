@@ -63,7 +63,7 @@ class PhpView extends View {
                     else
                         $cont = '<span color="red">Error: No such content id '.$id.'</span>';
                 }
-            } elseif ($tag == '@include') {
+            } elseif ($tag == '@embed') {
                 // Switch based on the module
                 if (!empty($attr['type'])) {
                     switch(strtolower($attr['type'])) {

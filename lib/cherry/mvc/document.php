@@ -2,6 +2,8 @@
 
 namespace Cherry\Mvc;
 
+use App;
+
 if (!defined('_NL_')) define('_NL_',"\n");
 
 /**
@@ -50,20 +52,20 @@ class Document {
     private
             $doctype = null,    ///< DocType of the document
             $xhtml = false,     ///< Use XHTML tags for <br/> and the likes
-            $headers = [],      ///< 
+            $headers = [],      ///<
             $meta = [],         ///< Meta headers
             $scripts = [],      ///< Linked scripts
             $inlinescripts = [],///< Inline scripts
             $styles = [],       ///< Styles
             $title = null,      ///< Document title
-            $chunked = false,   ///< 
-            $body = '',         ///< 
+            $chunked = false,   ///<
+            $body = '',         ///<
             $ob_active = false, ///< Output buffer active (TBD)
             $lang = null,       ///< Language of the document
             $decorator = null,  ///< The decorator if any
             $view = null,       ///< The document view
             $charset = null;    ///< Character set for the document
-            
+
     private static
             $document = null;
 
@@ -86,6 +88,7 @@ class Document {
      */
     static function begin($doctype = Document::DT_HTML5, $lang = null, $charset = null) {
         self::$document = new Document($doctype, $lang, $charset);
+        App::extend('document',self::$document);
         return self::$document;
     }
 
@@ -100,12 +103,12 @@ class Document {
     /**
      * @brief Assign the decorator view.
      *
-     * 
+     *
      */
     public function setDecorator(View $view) {
         $this->decorator = $view;
     }
-    
+
     /**
      * @brief Retrieve the decorator view.
      *
@@ -113,14 +116,14 @@ class Document {
     public function getDecorator() {
         return $this->decorator;
     }
-    
+
     public function getView() {
         return $this->view;
     }
 
     /**
      * @brief Set the document title.
-     * 
+     *
      */
     public function setTitle($title) {
         $this->title = $title;
@@ -133,7 +136,7 @@ class Document {
     public function getTitle() {
         return $this->title;
     }
-    
+
     /**
      * @brief Set the caching policy for the document.
      *
@@ -146,7 +149,7 @@ class Document {
 
     /**
      * @brief Add a script url to the document.
-     * 
+     *
      */
     public function addScript($file,$type='text/javascript') {
         $this->scripts[] = [ $file, $type ];
@@ -156,11 +159,15 @@ class Document {
      * @brief Add an inline script to the document.
      *
      */
-    public function addInlineScript($string, $type='text/javascript') {
+    public function addInlineScript($string, $type='text/javascript', $id = null) {
         if (!array_key_exists($type,$this->inlinescripts)) {
-            $this->inlinescripts[$type] = '';
+            $this->inlinescripts[$type] = [];
         }
-        $this->inlinescripts[$type].= $string."\n";
+        if ($id) {
+            $this->inlinescripts[$type][$id] = $string."\n";
+        } else {
+            $this->inlinescripts[$type][] = $string."\n";
+        }
     }
 
     public function addStyleSheet($file) {
@@ -177,7 +184,7 @@ class Document {
     public function setMeta($key,$value) {
         $this->meta[$key] = [ 'meta', $value ];
     }
-    
+
     /**
      * @brief Set a meta http-equiv header value.
      *
@@ -185,7 +192,7 @@ class Document {
     public function setHttpEquiv($key,$value) {
         $this->meta[$key] = [ 'http-equiv', $value ];
     }
-    
+
     /**
      * @brief Set the documents character encoding
      *
@@ -208,7 +215,9 @@ class Document {
     public function getContent() {
         $this->end();
         if ($this->view) {
+            $this->view->setDocument($this);
             if ($this->decorator) {
+                $this->decorator->setDocument($this);
                 $this->decorator->setContentView($this->view);
                 $this->body = $this->decorator->render(true);
             } else {
@@ -220,7 +229,8 @@ class Document {
                 $this->getDocumentHead().
                 (string)$this->body.
                 $this->getDocumentFoot();
-        if (function_exists('tidy_parse_string')) {
+        $tidy = (bool)App::config()->get('html.document.tidy', false);
+        if (function_exists('tidy_parse_string') && $tidy) {
             $config = array('indent' => true,
                             'output-xhtml' => $this->xhtml,
                             'input-encoding' => $this->charset,
@@ -233,9 +243,9 @@ class Document {
             $out = (string)$tidy._NL_;
             $out = str_replace(">\n</script>","></script>",$out);
         }
-        return  $out;
+        return $out;
     }
-    
+
     public function __get($key) {
         switch(strtolower($key)) {
             case 'view':
@@ -254,7 +264,7 @@ class Document {
                 user_error("No such property: ".__CLASS__.'->'.$key);
         }
     }
-    
+
     /**
      *
      */
@@ -309,7 +319,7 @@ class Document {
                 $doc.= sprintf('<script src="%s" type="%s"></script>', $file, $type);
         }
         foreach($this->inlinescripts as $k=>$v) {
-            $doc.= sprintf('<script type="%s">%s</script>', $k, $v);
+            $doc.= sprintf('<script type="%s">%s</script>', $k, join(_NL_,$v));
         }
         $doc.= '</head>';
         $doc.= '<body>';
@@ -324,5 +334,5 @@ class Document {
     public function __destruct() {
         $this->end();
     }
-    
+
 }

@@ -37,7 +37,10 @@ class Request {
                 $this->remoteip = $_SERVER['REMOTE_ADDR'];
                 $this->remoteport = $_SERVER['REMOTE_PORT'];
                 $this->protocol = $_SERVER['SERVER_PROTOCOL'];
-                $this->accept = new HttpAcceptRequestDirective($_SERVER['HTTP_ACCEPT']);
+                if (!empty($_SERVER['HTTP_ACCEPT']))
+                    $this->accept = new HttpAcceptRequestDirective($_SERVER['HTTP_ACCEPT']);
+                else
+                    $this->accept = new HttpAcceptRequestDirective();
                 if (!empty($_SERVER['HTTP_CACHE_CONTROL']))
                     $cache_control = $_SERVER['HTTP_CACHE_CONTROL'];
                 //$this->cache_control = new HttpCacheRequestDirective($cache_control?:'');
@@ -77,7 +80,7 @@ class Request {
             return $_SERVER[$key];
         return null;
     }
-    
+
     public function getProtocol() {
         return $this->protocol;
     }
@@ -86,12 +89,12 @@ class Request {
 }
 
 class HttpCacheRequestDirective {
-    
+
     private
             $directives = [],
             $extensions = [],
             $header = null;
-            
+
     public function __construct($string) {
         $directives = explode(',',$string);
         $this->header = $string;
@@ -115,15 +118,15 @@ class HttpCacheRequestDirective {
                     $this->extensions[$dname] = $dvalue;
                     break;
             }
-            
+
         }
-        
+
     }
-    
+
     public function __toString() {
         return $this->header;
     }
-    
+
 }
 
 class HttpAcceptRequestDirective {
@@ -132,8 +135,9 @@ class HttpAcceptRequestDirective {
             $accept = null,
             $fragments = [];
 
-    public function __construct($string) {
-        $this->accept = $string;
+    public function __construct($hdr) {
+        if (empty($hdr)) return;
+        $this->accept = $hdr;
         $fragments = explode(',',$this->accept);
         foreach($fragments as $fragment) {
             if (strpos($fragment,';q=')!==false)
