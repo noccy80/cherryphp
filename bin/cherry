@@ -20,11 +20,9 @@ $lepton = new \cherry\Lepton(__FILE__);
 //require_once('lib/cherryutil/command.php');
 //require_once('lib/cherryutil/commands/all.php');
 
-use Cherry\BundleManager;
 use cherry\Base\Event;
 
-BundleManager::getInstance()->load('cherry.util');
-
+use CherryUtil\CommandList;
 
 class CherryApplication extends \cherry\Cli\Application {
     protected $apppath = null;
@@ -91,7 +89,7 @@ class CherryApplication extends \cherry\Cli\Application {
         }
 
         $clicmd = $this->parameters[0];
-        $clist = \cherryutil\commands\CommandList::getInstance();
+        $clist = CommandList::getInstance();
         $cmd = $clist->findCommand($clicmd);
 
         if ($cmd) {
@@ -104,7 +102,7 @@ class CherryApplication extends \cherry\Cli\Application {
     }
 
     function usagecommands() {
-        $cb = \cherryutil\commands\CommandList::getInstance();
+        $cb = CommandList::getInstance();
         fprintf(STDERR,"Commands:\n");
         foreach($cb->getCommands() as $command) {
             fprintf(STDERR,"    %s\n", (string)$command);

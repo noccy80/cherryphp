@@ -270,3 +270,11 @@ div.tableview {
     border:solid 1px #888;
     border-top:none;
 }
+div.tableview a {
+    color:#333;
+    text-decoration:none;
+    padding:0px 2px;
+}
+div.tableview a:hover {
+    text-decoration: underline;
+}

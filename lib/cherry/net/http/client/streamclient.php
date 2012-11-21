@@ -97,7 +97,9 @@ class StreamClient extends ClientBase {
 
     public function execute() {
         $ctx = $this->createContext();
-        $stream = fopen($this->url, 'rb', false, $ctx);
+        if (!($stream = @fopen($this->url, 'rb', false, $ctx))) {
+            return false;
+        }
         $this->response_data = stream_get_contents($stream);
         $this->response_meta = stream_get_meta_data($stream);
         $wd = $this->response_meta['wrapper_data'];
@@ -120,7 +122,7 @@ class StreamClient extends ClientBase {
             case STREAM_NOTIFY_COMPLETED:
             case STREAM_NOTIFY_FAILURE:
             case STREAM_NOTIFY_AUTH_RESULT:
-                //var_dump($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
+                var_dump($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
                 /* Ignore */
                 break;
 
@@ -151,8 +153,3 @@ class StreamClient extends ClientBase {
 
 }
 
-$sc = new StreamClient();
-$sc->setUrl('http://127.0.0.1:8080');
-var_dump($sc->execute());
-var_dump($sc->getHeaders());
-//echo $sc->getResponse();

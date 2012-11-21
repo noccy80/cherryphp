@@ -1,9 +1,9 @@
 <?php
 
 namespace cherryutil\commands;
-use cherryutil\commands\Command;
-use cherryutil\commands\CommandBundle;
-use cherryutil\commands\CommandList;
+use cherryutil\Command;
+use cherryutil\CommandBundle;
+use cherryutil\CommandList;
 use cherry\cpr\RepositoryList;
 
 require_once('lib/cherry/cpr/repository.php');

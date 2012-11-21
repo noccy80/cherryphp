@@ -10,13 +10,14 @@
                 <ul class="navigation">
                     <li><a href="/">Home</a></li>
                     <li><a href="/about">About CherryTree</a></li>
+                    <li><a href="/docs">Documentation</a></li>
                 </ul>
             </div>
             <div class="col w-1"></div>
             <div class="col w-3" style="height:28px; line-height:28px;">Search</div>
         </div>
         <div class="container">
-            <div class="col w-12">
+            <div class="col w-12php">
                 <h1>CherryTree</h1>
             </div>
         </div>
@@ -60,7 +61,7 @@
                     <div><@content id="table"></div>
                 </div>
             </div>
-            <div class="col w-3"><@include type="widget" class="CherryTree.Widgets.Sidebar" id="sidebar" scope="request"></div>
+            <div class="col w-3"><@embed type="widget" class="CherryTree.Widgets.Sidebar" id="sidebar" scope="request"></div>
         </div>
     </div>
     <div class="inner foot">
@@ -72,7 +73,7 @@
             <div class="col w-2">Foot</div>
             <div class="col w-2"><@content id="foot"></div>
             <div class="col w-3">
-                <@include type="widget" class="CherryTree.Widgets.AboutCherry">
+                <@embed type="widget" class="CherryTree.Widgets.AboutCherry">
             </div>
         </div>
     </div>

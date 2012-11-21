@@ -8,6 +8,16 @@ class Autoloaders {
     private static $registered = false;
     private static $lastloader = null;
 
+    const
+            AL_DEFAULT  = 0,
+            AL_PSR_0    = 1,
+            AL_CHERRY   = 2,
+            AL_LEPTON   = 3;
+
+    static function add($match,$data,$type = self::AL_DEFAULT) {
+
+    }
+
     static function register(Autoloader $loader, $addtotop = false) {
         if (!self::$registered) {
             spl_autoload_register(array(__CLASS__,'_spl_autoload'),true,true);
@@ -34,8 +44,6 @@ class Autoloaders {
                 }
             }
         }
-        if (!class_exists($class))
-            throw new AutoloaderException("Could not autoload class ".$class);
         return false;
     }
 

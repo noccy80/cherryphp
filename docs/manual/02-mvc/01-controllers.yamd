@@ -34,17 +34,20 @@ normally a `\cherry\Mvc\Application`
     <?php
     
     namespace MyApp\Controllers;
-    class IndexController extends \cherry\Mvc\Controller\Basic {
+    use Cherry\Mvc\Controller;
+    use Cherry\Mvc\Views\PhpView;
+    
+    class IndexController extends Controller {
     
         public function initialize() {
             // Create the view and initialize it to a frame with a
             // placeholder for the rendered view.
-            $this->view = new \cherry\Mvc\View\Frame('frames/default.phtml');
+            $this->decorator = new PhpView('frames/default.phtml');
         }
     
         public function indexAction() {
             // Load the view 
-            $this->view->load('index/index.phtml');
+            $this->view = new PhpView('index/index.phtml');
         }
     
     }
@@ -55,10 +58,11 @@ normally a `\cherry\Mvc\Application`
 
         public function indexAction() {
             // Load the view 
-            $this->view->load('index/index.phtml');
+            $this->view = new PhpView('index/index.phtml');
+            $this->view->sitename = 'My Site';
         }
 
-You can pass data on to the view through the request state.
+You can pass data on to the view through the view as properties.
 
 ## Content in all its glory
 
@@ -75,9 +79,13 @@ The complete list of attributes that are available are:
 <dl>
 <dt><code>encoding="<em>encoding</em>"</code></dt>
     <dd>Encode the content using the specified encoding scheme. This can be used to output Base64-encoded content among other things.</dd>
-<dt><code>src="<em>view.phtml</em>"</code></dt>
-    <dd>Load a specific view. If this attribute is left out, the previous view buffer is rendered.</dd>
-<dt><code>widget="<em>widget-id</em>"</code></dt>
-    <dd>Insert a widget in the content. The widget must be registered with the widget manager
-    before it can be used with the @content tag.</dd>
+<dt><code>id="<em>view-id</em>"</code></dt>
+    <dd>Select the view previously added with <code>setView(<em>view-id</em>,<em>view</em>)</code>.</dd>
 </dl>
+
+### Embedding widgets
+
+Embedding widgets.
+
+    <@embed type="widget" class="Shoutbox" scope="session">
+

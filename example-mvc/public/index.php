@@ -5,7 +5,6 @@
 require('cherryphp.php');
 //LOADER:END
 */
-
 //LOADER:BEGIN
 if (!( @include_once "lib/bootstrap.php" )) {
     $libpath = getenv('CHERRY_LIB');
@@ -21,26 +20,23 @@ App::bootstrap([
     'app.ns' => 'CherryTree',
     'app.public' => dirname(__FILE__),
     'app.root' => dirname(dirname(__FILE__)),
-    'autoload.bundles' => [
-        'cherry.mvc'
-    ],
+    'autoload.bundles' => [    ],
     'autoload.paths' => [
         'CherryTree'    => 'src/',
         '*'             => 'vendor/'
     ]
 ]);
 
+new Cherry\Mvc\Loader();
+
 require_once('src/widgets/sidebar.php');
-//require_once('src/widgets/aboutcherry.php');
+require_once('src/widgets/aboutcherry.php');
 
 use Cherry\Util\AppProfiler;
 
 if (getenv('PROFILE')) {
     App::extend('profiler',new AppProfiler('perf.log'));
     App::profiler()->setReporting(AppProfiler::REPORT_FULL);
-    App::profiler()->push('Loading bundles...');
-    App::bundles()->load('cherry.mvc');
-    App::profiler()->pop();
 }
 App::router()->addRoutes([
     '/admin/posts/(:str)' => 'admin/posts/$1',
@@ -61,4 +57,3 @@ App::router()->addPassthru([
     '/favicon*' => 'public'
 ]);
 App::router()->route();
-
