@@ -98,10 +98,11 @@ div.sidebar-box > ul a {
     padding:5px 8px;
     text-decoration:none;
     color:#444;
+    border-radius:3px;
 }
 div.sidebar-box > ul a:hover {
-    background-color:#EACCE3;
-    border-radius:3px;
+    background-color:#ED9EB6;
+    color:#FFF;
 }
 
 #controls {

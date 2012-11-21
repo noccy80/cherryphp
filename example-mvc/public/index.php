@@ -27,6 +27,8 @@ App::bootstrap([
     ]
 ]);
 
+require(APP_ROOT.'/vendor/autoload.php');
+
 new Cherry\Mvc\Loader();
 
 require_once('src/widgets/sidebar.php');

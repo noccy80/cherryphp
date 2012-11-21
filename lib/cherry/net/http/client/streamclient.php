@@ -78,7 +78,7 @@ class StreamClient extends ClientBase {
         $ctxparams = [
             'notification' => [ $this, '_cb_notification' ]
         ];
-        var_dump($ctxopts);
+        //var_dump($ctxopts);
         $ctx = stream_context_create($ctxopts, $ctxparams);
         return $ctx;
     }
@@ -122,7 +122,7 @@ class StreamClient extends ClientBase {
             case STREAM_NOTIFY_COMPLETED:
             case STREAM_NOTIFY_FAILURE:
             case STREAM_NOTIFY_AUTH_RESULT:
-                var_dump($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
+                //var_dump($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
                 /* Ignore */
                 break;
 

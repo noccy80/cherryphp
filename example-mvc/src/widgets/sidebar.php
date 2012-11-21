@@ -16,29 +16,32 @@ class Sidebar extends Widget {
     function render() {
 
         $boxes = [];
-        $nav =  html::li(html::a('First option', ['href'=>'#'] )).
-                html::li(html::a('Second option', ['href'=>'#'] ));
 
         $boxes[] = html::div(
-            html::div('Navigation',[ 'style'=>'font-weight:bold;' ]).
-            html::ul($nav),
             [
+                html::div('CherryTree',[ 'style'=>'font-weight:bold;' ]).
+                html::ul([
+                    html::li(html::a('Why CherryTree?', ['href'=>'#'] )),
+                    html::li(html::a('Features', ['href'=>'#'] )),
+                    html::li(html::a('CherryTree on GitHub', ['href'=>'#'] )),
+                ])
+            ],[
                 'class'=>'sidebar-box'
             ]
         );
 
-
-        $nav =  [
-            html::li(html::a('First option', ['href'=>'#'] )),
-            html::li(html::a('Second option', ['href'=>'#'] )),
-            html::li(html::a('Third option', ['href'=>'#'] )),
-            html::li(html::a('Fourth option', ['href'=>'#'] ))
-        ];
-
         $boxes[] = html::div(
+            [
                 html::div('Navigation',[ 'style'=>'font-weight:bold;' ]).
-                html::ul(join($nav)),
-            [ 'class'=>'sidebar-box' ]
+                html::ul([
+                    html::li(html::a('First option', ['href'=>'#'] )),
+                    html::li(html::a('Second option', ['href'=>'#'] )),
+                    html::li(html::a('Third option', ['href'=>'#'] )),
+                    html::li(html::a('Fourth option', ['href'=>'#'] ))
+                ])
+            ],[
+                'class'=>'sidebar-box'
+            ]
         );
 
         return join($boxes);
