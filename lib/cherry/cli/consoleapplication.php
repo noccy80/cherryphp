@@ -1,8 +1,8 @@
 <?php
 
-namespace cherry\Cli;
+namespace Cherry\Cli;
 
-abstract class Application extends \cherry\Application {
+abstract class ConsoleApplication extends \Cherry\Application {
 
     private $arguments = array();
     private $commands = array();
@@ -202,4 +202,34 @@ abstract class Application extends \cherry\Application {
     protected function usageinfo() {
         fprintf(STDERR,"This application does not provide any additional usageinfo().\n\n");
     }
+    
+    private static function showError($ca,$type,$message,$file,$line,$log,$bt) {
+        if (function_exists('ncurses_end')) @ncurses_end();
+        $ca->error("\033[1m%s:\033[22m\n    %s\n",$type,$message);
+        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
+        $ca->error("%s\n",join("\n",$this->indent(Debug::getCodePreview($file,$line),4)));
+        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",$this->indent($bt,4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",$this->indent($log,4)));
+        $ca->error("(Hint: Change the LOG_LENGTH envvar to set the size of the debug log buffer)\n");
+    }
+
+    private function indent(array $arr, $indent) {
+        $arro = array();
+        foreach($arr as $row) {
+            $arro[] = str_repeat(" ",$indent).$row;
+        }
+        return $arro;
+    }
+    
+    public function handleException(\Exception $exception) {
+        \Cherry\debug("Unhandled exception %s in %s on line %d", get_class($exception), $exception->getFile(), $exception->getLine());
+        $log = DebugLog::getDebugLog();
+        $ca = \Cherry\Cli\Console::getAdapter();
+
+        $bt = Debug::makeBacktrace($exception->getTrace());
+        $errfile = $exception->getFile();
+        $errline = $exception->getLine();
+        $this->showError($ca,'Exception',$exception->getMessage().' ('.$exception->getCode().')',$errfile,$errline,$log,$bt);
+    }
+
 }

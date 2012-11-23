@@ -11,12 +11,56 @@ abstract class Application {
     }
 
     public function __construct($app=null) {
+        /*
         if ($app) {
             $this->setPath($app);
             $this->loadConfig();
         }
+        */
+        
+        if (is_callable([ $this, 'handleException' ])) {
+            set_error_handler(array($this,'__php_handleError'), E_ALL);
+            set_exception_handler(array($this,'handleException'));
+            // Active assert and make it quiet
+            assert_options(ASSERT_ACTIVE, 1);
+            assert_options(ASSERT_WARNING, 0);
+            assert_options(ASSERT_QUIET_EVAL, 1);
+            assert_options(ASSERT_CALLBACK, array($this,'__php_handleAssert'));
+        }
+        
         if (!self::$instance) self::$instance = $this;
     }
+    
+    public static function __php_handleError($errno,$errstr,$file,$line,$errctx) {
+
+        if ($errno & E_WARNING) {
+            //fprintf(STDERR,"Warning: %s [from %s:%d]\n", $errstr,$errfile,$errline);
+            \Cherry\debug("Warning: %s [from %s:%d]\n", $errstr,$file,$line);
+            return true;
+        }
+        if ($errno & E_DEPRECATED) {
+            //fprintf(STDERR,"Deprecated: %s [from %s:%d]\n", $errstr,$errfile,$errline);
+            return true;
+        }
+
+        if (!error_reporting()) return;
+        throw new \ErrorException($errstr,$errno,0,$file,$line);
+
+    }
+    // Create a handler function
+    public static function __php_handleAssert($file, $line, $code, $desc = null) {
+        
+        \Cherry\debug("Assertion failed in %s on line %d", $file, $line);
+        $log = DebugLog::getDebugLog();
+        $ca = \Cherry\Cli\Console::getAdapter();
+
+        $str = sprintf("in %s on line %d",$file, $line );
+        $bt = Debug::getBacktrace(1);
+        self::showError($ca,'Assertion failed',$str,$file,$line,$log,$bt);
+
+        exit(1);
+    }
+    
 
     public function setPath($path) {
         $this->path = $path.'/app';

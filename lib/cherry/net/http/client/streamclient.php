@@ -39,6 +39,8 @@ class StreamClient extends ClientBase {
     }
 
     public function setUrl($url) {
+        if (stream_is_local($url))
+            user_error("StreamClient can't open local resources");
         $this->url = (string)$url;
     }
 

@@ -24,7 +24,7 @@ use cherry\Base\Event;
 
 use CherryUtil\CommandList;
 
-class CherryApplication extends \cherry\Cli\Application {
+class CherryApplication extends \cherry\Cli\ConsoleApplication {
     protected $apppath = null;
     protected $route = false;
     protected $config = 'development';
