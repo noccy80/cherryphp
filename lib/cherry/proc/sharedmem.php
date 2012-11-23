@@ -8,22 +8,20 @@ class SharedMem {
     const SCOPE_PID = 2;
 
     private
-            $shm = null;
+            $shm = null,
+            $key = null;
 
-    public function __initialize($file,$scope = self::SCOPE_APP, $size = 65535) {
-
+    public function __construct($file,$scope = self::SCOPE_APP, $size = 65535) {
         $mf = $file . ($scope==self::SCOPE_PID)?'.'.getmypid():'';
         if (!file_exists($mf))
             touch($mf);
-        $key = fileinode($mf);
-        $this->shm = shm_attach($key, $size);
-
+        $this->key = fileinode($mf);
+        \Cherry\Debug("SHM key: %d", $this->key);
+        $this->shm = shm_attach($this->key, $size);
     }
 
     public function __destruct() {
-
         shm_detach($this->shm);
-
     }
 
     public function get($index) {

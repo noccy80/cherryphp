@@ -13,6 +13,12 @@ abstract class ConsoleAdapter {
     public function __construct() {
         $this->errorfifo = new \Data\FifoQueue(250);
     }
+    
+    public function __invoke() {
+        $args = func_get_args();
+        $out = call_user_func_array('\sprintf',$args);
+        $this->putMessage($out,self::CLASS_DEFAULT);
+    }
 
     function write() {
         $args = func_get_args();
