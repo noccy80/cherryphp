@@ -4,6 +4,7 @@ namespace cherryutil\commands;
 use cherryutil\Command;
 use cherryutil\CommandBundle;
 use cherryutil\CommandList;
+use App;
 
 class SysInfoCommands extends CommandBundle {
     
@@ -12,6 +13,9 @@ class SysInfoCommands extends CommandBundle {
             new Command('phpinfo','',
                     'PHP Information.', 
                     array($this,'phpinfo')),
+            new Command('print-config','',
+                    'Show the cherry configuration',
+                    array($this,'cherrycfg')),
             new Command('php-extensions','',
                     'Show available PHP extensions',
                     array($this,'phpextensions')),
@@ -23,6 +27,12 @@ class SysInfoCommands extends CommandBundle {
     
     function phpinfo() {
         \phpinfo();
+    }
+    
+    function cherrycfg() {
+        $con = \cherry\cli\Console::getAdapter();
+        $cfg = App::config()->getAll();
+        $con->write(print_r($cfg,true)."\n");
     }
     
     function phpextensions() {
