@@ -37,10 +37,13 @@ class ErrorHandler {
             return true;
         }
 
-        \Cherry\debug("Fatal error %s in %s on line %d", $errstr, $file, $line);
-        $log = DebugLog::getDebugLog();
-        $bt = Debug::getBacktrace(1);
-        self::showError($ca,'Error',$errstr.' ('.$errno.')',$file,$line,$log,$bt);
+        if (error_reporting())
+            throw new ErrorException($errstr, 0, $errno, $file, $line);
+
+        //\Cherry\debug("Fatal error %s in %s on line %d", $errstr, $file, $line);
+        //$log = DebugLog::getDebugLog();
+        //$bt = Debug::getBacktrace(1);
+        //self::showError($ca,'Error',$errstr.' ('.$errno.')',$file,$line,$log,$bt);
 
         exit(1);
 

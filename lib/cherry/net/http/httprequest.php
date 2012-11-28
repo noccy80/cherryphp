@@ -10,16 +10,34 @@ class HttpRequest extends EventEmitter {
         $client = null,     ///< HttpClient instance
         $status = null;     ///< HTTP status code
 
-    public function __construct($url,$method='GET',$postdata=null,$contenttype=null) {
+    public function __construct($url=null,$method='GET',$postdata=null,$contenttype=null) {
         $this->client = new StreamClient();
-        $this->client->setUrl($url);
+        $this->client->on('httprequest:before', function() { $this->emit('httprequest:before'); });
+        $this->client->on('httprequest:complete', function($status) {
+            if ($status == 200) { $this->emit('httprequest:success', $this->getResponseText(), $this->getAllHeaders()); }
+            else { $this->emit('httprequest:error'); }
+        });
+        if ($url) $this->client->setUrl($url);
         $this->client->setMethod($method);
         if (($postdata) && ($contenttype)) {
             $this->client->setPostData($contenttype, $postdata);
         }
     }
 
-    public function execute() {
+    public function open($method, $url, $useragent=null) {
+        $this->client->setUrl($url);
+        $this->client->setMethod($method);
+        if ($useragent) $this->client->setHeader('User-Agent',$useragent);
+    }
+
+    public function setHeader($header,$value) {
+        return $this->client->setHeader($header,$value);
+    }
+
+    public function send($postdata=null,$contenttype=null) {
+        if (($postdata) && ($contenttype)) {
+            $this->client->setPostData($contenttype, $postdata);
+        }
         if ($this->status !== null) return;
         $this->status = $this->client->execute();
         if ($this->status == 200) {
@@ -39,7 +57,10 @@ class HttpRequest extends EventEmitter {
     public function getHeader($header) {
         if ($this->status === null)
             user_error("Need to execute() before accessing response");
+    }
 
+    public function getAllHeaders() {
+        return $this->client->getHeaders();
     }
 
     public function getResponseJson() {

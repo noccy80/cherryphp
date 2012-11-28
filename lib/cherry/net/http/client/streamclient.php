@@ -2,7 +2,9 @@
 
 namespace Cherry\Net\Http\Client;
 
-abstract class ClientBase {
+use Cherry\Base\EventEmitter;
+
+abstract class ClientBase extends EventEmitter {
     abstract public function setMethod($method);
     abstract public function setPostData($contenttype, $postdata);
     abstract public function setUrl($url);
@@ -53,12 +55,22 @@ class StreamClient extends ClientBase {
         $this->postdata = $postdata;
     }
 
-    public function setHeader($header) {
-        $this->request_headers[] = $header;
+    public function setHeader($header,$value) {
+        switch(strtolower($header)) {
+            case 'user-agent':
+                $this->useragent = $value;
+                break;
+            case 'content-type':
+                $this->contenttype = $value;
+                break;
+            default:
+            $this->request_headers[$header] = $value;
+        }
     }
 
     private function buildHeaders() {
-        $hdr = $this->request_headers;
+        $hdrl = $this->request_headers;
+        $hdr = []; foreach($hdrl as $k=>$v) $hdr[] = str_replace(' ','-',ucwords(str_replace('-',' ',$k))).': '.$v;
         if ($this->contenttype)
             $hdr[] = 'Content-Type: '.$this->contenttype;
         return (count($hdr)>0)?join("\r\n",$hdr):null;
@@ -68,7 +80,7 @@ class StreamClient extends ClientBase {
         $ctxopts = [
             'http' => [
                 'method' => $this->request_method,
-                'user_agent' => 'CherryPHP StreamClient/1.0',
+                'user_agent' => ($this->useragent)?:'CherryPHP StreamClient/1.0',
                 'header' => $this->buildHeaders(),
                 'content' => null,
                 'proxy' => null,
@@ -98,8 +110,10 @@ class StreamClient extends ClientBase {
     }
 
     public function execute() {
+        $this->emit('httprequest:before');
         $ctx = $this->createContext();
         if (!($stream = @fopen($this->url, 'rb', false, $ctx))) {
+        $this->emit('httprequest:complete', (int)0);
             return false;
         }
         $this->response_data = stream_get_contents($stream);
@@ -111,6 +125,7 @@ class StreamClient extends ClientBase {
             list($k, $v) = explode(': ', $header, 2);
             $this->response_headers[$k] = $v;
         }
+        $this->emit('httprequest:complete', (int)$this->response_status);
         return (int)$this->response_status;
         //var_dump($headers);
         //var_dump($data);
@@ -154,4 +169,3 @@ class StreamClient extends ClientBase {
     }
 
 }
-

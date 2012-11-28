@@ -123,6 +123,10 @@ class AppConfig {
         return $base;
     }
 
+    public function getAll() {
+        return $this->cfg;
+    }
+
     public function addConfiguration($file) {
         if (is_array($file)) {
             foreach($file as $f) {
