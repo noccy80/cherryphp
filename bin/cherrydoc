@@ -23,11 +23,11 @@ $lepton = new \cherry\Lepton(__FILE__);
 require('lib/markdown.php');
 
 // We need this to set up a CLI application
-require_once('lib/cherry/cli/application.php');
+//require_once('lib/cherry/cli/application.php');
 
 use cherry\Base\Event;
 
-class CherryDocApplication extends \cherry\Cli\Application {
+class CherryDocApplication extends \cherry\Cli\ConsoleApplication {
     protected $projectfile = 'cherrydoc.ini';
     protected $segments = null;
     /**
