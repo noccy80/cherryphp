@@ -4,6 +4,13 @@ namespace Cherry\Net\Http;
 use Cherry\Net\Http\Client\StreamClient;
 use Cherry\Base\EventEmitter;
 
+/**
+ *
+ *
+ * @x-event httprequest:before [$this] Fired before the request is executed
+ * @x-event httprequest:error [$status,$this] Fires on error (not 200)
+ * @x-event httprequest:success [$responsetext,$headers,$this] Fires on success (200)
+ */
 class HttpRequest extends EventEmitter {
 
     private
@@ -12,11 +19,13 @@ class HttpRequest extends EventEmitter {
 
     public function __construct($url=null,$method='GET',$postdata=null,$contenttype=null) {
         $this->client = new StreamClient();
-        $this->client->on('httprequest:before', function() { $this->emit('httprequest:before'); });
+        /*
+        $this->client->on('httprequest:before', function() { $this->emit('httprequest:before', $this); });
         $this->client->on('httprequest:complete', function($status) {
-            if ($status == 200) { $this->emit('httprequest:success', $this->getResponseText(), $this->getAllHeaders()); }
-            else { $this->emit('httprequest:error'); }
+            if ($status == 200) { $this->emit('httprequest:success', $this->getResponseText(), $this->getAllHeaders(), $this); }
+            else { $this->emit('httprequest:error',$status,$this); }
         });
+        */
         if ($url) $this->client->setUrl($url);
         $this->client->setMethod($method);
         if (($postdata) && ($contenttype)) {
@@ -35,6 +44,7 @@ class HttpRequest extends EventEmitter {
     }
 
     public function send($postdata=null,$contenttype=null) {
+        \Cherry\debug("Sending request...");
         if (($postdata) && ($contenttype)) {
             $this->client->setPostData($contenttype, $postdata);
         }

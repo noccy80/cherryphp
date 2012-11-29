@@ -75,7 +75,3 @@ class Autoloader {
     }
 
 }
-
-
-
-Autoloader::add('Cherry\*', CHERRY_LIB._DS_.'lib', 'Cherry' );

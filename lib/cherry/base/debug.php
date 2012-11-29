@@ -66,21 +66,25 @@ function getLineInfo(array $btr) {
 
 function log($type,$fmt,$args=null) {
     $args = func_get_args();
+/*
     $bt = debug_backtrace();
     if (count($bt)>0) {
         $ol = getLineInfo($bt[0]);
         if ($ol) $args[1] = $args[1].' (at '.$ol.')';
     }
+*/
     call_user_func_array(array('\Cherry\DebugLog','log'),$args);
 }
 function debug($fmt,$args=null) {
     $args = func_get_args();
     array_unshift($args,LOG_DEBUG);
+/*
     $bt = debug_backtrace();
     if (count($bt)>0) {
         $ol = getLineInfo($bt[0]);
         if ($ol) $args[1] = $args[1].' (at '.$ol.')';
     }
+*/
     call_user_func_array(array('\Cherry\DebugLog','log'),$args);
 }
 
@@ -171,4 +175,3 @@ class Debug {
     }
 
 }
-

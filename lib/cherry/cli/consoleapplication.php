@@ -9,9 +9,9 @@ abstract class ConsoleApplication extends \Cherry\Application {
 
     protected $parameters = array();
 
-    function __construct($app) {
+    function __construct() {
         global $argv;
-        parent::__construct($app);
+        parent::__construct();
 
         \cherry\log(\cherry\LOG_DEBUG,'Spawning application');
         $this->init();
@@ -202,7 +202,7 @@ abstract class ConsoleApplication extends \Cherry\Application {
     protected function usageinfo() {
         fprintf(STDERR,"This application does not provide any additional usageinfo().\n\n");
     }
-    
+
     private static function showError($ca,$type,$message,$file,$line,$log,$bt) {
         if (function_exists('ncurses_end')) @ncurses_end();
         $ca->error("\033[1m%s:\033[22m\n    %s\n",$type,$message);
@@ -220,7 +220,7 @@ abstract class ConsoleApplication extends \Cherry\Application {
         }
         return $arro;
     }
-    
+
     public function handleException(\Exception $exception) {
         \Cherry\debug("Unhandled exception %s in %s on line %d", get_class($exception), $exception->getFile(), $exception->getLine());
         $log = DebugLog::getDebugLog();

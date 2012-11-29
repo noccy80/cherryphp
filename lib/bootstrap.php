@@ -49,18 +49,26 @@ require_once CHERRY_LIB.'/lib/data/fifoqueue.php';
 if (PHP_VERSION_ID >= 50400) {
     require_once CHERRY_LIB.'/lib/traits.php';
 }
-require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
+
 require_once CHERRY_LIB.'/lib/cherry/base/debug.php';
+
+//require_once CHERRY_LIB.'/lib/cherry/autoloader.php';
+//$loader = new Autoloader('Cherry\*', CHERRY_LIB._DS_.'lib', 'Cherry' );
+//$loader->register();
+
+use Cherry\Autoloader\Autoloader;
+use Cherry\Autoloader\Autoloaders;
+require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
+// Register the autoloader for the base library
+Autoloaders::register(new Autoloader(CHERRY_LIB.'/lib'));
+
 require_once CHERRY_LIB.'/lib/bundles.php';
 require_once CHERRY_LIB.'/lib/cherry/base/config.php';
 require_once CHERRY_LIB.'/lib/cherry/base/event.php';
 require_once CHERRY_LIB.'/lib/cherry/extension.php';
 require_once CHERRY_LIB.'/lib/cherry/base/cherry.php';
-//require_once CHERRY_LIB.'/lib/cherry/base/application.php';
 require_once CHERRY_LIB.'/lib/app.php';
-
-use Cherry\Autoloader\Autoloader;
-use Cherry\Autoloader\Autoloaders;
+//require_once CHERRY_LIB.'/lib/cherry/base/application.php';
 
 function unipath($path) {
     if (DIRECTORY_SEPARATOR != '/') {
@@ -82,6 +90,3 @@ class ScopeTimer {
         \Cherry\debug('%s: %fus', $this->info, $dur);
     }
 }
-
-// Register the autoloader for the base library
-Autoloaders::register(new Autoloader(CHERRY_LIB.'/lib'));

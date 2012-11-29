@@ -2,8 +2,8 @@
 
 namespace Cherry;
 
-use Cherry\Autoloader\Autoloaders;
-use Cherry\Autoloader\Autoloader;
+//use Cherry\Autoloader\Autoloaders;
+//use Cherry\Autoloader\Autoloader;
 
 class BundleManager {
 
@@ -28,9 +28,9 @@ class BundleManager {
             $info = require($bpath._DS_.'loader.php');
             // var_dump($info);
             $bundlesrc = $bpath._DS_.((empty($info['src'])?'src':$info['src']));
-            Autoloaders::register(new Autoloader($bundlesrc));
+            //Autoloaders::register(new Autoloader($bundlesrc));
             foreach((array)$info['autoload'] as $classname) {
-                Autoloaders::_spl_autoload($classname);
+                //Autoloaders::_spl_autoload($classname);
             }
         } else {
             throw new BundleException("Bundle ".$bundlekey." not found.");
