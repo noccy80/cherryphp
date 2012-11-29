@@ -4,13 +4,13 @@
  * @brief File operation helpers for cherryutil
  *
  */
-namespace cherryutil\fileops;
+namespace CherryUtil;
 
 /**
  * @class FileOpHelper
  * @brief Actions useful for installing files
  */
-class FileOpHelper {
+class FileOps {
 
     private $verbose = false;
     private $replace = false;

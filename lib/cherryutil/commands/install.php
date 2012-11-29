@@ -21,7 +21,7 @@ class InstallCommands extends CommandBundle {
     function installAll() {
     
         $con = \cherry\cli\Console::getAdapter();
-        $foh = new \cherryutil\fileops\FileOpHelper();
+        $foh = new \cherryutil\FileOps();
 
         $opts = func_get_args();
         $tools = false;
@@ -84,7 +84,7 @@ class InstallCommands extends CommandBundle {
     
     function installTools() {
         $con = \cherry\cli\Console::getAdapter();
-        $foh = new \cherryutil\fileops\FileOpHelper();
+        $foh = new \cherryutil\FileOps();
         $foh->setReplace(true);
         $home = getenv('HOME');
         $bindir = $home.'/bin';

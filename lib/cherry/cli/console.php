@@ -13,7 +13,7 @@ abstract class ConsoleAdapter {
     public function __construct() {
         $this->errorfifo = new \Data\FifoQueue(250);
     }
-    
+
     public function __invoke() {
         $args = func_get_args();
         $out = call_user_func_array('\sprintf',$args);
@@ -59,12 +59,12 @@ class Console {
                 if (php_sapi_name() == 'cli-server')
                     $objadapter = new \Cherry\Cli\Adapters\NullConsole();
                 elseif (_IS_LINUX) {
-                    if (getenv("ANSI")=='1') {
-                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: ANSI envvar is 1, enabling ANSI.");
-                        $objadapter = new \Cherry\Cli\Adapters\AnsiConsole();
-                    } elseif (getenv("NOANSI")=='1') {
+                    if (getenv("NOANSI")=='1') {
                         \Cherry\Log(\Cherry\LOG_DEBUG,"Console: NOANSI envvar is 1. Falling back on simple adapter.");
                         $objadapter = new \Cherry\Cli\Adapters\SimpleConsole();
+                    } elseif (getenv("ANSI")=='1') {
+                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: ANSI envvar is 1, enabling ANSI.");
+                        $objadapter = new \Cherry\Cli\Adapters\AnsiConsole();
                     } else {
                         $out = null; $ret = 0;
                         exec('tty',$out,$ret);
