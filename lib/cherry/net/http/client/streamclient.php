@@ -5,11 +5,60 @@ namespace Cherry\Net\Http\Client;
 use Cherry\Base\EventEmitter;
 
 abstract class ClientBase extends EventEmitter {
+    private $cookies = [];
+    private $cookiejar = null;
     abstract public function setMethod($method);
     abstract public function setPostData($contenttype, $postdata);
     abstract public function setUrl($url);
     abstract public function getUrl();
     abstract public function execute();
+    abstract public function getLastError();
+    public function setCookieJar($jar) {
+        $this->cookiejar = $jar;
+        if (is_readable($jar)) {
+            $this->cookies = explode("\n",file_get_contents($jar));
+        }
+    }
+    public function setCookie($k,$v,$p=null) {
+        if ($p) $p='; '.$p;
+        $this->cookies[$k] = "{$k}={$v}{$p}";
+        if (!empty($this->cookiejar)) {
+            file_put_contents($this->cookiejar,join("\n",$this->cookies));
+        }
+    }
+    public function setCookieRaw($ks) {
+        if (strpos($ks,'; ')!==null) {
+            list($cookie,$p) = explode('; ',$ks,2);
+            list($k,$v) = explode('=',$cookie,2);
+            $this->setCookie($k,$v,$p);
+        } else {
+            list($k,$v) = explode('=',$ks,2);
+            $this->setCookie($k,$v);
+        }
+    }
+    public function getCookie($k) {
+        if (array_key_exists($this->cookies,$k)) {
+            $ks = $this->cookies[$k];
+            if (strpos($ks,'; ')!==null) {
+                list($cookie,$p) = explode('; ',$ks,2);
+                list($k,$v) = explode('=',$cookie,2);
+                return $v;
+            } else {
+                list($k,$v) = explode('=',$ks,2);
+                return $v;
+            }
+        } else {
+            return null;
+        }
+    }
+    public function getCookieRaw($k) {
+        if (array_key_exists($this->cookies,$k)) {
+            return $this->cookies[$k];
+        }
+    }
+    public function getCookiesForRequest() {
+        return array_values($this->cookies);
+    }
 }
 
 /**
@@ -34,7 +83,8 @@ class StreamClient extends ClientBase {
         $response_status    = null,
         $response_headers   = [],
         $response_protocol  = null,
-        $response_message   = null;
+        $response_message   = null,
+        $useragent          = null;
 
     public function setMethod($method) {
         $this->request_method = strtoupper($method);
@@ -73,6 +123,10 @@ class StreamClient extends ClientBase {
         $hdr = []; foreach($hdrl as $k=>$v) $hdr[] = str_replace(' ','-',ucwords(str_replace('-',' ',$k))).': '.$v;
         if ($this->contenttype)
             $hdr[] = 'Content-Type: '.$this->contenttype;
+        // Check which cookies should be included for the request
+        $cookies = $this->getCookiesForRequest();
+        foreach($cookies as $cookie)
+            $hdr[] = 'Cookie: '.$cookie;
         return (count($hdr)>0)?join("\r\n",$hdr):null;
     }
 
@@ -108,6 +162,10 @@ class StreamClient extends ClientBase {
     public function getStatus() {
         return (int)$this->response_status;
     }
+    
+    public function getLastError() {
+        return "Unknown error.";
+    }
 
     public function execute() {
         $this->emit('httprequest:before');
@@ -122,8 +180,17 @@ class StreamClient extends ClientBase {
         $headers = array_slice($wd,1);
         list($this->response_protocol, $this->response_status, $this->response_message) = explode(' ', $wd[0], 3);
         foreach($headers as $header) {
-            list($k, $v) = explode(': ', $header, 2);
-            $this->response_headers[$k] = $v;
+            if (strpos($header,': ')!==false) {
+                list($k, $v) = explode(': ', $header, 2);
+                if ($k == 'Set-Cookie') $this->setCookieRaw($v);
+                if (array_key_exists($this->response_headers,$k)) {
+                    if (is_array($this->response_headers[$k]))
+                        $this->response_headers[$k] = [$this->response_headers[$k]];
+                    $this->response_headers[$k][] = $v;
+                } else {
+                    $this->response_headers[$k] = $v;
+                }
+            }
         }
         $this->emit('httprequest:complete', (int)$this->response_status);
         return (int)$this->response_status;
