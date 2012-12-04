@@ -1,0 +1,35 @@
+#!/usr/bin/php
+<?php
+
+//LOADER:BEGIN
+if (!( @include_once "lib/bootstrap.php" )) {
+    $libpath = getenv('CHERRY_LIB');
+    if (!$libpath) {
+        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+        exit(1);
+    }
+    require_once($libpath.'/lib/bootstrap.php');
+}
+//LOADER:END
+
+use Cherry\Cli\Ansi;
+
+$ca = \Cherry\Cli\Console::getAdapter();
+
+$ca("Creating semaphore...\n");
+$sem = new \Cherry\Proc\Semaphore(12421);
+
+$ca("Acquiring...\n");
+$sem->acquire();
+
+$ca("Dropping message in IPC sharedmem...\n");
+$sm = new \Cherry\Proc\SharedMem(__FILE__);
+$sm->set(1,'Hello World!',true);
+
+$ca("Sleeping for 10 seconds, try spawning another copy of this script meanwhile...\n");
+sleep(5);
+
+$ca("The message was: %s\n", $sm->get(1));
+
+$ca("Releasing...\n");
+$sem->release();
