@@ -2,6 +2,9 @@
 
 namespace Cherry\Cli;
 
+use Cherry\Debug;
+use Cherry\DebugLog;
+
 abstract class ConsoleApplication extends \Cherry\Application {
 
     private $arguments = array();
@@ -207,13 +210,13 @@ abstract class ConsoleApplication extends \Cherry\Application {
         if (function_exists('ncurses_end')) @ncurses_end();
         $ca->error("\033[1m%s:\033[22m\n    %s\n",$type,$message);
         $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
-        $ca->error("%s\n",join("\n",$this->indent(Debug::getCodePreview($file,$line),4)));
-        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",$this->indent($bt,4)));
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",$this->indent($log,4)));
+        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
+        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent($bt,4)));
+        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
         $ca->error("(Hint: Change the LOG_LENGTH envvar to set the size of the debug log buffer)\n");
     }
 
-    private function indent(array $arr, $indent) {
+    private static function indent(array $arr, $indent) {
         $arro = array();
         foreach($arr as $row) {
             $arro[] = str_repeat(" ",$indent).$row;
@@ -230,6 +233,7 @@ abstract class ConsoleApplication extends \Cherry\Application {
         $errfile = $exception->getFile();
         $errline = $exception->getLine();
         $this->showError($ca,'Exception',$exception->getMessage().' ('.$exception->getCode().')',$errfile,$errline,$log,$bt);
+        exit(1);
     }
 
 }
