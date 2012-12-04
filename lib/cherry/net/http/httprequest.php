@@ -19,13 +19,11 @@ class HttpRequest extends EventEmitter {
 
     public function __construct($url=null,$method='GET',$postdata=null,$contenttype=null) {
         $this->client = new StreamClient();
-        /*
         $this->client->on('httprequest:before', function() { $this->emit('httprequest:before', $this); });
         $this->client->on('httprequest:complete', function($status) {
             if ($status == 200) { $this->emit('httprequest:success', $this->getResponseText(), $this->getAllHeaders(), $this); }
             else { $this->emit('httprequest:error',$status,$this); }
         });
-        */
         if ($url) $this->client->setUrl($url);
         $this->client->setMethod($method);
         if (($postdata) && ($contenttype)) {
@@ -74,13 +72,13 @@ class HttpRequest extends EventEmitter {
     }
 
     public function getResponseJson() {
-        if ($this->status === null)
+        if ($this->client->getStatus() === null)
             user_error("Need to execute() before accessing response");
         return json_decode($this->client->getResponse());
     }
 
     public function getResponseText() {
-        if ($this->status === null)
+        if ($this->client->getStatus() === null)
             user_error("Need to execute() before accessing response");
         return $this->client->getResponse();
     }
