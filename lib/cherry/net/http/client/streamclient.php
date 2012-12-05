@@ -2,65 +2,6 @@
 
 namespace Cherry\Net\Http\Client;
 
-use Cherry\Base\EventEmitter;
-
-abstract class ClientBase extends EventEmitter {
-    private $cookies = [];
-    private $cookiejar = null;
-    abstract public function setMethod($method);
-    abstract public function setPostData($contenttype, $postdata);
-    abstract public function setUrl($url);
-    abstract public function getUrl();
-    abstract public function execute();
-    abstract public function getLastError();
-    public function setCookieJar($jar) {
-        $this->cookiejar = $jar;
-        if (is_readable($jar)) {
-            $this->cookies = explode("\n",file_get_contents($jar));
-        }
-    }
-    public function setCookie($k,$v,$p=null) {
-        if ($p) $p='; '.$p;
-        $this->cookies[$k] = "{$k}={$v}{$p}";
-        if (!empty($this->cookiejar)) {
-            file_put_contents($this->cookiejar,join("\n",$this->cookies));
-        }
-    }
-    public function setCookieRaw($ks) {
-        if (strpos($ks,'; ')!==null) {
-            list($cookie,$p) = explode('; ',$ks,2);
-            list($k,$v) = explode('=',$cookie,2);
-            $this->setCookie($k,$v,$p);
-        } else {
-            list($k,$v) = explode('=',$ks,2);
-            $this->setCookie($k,$v);
-        }
-    }
-    public function getCookie($k) {
-        if (array_key_exists($this->cookies,$k)) {
-            $ks = $this->cookies[$k];
-            if (strpos($ks,'; ')!==null) {
-                list($cookie,$p) = explode('; ',$ks,2);
-                list($k,$v) = explode('=',$cookie,2);
-                return $v;
-            } else {
-                list($k,$v) = explode('=',$ks,2);
-                return $v;
-            }
-        } else {
-            return null;
-        }
-    }
-    public function getCookieRaw($k) {
-        if (array_key_exists($this->cookies,$k)) {
-            return $this->cookies[$k];
-        }
-    }
-    public function getCookiesForRequest() {
-        return array_values($this->cookies);
-    }
-}
-
 /**
  * @class StreamClient
  * @brief HTTP Client over PHP streams.
@@ -84,20 +25,11 @@ class StreamClient extends ClientBase {
         $response_headers   = [],
         $response_protocol  = null,
         $response_message   = null,
-        $useragent          = null;
+        $useragent          = null,
+        $timings            = [];
 
     public function setMethod($method) {
         $this->request_method = strtoupper($method);
-    }
-
-    public function setUrl($url) {
-        // if (stream_is_local($url))
-        //     user_error("StreamClient can't open local resources");
-        $this->url = (string)$url;
-    }
-
-    public function getUrl() {
-        return $this->url;
     }
 
     public function setPostData($contenttype, $postdata) {
@@ -169,13 +101,25 @@ class StreamClient extends ClientBase {
 
     public function execute() {
         $this->emit('httprequest:before');
+        $this->timings = ['started' => microtime(true)];
+        \Cherry\Debug('StreamClient: Creating context and opening connection...');
         $ctx = $this->createContext();
         if (!($stream = @fopen($this->url, 'rb', false, $ctx))) {
-        $this->emit('httprequest:complete', (int)0);
+            $this->timings['request_sent'] = microtime(true);
+            $this->emit('httprequest:complete', (int)0);
             return false;
         }
-        $this->response_data = stream_get_contents($stream);
+        $this->timings['request_sent'] = microtime(true);
         $this->response_meta = stream_get_meta_data($stream);
+        if (!empty($this->response_meta['unread_bytes'])) {
+            $bytes = $this->response_meta['unread_bytes'];
+            \Cherry\Debug('StreamClient: Getting contents (%d bytes)', $bytes);
+            $this->response_data = stream_get_contents($stream, $bytes);
+        } else {
+            \Cherry\Debug('StreamClient: Getting contents (Unknown length)');
+            $this->response_data = stream_get_contents($stream);
+        }
+        \Cherry\Debug('StreamClient: Parsing response headers');
         $wd = $this->response_meta['wrapper_data'];
         $headers = array_slice($wd,1);
         list($this->response_protocol, $this->response_status, $this->response_message) = explode(' ', $wd[0], 3);
@@ -183,8 +127,8 @@ class StreamClient extends ClientBase {
             if (strpos($header,': ')!==false) {
                 list($k, $v) = explode(': ', $header, 2);
                 if ($k == 'Set-Cookie') $this->setCookieRaw($v);
-                if (array_key_exists($this->response_headers,$k)) {
-                    if (is_array($this->response_headers[$k]))
+                if (array_key_exists($k,$this->response_headers)) {
+                    if (!is_array($this->response_headers[$k]))
                         $this->response_headers[$k] = [$this->response_headers[$k]];
                     $this->response_headers[$k][] = $v;
                 } else {
@@ -193,10 +137,23 @@ class StreamClient extends ClientBase {
             }
         }
         $this->emit('httprequest:complete', (int)$this->response_status);
+        \Cherry\Debug('StreamClient: Returning response status');
         return (int)$this->response_status;
         //var_dump($headers);
         //var_dump($data);
         //var_dump($meta);
+    }
+    
+    public function getTimings() {
+        $start = $this->timings['started'];
+        $out = [ 'started' => 0 ];
+        $maxv = 0;
+        foreach($this->timings as $k=>$v) {
+            if ($v > $maxv) $maxv = $v;
+            if ($k != 'start') $out[$k] = ($v - $start);
+        }
+        $out['completed'] = ($maxv - $start);
+        return $out;
     }
 
     public function _cb_notification($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) {
@@ -215,6 +172,7 @@ class StreamClient extends ClientBase {
                 break;
 
             case STREAM_NOTIFY_CONNECT:
+                $this->timings['connected'] = microtime(true); 
                 //echo "Connected...";
                 break;
 
@@ -224,11 +182,17 @@ class StreamClient extends ClientBase {
                 break;
 
             case STREAM_NOTIFY_MIME_TYPE_IS:
+                $this->timings['headers'] = microtime(true); 
                 //echo "Found the mime-type: ", $message;
                 break;
 
             case STREAM_NOTIFY_PROGRESS:
+                if (empty($this->timings['content_begins']))
+                    $this->timings['content_begins'] = microtime(true);
+                if ($bytes_transferred >= $bytes_max)
+                    $this->timings['content_ends'] = microtime(true);
                 $this->bytes_transferred = $bytes_transferred;
+                
                 //$this->emit('streamclient.progress', $bytes_transferred, $bytes_max);
                 //echo "Made some progress, downloaded ", $bytes_transferred, " so far";
                 break;
