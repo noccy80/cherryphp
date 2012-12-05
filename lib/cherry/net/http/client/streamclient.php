@@ -26,7 +26,9 @@ class StreamClient extends ClientBase {
         $response_protocol  = null,
         $response_message   = null,
         $useragent          = null,
-        $timings            = [];
+        $timings            = [],
+        $verify_cert        = true,
+        $verify_fp          = null;
 
     public function setMethod($method) {
         $this->request_method = strtoupper($method);
@@ -159,8 +161,10 @@ class StreamClient extends ClientBase {
     public function _cb_notification($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) {
         switch($notification_code) {
             case STREAM_NOTIFY_RESOLVE:
-            case STREAM_NOTIFY_AUTH_REQUIRED:
+                $this->timings['resolve'] = microtime(true); break;
             case STREAM_NOTIFY_COMPLETED:
+                $this->timings['completednf'] = microtime(true); break;
+            case STREAM_NOTIFY_AUTH_REQUIRED:
             case STREAM_NOTIFY_FAILURE:
             case STREAM_NOTIFY_AUTH_RESULT:
                 //var_dump($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
@@ -196,6 +200,34 @@ class StreamClient extends ClientBase {
                 //$this->emit('streamclient.progress', $bytes_transferred, $bytes_max);
                 //echo "Made some progress, downloaded ", $bytes_transferred, " so far";
                 break;
+        }
+    }
+
+    public function setOption($koa,$v=null) {
+        if (is_array($koa)) { foreach($koa as $k=>$v) setOption($k,$v); return; }
+        switch($koa) {
+            case ClientBase::HTTP_PROXY:
+                $this->proxy = $v;
+                break;
+            case ClientBase::HTTPS_VERIFY_CERT:
+                $this->verify_cert = ($v == true);
+                break;
+            case ClientBase::HTTPS_VERIFY_FP:
+                $this->verify_fp = $v;
+                break;
+        }
+    }
+
+    public function getOption($k) {
+        switch($k) {
+            case ClientBase::HTTP_PROXY:
+                return $this->proxy;
+            case ClientBase::HTTPS_VERIFY_CERT:
+                return $this->verify_cert;
+            case ClientBase::HTTPS_VERIFY_FP:
+                return $this->verify_fp;
+            default:
+                return null;
         }
     }
 

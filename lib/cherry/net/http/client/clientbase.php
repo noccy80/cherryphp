@@ -6,15 +6,23 @@ use Cherry\Base\EventEmitter;
 
 abstract class ClientBase extends EventEmitter {
     protected
-        $url = null;
+        $url                = null;
     private
-        $cookies = [],
-        $cookiejar = null;
+        $cookies            = [],
+        $cookiejar          = null,
+        $auth_type          = null,
+        $auth_params        = null;
+    const
+        HTTP_PROXY          = 'HTTP_PROXY',
+        HTTPS_VERIFY_CERT   = 'HTTPS_VERIFY_CERT',
+        HTTPS_VERIFY_FP     = 'HTTPS_VERIFY_FP';
     abstract public function setMethod($method);
     abstract public function setHeader($header,$value);
     abstract public function setPostData($contenttype, $postdata);
     abstract public function execute();
     abstract public function getLastError();
+    abstract public function setOption($koa,$v=null);
+    abstract public function getOption($k);
     
     public function setUrl($url) {
         // if (stream_is_local($url))
@@ -49,6 +57,9 @@ abstract class ClientBase extends EventEmitter {
             $this->setCookie($k,$v);
         }
     }
+    public function getAllCookies() {
+        return $this->cookies;
+    }
     public function getCookie($k) {
         if (array_key_exists($this->cookies,$k)) {
             $ks = $this->cookies[$k];
@@ -74,6 +85,13 @@ abstract class ClientBase extends EventEmitter {
     }
     
     public function setAuthentication($type,$params) {
-    
+        $this->auth_type = $type;
+        $this->auth_params = $params;
+    }
+    public function getAuthenticationType() {
+        return $this->auth_type;
+    }
+    public function getAuthenticationParams() {
+        return $this->auth_params;
     }
 }
