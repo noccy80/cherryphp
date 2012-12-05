@@ -37,7 +37,8 @@ abstract class ClientBase extends EventEmitter {
     public function setCookieJar($jar) {
         $this->cookiejar = $jar;
         if (is_readable($jar)) {
-            $this->cookies = explode("\n",file_get_contents($jar));
+            $cs = explode("\n",file_get_contents($jar));
+            foreach($cs as $c) $this->setCookieRaw($c);
         }
     }
     public function setCookie($k,$v,$p=null) {
@@ -46,8 +47,10 @@ abstract class ClientBase extends EventEmitter {
         if (!empty($this->cookiejar)) {
             file_put_contents($this->cookiejar,join("\n",$this->cookies));
         }
+        \Cherry\Debug("ClientBase: Set cookie %s", $this->cookies[$k]);
     }
     public function setCookieRaw($ks) {
+        if (trim($ks) == '') return;
         if (strpos($ks,'; ')!==null) {
             list($cookie,$p) = explode('; ',$ks,2);
             list($k,$v) = explode('=',$cookie,2);
