@@ -13,10 +13,11 @@ class StreamClient extends ClientBase {
 
     private
         $request_method     = 'GET',
+        $request_headers    = [],
+        $request_headers_u  = [],
         $proxy              = null,
         $postdata           = null,
         $contenttype        = null,
-        $request_headers    = [],
         $bytes_max          = null,
         $bytes_transferred  = null,
         $response_data      = null,
@@ -32,6 +33,10 @@ class StreamClient extends ClientBase {
 
     public function setMethod($method) {
         $this->request_method = strtoupper($method);
+    }
+    
+    public function getMethod() {
+        return $this->request_method;
     }
 
     public function setPostData($contenttype, $postdata) {
@@ -51,10 +56,10 @@ class StreamClient extends ClientBase {
             $this->request_headers[$header] = $value;
         }
     }
-
+    
     private function buildHeaders() {
         $hdrl = $this->request_headers;
-        $hdr = []; foreach($hdrl as $k=>$v) $hdr[] = str_replace(' ','-',ucwords(str_replace('-',' ',$k))).': '.$v;
+        $hdr = ['Connection: Close']; foreach($hdrl as $k=>$v) $hdr[] = str_replace(' ','-',ucwords(str_replace('-',' ',$k))).': '.$v;
         if ($this->contenttype)
             $hdr[] = 'Content-Type: '.$this->contenttype;
         // Check which cookies should be included for the request
@@ -65,11 +70,12 @@ class StreamClient extends ClientBase {
     }
 
     private function createContext() {
+        $this->request_headers_u = $this->buildHeaders();
         $ctxopts = [
             'http' => [
                 'method' => $this->request_method,
                 'user_agent' => ($this->useragent)?:'CherryPHP StreamClient/1.0',
-                'header' => $this->buildHeaders(),
+                'header' => $this->request_headers_u,
                 'content' => null,
                 'proxy' => null,
                 'follow_location' => 1,
@@ -84,13 +90,24 @@ class StreamClient extends ClientBase {
         $ctx = stream_context_create($ctxopts, $ctxparams);
         return $ctx;
     }
+    
+    public function getRequestHeaders() {
+        return explode("\r\n",$this->request_headers_u);
+    }
 
     public function getResponse() {
         return $this->response_data;
     }
 
-    public function getHeaders() {
-        return $this->response_headers;
+    public function getAllHeaders() {
+        $ho = [];
+        foreach($this->response_headers as $hdr=>$v) {
+            if (is_array($v))
+                foreach($v as $vi) $ho[] = $hdr.': '.$vi;
+            else
+                $ho[] = $hdr.': '.$v;
+        }
+        return $ho;
     }
 
     public function getStatus() {
@@ -104,7 +121,7 @@ class StreamClient extends ClientBase {
     public function execute() {
         $this->emit('httprequest:before');
         $this->timings = ['started' => microtime(true)];
-        \Cherry\Debug('StreamClient: Creating context and opening connection...');
+        // \Cherry\Debug('StreamClient: Creating context and opening connection...');
         $ctx = $this->createContext();
         if (!($stream = @fopen($this->url, 'rb', false, $ctx))) {
             $this->timings['request_sent'] = microtime(true);
@@ -113,15 +130,9 @@ class StreamClient extends ClientBase {
         }
         $this->timings['request_sent'] = microtime(true);
         $this->response_meta = stream_get_meta_data($stream);
-        if (!empty($this->response_meta['unread_bytes'])) {
-            $bytes = $this->response_meta['unread_bytes'];
-            \Cherry\Debug('StreamClient: Getting contents (%d bytes)', $bytes);
-            $this->response_data = stream_get_contents($stream, $bytes);
-        } else {
-            \Cherry\Debug('StreamClient: Getting contents (Unknown length)');
-            $this->response_data = stream_get_contents($stream);
-        }
-        \Cherry\Debug('StreamClient: Parsing response headers');
+        $this->response_data = stream_get_contents($stream);
+        $this->response_headers = [];
+        // \Cherry\Debug('StreamClient: Parsing response headers');
         $wd = $this->response_meta['wrapper_data'];
         $headers = array_slice($wd,1);
         list($this->response_protocol, $this->response_status, $this->response_message) = explode(' ', $wd[0], 3);
@@ -136,10 +147,12 @@ class StreamClient extends ClientBase {
                 } else {
                     $this->response_headers[$k] = $v;
                 }
+            } else {
+                // We probably got redirected somewhere
             }
         }
         $this->emit('httprequest:complete', (int)$this->response_status);
-        \Cherry\Debug('StreamClient: Returning response status');
+        // \Cherry\Debug('StreamClient: Returning response status');
         return (int)$this->response_status;
         //var_dump($headers);
         //var_dump($data);
@@ -182,7 +195,7 @@ class StreamClient extends ClientBase {
 
             case STREAM_NOTIFY_FILE_SIZE_IS:
                 $this->bytes_max = $bytes_max;
-                //echo "Got the filesize: ", $bytes_max;
+                // echo "Got the filesize: ", $bytes_max, "\n";
                 break;
 
             case STREAM_NOTIFY_MIME_TYPE_IS:
