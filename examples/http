@@ -20,14 +20,16 @@ use Cherry\Net\Http\HttpRequest;
 // Here we create a new StreamClient, initializing it 
 
 $sc = new StreamClient();
-$sc->setUrl('http://127.0.0.1:8080');
+$sc->setUrl('http://127.0.0.1');
 $ret = $sc->execute();
 if ($ret !== false) {
-    var_dump($sc->getHeaders());
+    var_dump($sc->getAllHeaders());
     //echo $sc->getResponse();
+    var_dump($sc->getTimings());
 } else {
     echo "Request failed.\n";
 }
+exit;
             
 // This is the ideal way, inspired by XmlHttpRequest
 
