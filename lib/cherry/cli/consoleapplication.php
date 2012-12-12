@@ -102,7 +102,14 @@ abstract class ConsoleApplication extends \Cherry\Application {
     }
 
     abstract function main();
-    abstract function getApplicationInfo();
+    public function getApplicationInfo() {
+        return [
+            'appname' => 'ConsoleApplication',
+            'description' => 'Override getApplicationInfo() to change',
+            'version' => '0.0.0',
+            'copyright' => null
+        ];
+    }
 
     protected function addCommand($command,$info,$bind=null) {
         $co = new \Data\DataBlob(array(
@@ -235,5 +242,23 @@ abstract class ConsoleApplication extends \Cherry\Application {
         $this->showError($ca,'Exception',$exception->getMessage().' ('.$exception->getCode().')',$errfile,$errline,$log,$bt);
         exit(1);
     }
+    
+    protected function attachSignal($signal, $handler, $restart=false) {
+        if (!is_callable($handler))
+            user_error("Signal handler is not callable.");
+        if ($signal === null) $signal = SIG_DFL;
+        if ($signal === false) $signal = SIG_IGN;
+        pcntl_signal($signal,$handler,$restart);
+    }
+
+    /**
+     *
+     * @todo Move this to the Application prototype.
+     */
+    protected function log($str,$vararg=null) {
+         $args = func_get_args();
+         $lstr = call_user_func_array('sprintf',$args)."\n";
+         echo $lstr;
+    }    
 
 }

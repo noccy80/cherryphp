@@ -7,6 +7,14 @@ abstract class ConsoleService extends ConsoleApplication {
 
     abstract protected function serviceMain();
 
+    /**
+     *
+     *
+     * @note For fork() to work, you must use declare(ticks=1) in the same file
+     *      as your event handler. If you leave this out, your handlers will
+     *      never be called.
+     * @return bool True on success.
+     */
     protected function fork() {
         $pid = pcntl_fork();
         if ($pid == 0) {
@@ -21,19 +29,5 @@ abstract class ConsoleService extends ConsoleApplication {
             // Parent
         }
     }
-    
-    protected function attachSignal($signal, $handler, $restart=false) {
-        if (!is_callable($handler))
-            user_error("Signal handler is not callable.");
-        if ($signal === null) $signal = SIG_DFL;
-        if ($signal === false) $signal = SIG_IGN;
-        pcntl_signal($signal,$handler,$restart);
-    }
-
-    protected function log($str,$vararg=null) {
-         $args = func_get_args();
-         $lstr = call_user_func_array('sprintf',$args)."\n";
-         echo $lstr;
-    }
-    
+        
 }

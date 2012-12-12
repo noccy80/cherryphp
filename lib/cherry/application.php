@@ -119,7 +119,6 @@ abstract class Application {
 
     abstract function run();
 
-
 }
 
 class ApplicationException extends \Exception {
