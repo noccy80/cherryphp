@@ -51,7 +51,7 @@ class Router {
                     list($tctl,$tparms) = [ $route, []];
                 $tcclass = explode('/',$tctl);
                 $tcmethod = array_pop($tcclass);
-                $tparms = explode(',',$tparms);
+                $tparms = (array)explode(',',$tparms);
                 $tcargs = [];
                 foreach($tparms as $parm) {
                     if (($parm) && ($parm[0] == '$')) {
