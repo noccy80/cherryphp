@@ -253,9 +253,9 @@ abstract class ConsoleApplication extends \Cherry\Application {
 
     /**
      *
-     * @todo Move this to the Application prototype.
+     * 
      */
-    protected function log($str,$vararg=null) {
+    public function log($str,$vararg=null) {
          $args = func_get_args();
          $lstr = call_user_func_array('sprintf',$args)."\n";
          echo $lstr;
