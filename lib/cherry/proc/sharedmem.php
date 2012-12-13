@@ -9,7 +9,8 @@ class SharedMem {
 
     private
             $shm = null,
-            $key = null;
+            $key = null,
+            $fh = null;
 
     public function __construct($file,$scope = self::SCOPE_APP, $size = 65535) {
         $mf = $file . ($scope==self::SCOPE_PID)?'.'.getmypid():'';
@@ -17,7 +18,7 @@ class SharedMem {
             touch($mf);
         $this->key = fileinode($mf);
         \Cherry\Debug("SHM key: %d", $this->key);
-        $this->shm = shm_attach($this->key, $size);
+        $this->shm = shm_attach($this->key, $size, 0700);
     }
 
     public function __destruct() {
