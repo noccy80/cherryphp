@@ -9,6 +9,7 @@ abstract class ConsoleApplication extends \Cherry\Application {
 
     private $arguments = array();
     private $commands = array();
+    private $logtarget = null;
 
     protected $parameters = array();
 
@@ -252,13 +253,39 @@ abstract class ConsoleApplication extends \Cherry\Application {
     }
 
     /**
+     * Log text to the current logging facility on the
+     * application level.
      *
-     * 
+     * @param string $str The printf pattern
+     * @param string ... The arguments
      */
     public function log($str,$vararg=null) {
-         $args = func_get_args();
-         $lstr = call_user_func_array('sprintf',$args)."\n";
-         echo $lstr;
-    }    
+        $args = func_get_args();
+        $lstr = call_user_func_array('sprintf',$args);
+        if ($this->logtarget === null) {
+            echo $lstr."\n";
+        } elseif (is_callable($this->logtarget)) {
+           call_user_func($this->logtarget,$lstr);
+        } elseif (is_object($this->logtarget)) {
+            $this->logtarget($lstr);
+        } elseif (is_resource($this->logtarget)) {
+            fputs($this->logtarget,$lstr."\n");
+        } else {
+            echo $lstr."\n";
+        }
+    }
+    
+    /**
+     * Set the log target as one of:
+     *  - Callable (closure)
+     *  - Class (implementing __invoke)
+     *  - Resource (from fopen or STDOUT, STDERR etc)
+     *  - NULL (stdout)
+     *
+     * @param string $target The log target
+     */
+    public function setLogTarget($target) {
+        $this->logtarget = $target;
+    }
 
 }
