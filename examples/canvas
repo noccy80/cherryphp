@@ -1,0 +1,38 @@
+#!/usr/bin/php
+<?php
+
+//LOADER:BEGIN
+if (!( @include_once "lib/bootstrap.php" )) {
+    $libpath = getenv('CHERRY_LIB');
+    if (!$libpath) {
+        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
+        exit(1);
+    }
+    require_once($libpath.'/lib/bootstrap.php');
+}
+//LOADER:END
+
+use Cherry\Graphics\Canvas;
+use Cherry\Graphics\Font\TrueTypeFont;
+
+$c = new Canvas();
+$tm = new \Cherry\Util\Timer();
+$c->create(640,480);
+$tm->mark("created");
+
+for($x = 0; $x < 640; $x++) {
+    for($y = 0; $y < 480; $y++) {
+        $r = ($x / 640) * 255;
+        $g = 255 - ($x / 640) * 255;
+        $b = ($y / 480) * 255;
+        $c->setPixel($x, $y, [$r,$g,$b]);
+    }
+}
+$tm->mark("painted");
+/*
+$f = new TrueTypeFont("arial.ttf");
+$c->draw(new Text("Hello World"),[5,5]);
+*/
+$c->save('canvas.jpg');
+$tm->mark("saved");
+echo $tm."\n";
