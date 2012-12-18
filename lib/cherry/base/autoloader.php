@@ -94,11 +94,15 @@ namespace Cherry\Base {
     if (!defined('_NS_')) define('_NS_',"\\");
 
     class AutoLoader {
+        const CP_AUTO = 'auto';
+        const CP_PRESEVE = 'yes';
+        const CP_LOWERCASE = 'no';
         private
             $path = null,
             $ns = null,
             $options = [
-                'extensions' => '.php|.class.php'
+                'extensions' => '.php|.class.php',
+                'casepreserve' => self::CP_AUTO
             ];
         public function __construct($path,$ns=null,array $options=null) {
             $this->path = $path;
@@ -110,9 +114,11 @@ namespace Cherry\Base {
         }
         public function register() {
             spl_autoload_register([&$this,'autoload'],true);
+            \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader for %s', $this->path);
         }
         public function unregister() {
             spl_autoload_unregister([&$this,'autoload'],true);
+            \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader for %s', $this->path);
         }
         public function autoload($class) {
             if ($this->ns) {
@@ -131,13 +137,31 @@ namespace Cherry\Base {
             }
             $loc = $this->path._DS_;
             $extn = (array)explode("|",$this->options['extensions']);
-            for($case = 0; $case < 2; $case++) {
+            if ($this->options['casepreserve']==self::CP_LOWERCASE) {
                 foreach($extn as $ext) {
-                    $fl = $loc.(($case==1)?strtolower($cfn):$cfn).$ext;
-                    \Cherry\Debug("Autoload: Checking {$fl}");
+                    $fl = $loc.strtolower($cfn).$ext;
                     if (file_exists($fl) && is_readable($fl)) {
                         require_once $fl;
                         return true;
+                    }
+                }
+            } elseif ($this->options['casepreserve']==self::CP_PRESEVE) {
+                foreach($extn as $ext) {
+                    $fl = $loc.$cfn.$ext;
+                    if (file_exists($fl) && is_readable($fl)) {
+                        require_once $fl;
+                        return true;
+                    }
+                }
+            } else {
+                for($case = 0; $case < 2; $case++) {
+                    foreach($extn as $ext) {
+                        $fl = $loc.(($case==1)?strtolower($cfn):$cfn).$ext;
+                        // \Cherry\Debug("Autoload: Checking {$fl}");
+                        if (file_exists($fl) && is_readable($fl)) {
+                            require_once $fl;
+                            return true;
+                        }
                     }
                 }
             }
