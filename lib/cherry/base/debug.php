@@ -48,6 +48,10 @@ if (getenv('DEBUG_LOGFILE')) {
 }
 
 function getLineInfo(array $btr) {
+    $cn = (!empty($btr['class']))?$btr['class']:null;
+    $ct = (!empty($btr['type']))?$btr['type']:'··';
+    $cm = (!empty($btr['function']))?$btr['function']:null;
+/*
     $fn = (!empty($btr['file']))?$btr['file']:null;
     $fl = (!empty($btr['line']))?$btr['line']:'??';
     $fnp = explode(_DS_,$fn);
@@ -62,29 +66,33 @@ function getLineInfo(array $btr) {
     } else {
         return null;
     }
+*/
+    $ol = '['.$cn.$ct.$cm.'()]';
+    return $ol;
 }
 
 function log($type,$fmt,$args=null) {
     $args = func_get_args();
-/*
-    $bt = debug_backtrace();
-    if (count($bt)>0) {
-        $ol = getLineInfo($bt[0]);
-        if ($ol) $args[1] = $args[1].' (at '.$ol.')';
+    if (DEBUG_VERBOSE) {
+        $bt = debug_backtrace();
+        if (count($bt)>1) {
+            $ol = getLineInfo($bt[1]);
+            if ($ol) $args[1] = $ol.' '.$args[1];
+        }
     }
-*/
     call_user_func_array(array('\Cherry\DebugLog','log'),$args);
 }
 function debug($fmt,$args=null) {
     $args = func_get_args();
     array_unshift($args,LOG_DEBUG);
-/*
-    $bt = debug_backtrace();
-    if (count($bt)>0) {
-        $ol = getLineInfo($bt[0]);
-        if ($ol) $args[1] = $args[1].' (at '.$ol.')';
+    if (DEBUG_VERBOSE) {
+        $bt = debug_backtrace();
+        if (count($bt)>1) {
+            $ol = getLineInfo($bt[1]);
+            if ($ol) $args[1] = $ol.' '.$args[1];
+        }
     }
-*/
+
     call_user_func_array(array('\Cherry\DebugLog','log'),$args);
 }
 
