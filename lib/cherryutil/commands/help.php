@@ -4,6 +4,7 @@ namespace cherryutil\commands;
 use cherryutil\Command;
 use cherryutil\CommandBundle;
 use cherryutil\CommandList;
+use App;
 
 class HelpCommands extends CommandBundle {
     
@@ -17,10 +18,11 @@ class HelpCommands extends CommandBundle {
 
     function help($command=null) {
         if (!$command) {
-            $app = \cherry\Lepton::getInstance()->getApplication();
+            //$app = \cherry\Lepton::getInstance()->getApplication();
+            $app = App::app();
             $app->usage();
         } else {
-            $cobj = \cherryutil\commands\CommandList::getInstance()->findCommand($command);
+            $cobj = \cherryutil\CommandList::getInstance()->findCommand($command);
             printf("Command:\n    %s - %s\n\n",$command, $cobj->getDescription());
             printf("Synopsis:\n    %s\n\n",$cobj->getSynopsis());
             if ($help = $cobj->getHelp()) {

@@ -30,9 +30,24 @@ class SysInfoCommands extends CommandBundle {
     }
     
     function cherrycfg() {
-        $con = \cherry\cli\Console::getAdapter();
+        $this->con = \cherry\cli\Console::getAdapter();
         $cfg = App::config()->getAll();
-        $con->write(print_r($cfg,true)."\n");
+        $this->dumpcfg($cfg,0);
+        //$con->write(print_r($cfg,true)."\n");
+    }
+    private function dumpcfg($cfg,$r=0) {
+        $pre = str_repeat(" ",$r*2);
+        foreach($cfg as $key=>$val) {
+            if (is_object($val)) {
+                $this->con->write($pre."+ {$key}\n");
+                $this->dumpcfg($val,$r+1);
+            } elseif (is_array($val)) {
+                $this->con->write($pre."- {$key}\n");
+                $this->dumpcfg($val,$r+1);
+            } else {
+                $this->con->write($pre."  {$key} = {$val}\n");
+            }
+        }
     }
     
     function phpextensions() {
