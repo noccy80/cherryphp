@@ -139,5 +139,6 @@ class CherryApplication extends \cherry\Cli\ConsoleApplication {
 }
 
 $app = new CherryApplication(dirname(__FILE__));
-$app->run();
+//$app->run();
+App::run($app);
 // $lepton->runApplication($app);
