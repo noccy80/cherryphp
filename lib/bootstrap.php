@@ -52,16 +52,21 @@ if (PHP_VERSION_ID >= 50400) {
 }
 
 require_once CHERRY_LIB.'/lib/cherry/base/debug.php';
+require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
 
+/*
 //require_once CHERRY_LIB.'/lib/cherry/autoloader.php';
 //$loader = new Autoloader('Cherry\*', CHERRY_LIB._DS_.'lib', 'Cherry' );
 //$loader->register();
 
 use Cherry\Autoloader\Autoloader;
 use Cherry\Autoloader\Autoloaders;
-require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
 // Register the autoloader for the base library
 Autoloaders::register(new Autoloader(CHERRY_LIB.'/lib'));
+*/
+
+$al = new \Cherry\Base\Autoloader(CHERRY_LIB.'/lib');
+$al->register();
 
 require_once CHERRY_LIB.'/lib/bundles.php';
 require_once CHERRY_LIB.'/lib/cherry/base/config.php';

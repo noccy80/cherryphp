@@ -1,172 +1,119 @@
 <?php
 
-namespace Cherry\Autoloader {
-    
-class Autoloaders {
+namespace Cherry\Base;
 
-    private static $loaders = array();
-    private static $registered = false;
-    private static $lastloader = null;
+if (!defined('_NS_')) define('_NS_',"\\");
 
-    const
-            AL_DEFAULT  = 0,
-            AL_PSR_0    = 1,
-            AL_CHERRY   = 2,
-            AL_LEPTON   = 3;
+/**
+ * @brief Autoloader implementation.
+ *
+ *
+ *
+ *
+ * @code
+ * $al = new \Cherry\Base\AutoLoader("/opt/someframework","SomeFramework");
+ * $al->register();
+ * @endcode
+ *
+ */
+class AutoLoader {
+    const CP_AUTO = 'auto';
+    const CP_PRESEVE = 'yes';
+    const CP_LOWERCASE = 'no';
+    private
+        $path = null,
+        $ns = null,
+        $options = [
+            'extensions' => '.php|.class.php',
+            'casepreserve' => self::CP_AUTO
+        ];
 
-    static function add($match,$data,$type = self::AL_DEFAULT) {
-
-    }
-
-    static function register(Autoloader $loader, $addtotop = false) {
-        if (!self::$registered) {
-            spl_autoload_register(array(__CLASS__,'_spl_autoload'),true,true);
+    /**
+     *
+     *
+     * @param string $path
+     * @param string $ns
+     * @param array $options
+     */
+    public function __construct($path,$ns=null,array $options=null) {
+        $this->path = $path;
+        if ($ns) {
+            $ns = trim($ns,_NS_)._NS_;
+            $this->ns = $ns;
         }
-        \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader %s', $loader);
-        self::$loaders[] =& $loader;
+        $this->options = array_merge($this->options,(array)$options);
     }
 
-    public static function _spl_autoload($class) {
-        if (self::$lastloader) {
-            if (self::$lastloader->autoload($class) === true) {
-                if (class_exists($class)) {
+    /**
+     * @brief Register the autoloader.
+     *
+     */
+    public function register() {
+        spl_autoload_register([&$this,'autoload'],true);
+        \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader for %s', $this->path);
+    }
+
+    /**
+     * @brief Unregister the autoloader.
+     *
+     */
+    public function unregister() {
+        spl_autoload_unregister([&$this,'autoload'],true);
+        \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader for %s', $this->path);
+    }
+
+    /**
+     *
+     *
+     */
+    public function autoload($class) {
+        if ($this->ns) {
+            $cm = strtolower($class);
+            $nm = strtolower($this->ns);
+            if (substr($cm,0,strlen($nm)) == $nm) {
+                $cf = substr($class,strlen($nm));
+            } else return false;
+        } else {
+            $cf = $class;
+        }
+        if (strpos($cf,'_')!==false) {
+            $cfn = str_replace('_',_DS_,$cf);
+        } else {
+            $cfn = str_replace("\\",'/',$cf);
+        }
+        $loc = $this->path._DS_;
+        $extn = (array)explode("|",$this->options['extensions']);
+        if ($this->options['casepreserve']==self::CP_LOWERCASE) {
+            foreach($extn as $ext) {
+                $fl = $loc.strtolower($cfn).$ext;
+                // \Cherry\Debug("Autoload: {$class} (path {$fl}");
+                if (file_exists($fl) && is_readable($fl)) {
+                    require_once $fl;
                     return true;
                 }
             }
-        }
-        foreach(self::$loaders as $loader) {
-            if ($loader !== self::$lastloader) {
-                if ($loader->autoload($class) === true) {
-                    if (class_exists($class)) {
-                        self::$lastloader =& $loader;
-                        return true;
-                    }
+        } elseif ($this->options['casepreserve']==self::CP_PRESEVE) {
+            foreach($extn as $ext) {
+                $fl = $loc.$cfn.$ext;
+                // \Cherry\Debug("Autoload: {$class} (path {$fl}");
+                if (file_exists($fl) && is_readable($fl)) {
+                    require_once $fl;
+                    return true;
                 }
             }
-        }
-        return false;
-    }
-
-}
-
-class Autoloader {
-
-    private $path;
-
-    function __construct($path) {
-
-        $this->path = $path;
-
-    }
-
-    function __tostring() {
-        return "[".$this->path."]";
-    }
-
-    function autoload($class) {
-
-        $file = \Cherry\unipath($this->path._DS_.strtolower(str_replace('\\',_DS_,$class)).'.php');
-        //\cherry\log(\cherry\LOG_DEBUG,' .. searching %s for %s', $this->path, $file);
-        $afile = dirname($file).'/_autoload.php';
-        if ( file_exists($afile)) {
-            \cherry\log(\cherry\LOG_DEBUG,'Autoloading %s (%s)', $class, $this->path);
-            // \cherry\log(\cherry\LOG_DEBUG,' .. found %s',$file);
-            include_once $afile;
-            return true;
-        } elseif ( file_exists($file) ){
-            \cherry\log(\cherry\LOG_DEBUG,'Autoloading %s (%s)', $class, $this->path);
-            // \cherry\log(\cherry\LOG_DEBUG,' .. found %s',$file);
-            include_once $file;
-            return true;
-        }
-        return false;
-
-    }
-
-}
-
-class AutoloaderException extends \Exception { }
-
-}
-
-namespace Cherry\Base {
-
-    if (!defined('_NS_')) define('_NS_',"\\");
-
-    class AutoLoader {
-        const CP_AUTO = 'auto';
-        const CP_PRESEVE = 'yes';
-        const CP_LOWERCASE = 'no';
-        private
-            $path = null,
-            $ns = null,
-            $options = [
-                'extensions' => '.php|.class.php',
-                'casepreserve' => self::CP_AUTO
-            ];
-        public function __construct($path,$ns=null,array $options=null) {
-            $this->path = $path;
-            if ($ns) {
-                $ns = trim($ns,_NS_)._NS_;
-                $this->ns = $ns;
-            }
-            $this->options = array_merge($this->options,(array)$options);
-        }
-        public function register() {
-            spl_autoload_register([&$this,'autoload'],true);
-            \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader for %s', $this->path);
-        }
-        public function unregister() {
-            spl_autoload_unregister([&$this,'autoload'],true);
-            \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader for %s', $this->path);
-        }
-        public function autoload($class) {
-            if ($this->ns) {
-                $cm = strtolower($class);
-                $nm = strtolower($this->ns);
-                if (substr($cm,0,strlen($nm)) == $nm) {
-                    $cf = substr($class,strlen($nm));
-                } else return false;
-            } else {
-                $cf = $class;
-            }
-            if (strpos($cf,'_')!==false) {
-                $cfn = str_replace('_',_DS_,$cf);
-            } else {
-                $cfn = str_replace("\\",'/',$cf);
-            }
-            $loc = $this->path._DS_;
-            $extn = (array)explode("|",$this->options['extensions']);
-            if ($this->options['casepreserve']==self::CP_LOWERCASE) {
+        } else {
+            for($case = 0; $case < 2; $case++) {
                 foreach($extn as $ext) {
-                    $fl = $loc.strtolower($cfn).$ext;
+                    $fl = $loc.(($case==1)?strtolower($cfn):$cfn).$ext;
+                    // \Cherry\Debug("Autoload: {$class} (path {$fl}");
                     if (file_exists($fl) && is_readable($fl)) {
                         require_once $fl;
                         return true;
                     }
                 }
-            } elseif ($this->options['casepreserve']==self::CP_PRESEVE) {
-                foreach($extn as $ext) {
-                    $fl = $loc.$cfn.$ext;
-                    if (file_exists($fl) && is_readable($fl)) {
-                        require_once $fl;
-                        return true;
-                    }
-                }
-            } else {
-                for($case = 0; $case < 2; $case++) {
-                    foreach($extn as $ext) {
-                        $fl = $loc.(($case==1)?strtolower($cfn):$cfn).$ext;
-                        // \Cherry\Debug("Autoload: Checking {$fl}");
-                        if (file_exists($fl) && is_readable($fl)) {
-                            require_once $fl;
-                            return true;
-                        }
-                    }
-                }
             }
-
         }
+
     }
 
 }
