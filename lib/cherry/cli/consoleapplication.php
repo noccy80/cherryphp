@@ -4,6 +4,7 @@ namespace Cherry\Cli;
 
 use Cherry\Debug;
 use Cherry\DebugLog;
+use Cherry\Cli\Console;
 
 abstract class ConsoleApplication extends \Cherry\Application {
 
@@ -243,7 +244,7 @@ abstract class ConsoleApplication extends \Cherry\Application {
         $this->showError($ca,'Exception',$exception->getMessage().' ('.$exception->getCode().')',$errfile,$errline,$log,$bt);
         exit(1);
     }
-    
+
     protected function attachSignal($signal, $handler, $restart=false) {
         if (!is_callable($handler))
             user_error("Signal handler is not callable.");
@@ -274,7 +275,14 @@ abstract class ConsoleApplication extends \Cherry\Application {
             echo $lstr."\n";
         }
     }
-    
+
+    public function write($str,$vararg=null) {
+        static $con;
+        if (!$con) $con = Console::getAdapter();
+        $args = func_get_args();
+        call_user_func_array([$con,'write'],$args);
+    }
+
     /**
      * Set the log target as one of:
      *  - Callable (closure)
