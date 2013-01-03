@@ -21,17 +21,17 @@ class SdlNode implements ArrayAccess, Countable {
 
     // Literal types
     const   LT_STRING   = 1; // "string" or `string`
-    const   LT_CHAR     = 2; // Character as 'c'
+    const   LT_CHAR     = 2; // Character as 'c'   --- UNSUPPORTED
     const   LT_INT      = 3; // 123
-    const   LT_LONGINT  = 4; // 123L or 123l
-    const   LT_FLOAT    = 5; // 123.45F or 123.45f
-    const   LT_DFLOAT   = 6; // 123.45 or 123.45d or 123.45D
-    const   LT_DECIMAL  = 7; // 123.45BD or 123.45bd
+    const   LT_LONGINT  = 4; // 123L or 123l   --- UNSUPPORTED
+    const   LT_FLOAT    = 5; // 123.45F or 123.45f   --- UNSUPPORTED
+    const   LT_DFLOAT   = 6; // 123.45 or 123.45d or 123.45D   --- PARTIALLY
+    const   LT_DECIMAL  = 7; // 123.45BD or 123.45bd   --- UNSUPPORTED
     const   LT_BOOLEAN  = 8; // Boolean, yes no or true false
-    const   LT_DATE     = 9; // YYYY/MM/DD
-    const   LT_DATETIME = 10; // yyyy/mm/dd hh:mm(:ss)(.xxx)(-ZONE)
-    const   LT_TIMESPAN = 11; //  (d'd':)hh:mm:ss(.xxx)
-    const   LT_BINARY   = 12; // [base64data]
+    const   LT_DATE     = 9; // YYYY/MM/DD   --- UNSUPPORTED
+    const   LT_DATETIME = 10; // yyyy/mm/dd hh:mm(:ss)(.xxx)(-ZONE)   --- UNSUPPORTED
+    const   LT_TIMESPAN = 11; //  (d'd':)hh:mm:ss(.xxx)   --- UNSUPPORTED
+    const   LT_BINARY   = 12; // [base64data]   --- UNSUPPORTED
     const   LT_NULL     = 13; // null
     // States for parser
     const   SP_NODENAME  = 0; // Expecting node name
@@ -44,23 +44,53 @@ class SdlNode implements ArrayAccess, Countable {
     private $attr       = [];
     private $children   = [];
     private $comment    = null;
+    private $ns         = null;
 
     /**
+     * @brief Create a new SDL node
      *
-     *
+     * @param string $name The node name (with optional prefixed namespace followed by :, eg. foo:bar)
+     * @param array|string $values The value(s) of the node. Can be null.
+     * @param array $attr The attributes to attach to the node.
+     * @param array $children The child nodes that belong to this node.
+     * @param string $comment A textual description of the node. The comment will be serialized.
      */
     public function __construct($name, $values = null, array $attr = null, array $children = null, $comment = null) {
-        $this->name = $name;
+        if (strpos($name,':')!==false) {
+            list($this->ns,$this->name) = explode(':',$name,2);
+        } else {
+            $this->name = $name;
+        }
         $this->values = (array)$values;
         $this->attr = (array)$attr;
         $this->children = (array)$children;
         $this->comment = $comment;
     }
+    
+    /**
+     * @brief Load a file as children to the current node.
+     *
+     * @param string $file The filename to load
+     */
+    public function loadFile($file) {
+        // TODO: Check for errors
+        $fc = file_get_contents($file);
+        $this->loadString($fc);
+    }
+    
+    /**
+     * @brief Load a string as children to the current node.
+     *
+     * @param string $str The string containing SDL data to decode
+     */
+    public function loadString($str) {
+        $this->decode($str);
+    }
 
     /**
-     * @brief Decode a string into the node.
-     *
-     * $nod = (new SdlNode("root"))->decode($str);
+     * @brief DEPRECATED: Decode a string into the node.
+     * @see loadString()
+     * 
      *
      */
     public function decode($string) {
@@ -82,6 +112,8 @@ class SdlNode implements ArrayAccess, Countable {
         $_final = false;
         $_recurse = false;
         $_ret = false;
+        $_ns = null;
+        $_ttype = null;
         $idx = 0;
         $state = self::SP_NODENAME;
 
@@ -95,6 +127,9 @@ class SdlNode implements ArrayAccess, Countable {
                     case T_OPEN_TAG:
                         break;
 
+                    // Tag numbers as numbers
+                    case T_DNUMBER:
+                        if (!$_ttype) $_ttype = self::LT_DFLOAT;
                     // Keywords, let these slip through as strings
                     case T_DEFAULT:
                     case T_CLASS:
@@ -105,6 +140,7 @@ class SdlNode implements ArrayAccess, Countable {
                     case T_ECHO:
                     // Strings as keywords are handled here
                     case T_STRING:
+                        if (!$_ttype) $_ttype = self::LT_STRING;
                         if ($state == self::SP_NODENAME) {
                             // If we are expecting the node name, we got it
                             $_name = $str;
@@ -112,27 +148,43 @@ class SdlNode implements ArrayAccess, Countable {
                         } elseif ($state == self::SP_NODEVALUE) {
                             // If we are expecting a node value, this must be
                             // an attribute or a reserved keyword.
+                            $nvalue = null;
+                            if ($this->getTypedValue($str,$tok[0],$nvalue)) {
+                                $_vals[] = $nvalue;
+                                $idx++;
+                            } else {
+                                $_attrn = $str;
+                                $state = self::SP_ATTRIBUTE;
+                            }
+                            /*
                             switch($str) {
                                 case "null":
-                                    $_vals[] = "@NULL";
+                                    $_vals[] = "@NULL"; // [ null, self::LT_NULL]; // "@NULL";
                                     $idx++;
                                     break;
                                 case "true":
                                 case "yes":
-                                    $_vals[] = true;
+                                    $_vals[] = true; // [ true, self::LT_BOOLEAN ];
                                     $idx++;
                                     break;
                                 case "false":
                                 case "no":
-                                    $_vals[] = false;
+                                    $_vals[] = false; // [ false, self::LT_BOOLEAN ];
                                     $idx++;
                                     break;
                                 default:
-                                    $_attrn = $str;
-                                    $state = self::SP_ATTRIBUTE;
+                                    // For numbers we need some magic
+                                    if (is_numeric($str)) {
+                                        $_vals[] = $str;
+                                    } else {
+                                        $_attrn = $str;
+                                        $state = self::SP_ATTRIBUTE;
+                                    }
                             }
+                            */
                         } elseif ($state == self::SP_ATTRIBUTE) {
                             // This should never happen if not for null or consts
+                            /*
                             switch($str) {
                                 case "null":
                                     $_attt[$_attrn] = self::LT_NULL;
@@ -151,6 +203,13 @@ class SdlNode implements ArrayAccess, Countable {
                                 default:
                                     echo "Unknown value string: ".$str."\n";
                             }
+                            */
+                            $value = null;
+                            if ($this->getTypedValue($str,$tok[0],$value)) {
+                                $_attr[$_attrn] = $value;
+                            } else {
+                                $_attr[$_attrn] = $str;
+                            }
                             $state = self::SP_NODEVALUE;
                         } else {
 
@@ -160,13 +219,25 @@ class SdlNode implements ArrayAccess, Countable {
                     // Strings and numbers
                     case T_CONSTANT_ENCAPSED_STRING:
                         $str = trim($str,"\"");
+                        $str = str_replace("\\\"",'"',$str);
                     case T_LNUMBER:
                         if ($state == self::SP_NODENAME) {
-                            $_vals[] = $str;
+                            if ($_ns)
+                                throw new SdlParseException("Namespace declared but no node value present on line {$tok[2]}");
+                            $value = null;
+                            if ($this->getTypedValue($str,$tok[0],$value)) {
+                                $_vals[] = $value;
+                            } else {
+                                $_vals[] = $str;
+                            }
                             $state = self::SP_NODEVALUE;
                             //echo str_repeat(" ",($depth+1)*4)."(value list)\n";
                         } elseif ($state == self::SP_NODEVALUE) {
-                            $_vals[] = $str;
+                            if ($this->getTypedValue($str,$tok[0],$value)) {
+                                $_vals[] = $value;
+                            } else {
+                                $_vals[] = $str;
+                            }
                             $idx++;
                         } elseif ($state == self::SP_ATTRIBUTE) {
                             $_attr[$_attrn] = $str;
@@ -190,7 +261,8 @@ class SdlNode implements ArrayAccess, Countable {
                         else $_comment = $str;
                         break;
                     default:
-                        throw new \UnexpectedValueException("Unhandled token in sdl: {$tok[1]} (line {$tok[2]}");
+                        $type = token_name($tok[0]);
+                        throw new SdlParseException("Unhandled token in sdl: {$tok[1]} of type {$type} (line {$tok[2]}");
                 }
             } else {
                 switch($tok) {
@@ -212,19 +284,25 @@ class SdlNode implements ArrayAccess, Countable {
                         //echo "= ";
                         // Check keyword type and prepare for value
                         break;
+                    case ":":
+                        $_ns = $_name;
+                        $_name = null;
+                        $state = self::SP_NODENAME;
+                        break;
                     default:
-                        throw new \UnexpectedValueException("Unhandled string in sdl: {$tok}");
+                        throw new SdlParseException("Unhandled string in sdl: {$tok}");
                 }
             }
             if ($_final) {
                 if ($_name || count($_vals)>0) {
+                    if ($_ns) $_name = $_ns.':'.$_name; // Add namespace
                     $cnod = new SdlNode($_name,$_vals,$_attr,null,$_comment);
                     if ($_recurse) $toks = $cnod->decode($toks);
                     $this->children[] = $cnod;
                     $_comment = null;
                 }
                 $_name = null; $_vals = []; $_attr = [];
-                $_final = false; $_recurse = false;
+                $_final = false; $_recurse = false; $_ns = null;
             }
             if ($_ret) { break; }
         }
@@ -234,7 +312,10 @@ class SdlNode implements ArrayAccess, Countable {
     }
 
     /**
+     * @brief Encode the node and all child nodes into serialized SDL
      *
+     * @param $indent The level of indenting
+     * @return string The SDL string
      */
     public function encode($indent=0) {
         $ind = str_repeat(" ",$indent*4);
@@ -244,7 +325,10 @@ class SdlNode implements ArrayAccess, Countable {
             foreach($lines as $line)
                 $node.= $ind."// ".$line."\n";
         }
-        $node.= $ind.$this->name;
+        $node.= $ind;
+        if ($this->ns)
+            $node.= $this->ns.':';
+        $node.= $this->name;
         if (count($this->values)>0) {
             foreach($this->values as $value) {
                 $node.=" ".$this->escape($value);
@@ -258,7 +342,7 @@ class SdlNode implements ArrayAccess, Countable {
         }
         if ((count($this->children)>0) || (count($this->values)==0) ) {
             if (count($this->children)==0) {
-                $node.= " { }";
+                //$node.= " { }";
             } else {
                 $node.=" {\n";
                 foreach($this->children as $child) {
@@ -272,11 +356,32 @@ class SdlNode implements ArrayAccess, Countable {
     }
 
     /**
+     * @brief Escape strings.
      *
+     * This function will escape special characters such as backslashes as well
+     * as encode boolean keywords (true/false) or the "meta-null" value "@NULL"
+     * into the string null.
      *
+     * @param string $str The string to escape
+     * @return string The escaped and quoted string
      */
     private function escape($str) {
-        if (is_numeric($str)) {
+        if (is_array($str)) {
+            $type = $str[1];
+            $val = $str[0];
+            switch($type) {
+                case self::LT_BOOLEAN:
+                    return ($val?'true':'false');
+                case self::LT_NULL:
+                    return 'null';
+                case self::LT_DFLOAT:
+                    return $val;
+                case self::LT_INT:
+                    return $val;
+                default:
+                    $str = $val;
+            }
+        } elseif (is_numeric($str)) {
             return $str;
         } elseif (is_bool($str)) {
             return ($str?'true':'false');
@@ -285,85 +390,233 @@ class SdlNode implements ArrayAccess, Countable {
         }
         return "\"".str_replace("\"","\\\"",$str)."\"";
     }
-
+    
+    private function getTypedValue($value,$tok,&$typedval) {
+        if ($value === null) {
+            $typedval = [ null, self::LT_NULL ];
+            return true;
+        } elseif ($value === true) {
+                $typedval = [ true, self::LT_BOOLEAN ];
+                return true;
+        } elseif ($value === false) {
+                $typedval = [ false, self::LT_BOOLEAN ];
+                return true;
+        }
+        switch($value) {
+            case "null":
+                if ($tok == T_STRING) {
+                    $typedval = [ null, self::LT_NULL];
+                    return true;
+                }
+            case "true":
+            case "yes":
+                if ($tok == T_STRING) {
+                    $typedval = [ true, self::LT_BOOLEAN ];
+                    return true;
+                }
+            case "false":
+            case "no":
+                if ($tok == T_STRING) {
+                    $typedval = [ false, self::LT_BOOLEAN ];
+                    return true;
+                }
+                break;
+            default:
+                // For numbers we need some magic
+                if (is_numeric($value)) {
+                    if (is_integer($value)) {
+                        $typedval = [ intval($value), self::LT_INT ];
+                        return true;
+                    }
+                    $typedval = [ floatval($value), self::LT_DFLOAT ];
+                    return true;
+                } 
+        }
+        return false;
+    }
+    private function getSingleTypedValue($value) {
+        $ret = null;
+        if ($this->getTypedValue($value,null,$ret)) {
+            return $ret;
+        } else {
+            return $value;
+        }
+    }
+    private function getCastValue($value) {
+        if (is_array($value)) {
+            $type = $value[1];
+            $val = $value[0];
+            switch($type) {
+                case self::LT_BOOLEAN:
+                    return ($val?true:false);
+                case self::LT_NULL:
+                    return null;
+                case self::LT_DFLOAT:
+                    return $val;
+                case self::LT_INT:
+                    return $val;
+                default:
+                    $str = $val;
+            }
+        } 
+        return $value;
+    }
     /**
+     * @brief Add a child node to the node.
      *
-     *
+     * @param SdlNode $node The node to append
      */
     public function addChild(SdlNode $node) {
         $this->children[] = $node;
     }
 
+    /**
+     * @brief Return the name of the node.
+     *
+     * @return string The node name
+     */
     public function getName() {
         return $this->name;
     }
+    
+    public function getNameNs() {
+        if ($this->ns)
+            return $this->ns.':'.$this->name;
+        else
+            return ':'.$this->name;
+    }
+    
+    /**
+     * @brief Set the name of the node.
+     *
+     * @param string $name The name to set
+     */
     public function setName($name) {
         $this->name = $name;
     }
-
+    
     /**
+     * @brief Return the namespace of the node
      *
-     *
+     * @return string The namespace (or null)
      */
-    public function getValues() {
-        return $this->values;
+    public function getNamespace() {
+        return $this->ns;
     }
-
-    public function getChildren() {
-        return $this->children;
-    }
-
+    
     /**
+     * @brief Set the namespace of the node
      *
-     *
+     * @param string $ns The namespace to set
      */
-    public function getChildrenByName($name) {
-        $ret = [];
-        foreach($this->children as $nod) {
-            if ($nod->name == $name) $ret[] = $nod;
-        }
-        return $ret;
-        // Return all nodes of type $name
-    }
-
-    public function getChild($name) {
-        foreach($this->children as $nod) {
-            if ($nod->name == $name) return $nod;
-        }
-        return null;
+    public function setNamespace($ns) {
+        $this->ns = $ns;
     }
 
     /**
+     * @brief Set the node comment.
      *
+     * You can set the comment to null to remove it.
      *
+     * @param string $str The comment
      */
     public function setComment($str) {
         $this->comment = $str;
     }
 
     /**
+     * @brief Get the node comment
      *
-     *
+     * @return string The comment (or null)
      */
     public function getComment() {
         return $this->comment;
     }
 
     /**
+     * @brief Return all the values of the node 
      *
+     * @return array The values
+     */
+    public function getValues() {
+        $vo = [];
+        foreach($this->values as $vl) $vo[] = $this->getCastValue($vl);
+        return $vo;
+        //return $this->values;
+    }
+    
+    /**
+     * @brief Return the first value of the node.
      *
+     * This function is useful if you don't want to use arrayaccess, i.e. $node[0]
+     *
+     * @return mixed The first value of the node
+     */
+    public function getFirstValue() {
+        return $this->values[0];
+    }
+
+    /**
+     * @brief Return all child nodes
+     *
+     * @return array The child nodes
+     */
+    public function getChildren() {
+        return $this->children;
+    }
+
+    /**
+     * @brief Return all children whose node name match the string.
+     *
+     * @return array The matchind nodes or null.
+     */
+    public function getChildrenByName($name) {
+        $ret = [];
+        foreach($this->children as $nod) {
+            if ($nod->getName() == $name) $ret[] = $nod;
+        }
+        return $ret;
+        // Return all nodes of type $name
+    }
+
+    /**
+     * @brief Return the first child whose node ame match the string.
+     *
+     * @return SdlNode The first matching node or null
+     */
+    public function getChildByName($name) {
+        foreach($this->children as $nod) {
+            if ($nod->getName() == $name) return $nod;
+        }
+        return null;
+    }
+
+    /**
+     * @brief Return all the attributes of the node.
+     *
+     * @return array The attributes
      */
     public function getAllAttributes() {
         return $this->attr;
     }
 
     /**
+     * @brief Return a single attribute of the node.
      *
+     * This can also be accessed via the properties:
      *
+     * @code
+     * $attr = $node->getAttribute("foo");
+     * // ...is the same as...
+     * $attr = $node->foo;
+     * @endcode
+     *
+     * @param string $name The attribute to return
+     * @return mixed The attribute value
      */
     public function getAttribute($name) {
         if (array_key_exists($name,$this->attr))
-            return $this->attr[$name];
+            return $this->getCastValue($this->attr[$name]);
         return null;
     }
 
@@ -383,11 +636,17 @@ class SdlNode implements ArrayAccess, Countable {
     // From arrayaccess
     public function offsetGet($index) {
         if (isset($this->values[(int)$index]))
-            return $this->values[(int)$index];
+            return $this->getCastValue($this->values[(int)$index]);
         return null;
     }
     public function offsetSet($index,$value) {
-        $this->values[(int)$index] = $value;
+        if (is_array($value))
+            throw new SdlParseException("Invalid value type for set: <array> is not allowed");
+        if ($index === null) {
+            $this->values[] = $this->getSingleTypedValue($value);
+        } else {
+            $this->values[(int)$index] = $this->getSingleTypedValue($value);
+        }
     }
     public function offsetUnset($index) {
         if (isset($this->values[(int)$index]))
@@ -399,16 +658,18 @@ class SdlNode implements ArrayAccess, Countable {
 
     public function __get($key) {
         if (array_key_exists($key,$this->attr))
-            return $this->attr[$key];
+            return $this->getCastValue($this->attr[$key]);
         return null;
     }
-
-    public function __set($key,$val) {
-        $this->attr[$key]=$val;
+    public function __set($key,$value) {
+        if (is_array($value))
+            throw new SdlParseException("Invalid value type for attribute set: <array> is not allowed");
+        $this->attr[$key]=$this->getSingleTypedValue($value);
     }
-
     public function __unset($key) {
         unset($this->attr[$key]);
     }
 
 }
+
+class SdlParseException extends \Exception { }
