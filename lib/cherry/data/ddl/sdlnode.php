@@ -61,8 +61,8 @@ class SdlNode implements ArrayAccess, Countable {
         } else {
             $this->name = $name;
         }
-        $this->values = (array)$values;
-        $this->attr = (array)$attr;
+        foreach((array)$values as $value) $this->values[] = $this->getSingleTypedValue($value);
+        foreach((array)$attr as $k=>$value) $this->attr[$k] = $this->getSingleTypedValue($value);
         $this->children = (array)$children;
         $this->comment = $comment;
     }
@@ -382,7 +382,7 @@ class SdlNode implements ArrayAccess, Countable {
                     $str = $val;
             }
         } elseif (is_numeric($str)) {
-            return $str;
+            if (!is_string($str)) return $str;
         } elseif (is_bool($str)) {
             return ($str?'true':'false');
         } elseif ($str=="@NULL") {
@@ -422,6 +422,10 @@ class SdlNode implements ArrayAccess, Countable {
                 }
                 break;
             default:
+                if (is_string($value)) {
+                    $typedval = [ $value, self::LT_STRING ];
+                    return true;
+                }
                 // For numbers we need some magic
                 if (is_numeric($value)) {
                     if (is_integer($value)) {
@@ -553,7 +557,7 @@ class SdlNode implements ArrayAccess, Countable {
      * @return mixed The first value of the node
      */
     public function getFirstValue() {
-        return $this->values[0];
+        return $this->getCastValue($this->values[0]);
     }
 
     /**
