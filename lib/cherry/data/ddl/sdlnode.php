@@ -281,6 +281,8 @@ class SdlNode implements ArrayAccess, Countable {
                         //$idx = 0;
                         break;
                     case "=":
+                        $state = self::SP_ATTRIBUTE;
+                        $_attrn = array_pop($_vals)[0];
                         //echo "= ";
                         // Check keyword type and prepare for value
                         break;
@@ -392,6 +394,10 @@ class SdlNode implements ArrayAccess, Countable {
     }
     
     private function getTypedValue($value,$tok,&$typedval) {
+        if (is_array($value)) {
+            $typedval = $value;
+            return true;
+        }
         if ($value === null) {
             $typedval = [ null, self::LT_NULL ];
             return true;
@@ -459,7 +465,10 @@ class SdlNode implements ArrayAccess, Countable {
                     return $val;
                 case self::LT_INT:
                     return $val;
+                case self::LT_STRING:
+                    return $val;
                 default:
+                    throw new SdlParseException("Internal error: Casting from unhandled internal value type.");
                     $str = $val;
             }
         } 
