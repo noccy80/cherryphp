@@ -26,6 +26,12 @@ class Rect {
     public static function rect($x,$y,$w,$h) {
         return new Rect($x,$y,$w,$h);
     }
+
+    public function move($x,$y) {
+        $this->x+= $x;
+        $this->y+= $y;
+    }
+
 }
 //function rect($x,$y,$w,$h) {
 //    return new Rect($x,$y,$w,$h);
@@ -39,7 +45,8 @@ class Canvas implements IDrawable {
         $himage = null,
         $width = null,
         $height = null,
-        $truecolor = null;
+        $truecolor = null,
+        $dither = null;
 
     public function __construct($width=null,$height=null,$bgcolor=null) {
         if ($width && $height)
@@ -49,6 +56,21 @@ class Canvas implements IDrawable {
     public function __destruct() {
         if ($this->himage)
             imagedestroy($this->himage);
+    }
+
+    public function __get($key) {
+        switch($key) {
+            case 'width':
+                return $this->width;
+            case 'height':
+                return $this->height;
+            case 'truecolor':
+                return $this->truecolor;
+            case 'himage':
+                return $this->himage;
+            default:
+                throw new \BadFunctionCallException("Can not access missing property {$key}");
+        }
     }
 
     /**
@@ -86,6 +108,17 @@ class Canvas implements IDrawable {
         $this->refresh();
     }
 
+    public static function createFromFile($filename) {
+        $c = new Canvas();
+        $c->load($filename);
+        return $c;
+    }
+
+    public static function createTrueColor($width,$height) {
+        $c = new Canvas($width,$height);
+        return $c;
+    }
+
     /**
      * @brief Create a new canvas
      *
@@ -98,29 +131,47 @@ class Canvas implements IDrawable {
         $this->refresh();
     }
 
+    public function setDitherClass(Dither $class) {
+        $this->dither = $class;
+    }
+
+    public function drawLine($x1,$y1,$x2,$y2,$color) {
+        $c = $this->map($color);
+        //echo "Drawing line [{$x1}x{$y1}-{$x2}x{$y2}] c={$c}\n";
+        imageline($this->himage,$x1,$y1,$x2,$y2,$c);
+    }
+
+    public function drawRect($x1,$y1,$x2,$y2,$color) {
+        $c = $this->map($color);
+        //echo "Drawing line [{$x1}x{$y1}-{$x2}x{$y2}] c={$c}\n";
+        imagerectangle($this->himage,$x1,$y1,$x2,$y2,$c);
+    }
+
+    public function drawFilledRect($x1,$y1,$x2,$y2,$color) {
+        $c = $this->map($color);
+        //echo "Drawing line [{$x1}x{$y1}-{$x2}x{$y2}] c={$c}\n";
+        imagefilledrectangle($this->himage,$x1,$y1,$x2,$y2,$c);
+    }
+
     public function setPixel($x,$y,$color) {
-        $c = $this->map($color,$x,$y);
-        imagesetpixel($this->himage, $x, $y, $c);
+        $c = $this->map($color);
+        if ($this->dither != null) $c = $this->dither->ditherColor($x,$y,$c);
+        imagesetpixel($this->himage,$x,$y,$c);
     }
 
     public function getPixel($x,$y) {
         $c = imagecolorat($this->himage, $x, $y);
+        return $c;
     }
 
-    public function map($color,$x=null,$y=null) {
+    public function map($color) {
         /*if ((func_num_args()>1) && (!is_array($color)))
             $color = func_get_args();*/
         if (is_integer($color)) {
             // Color is already a color value
             return $color;
         } elseif (is_array($color)) {
-            if (($x) && ($y))
-                if ((($x % 2) == 0) && (($y % 2) == 0))
-                    $color = array_map("floor",$color);
-                else
-                    $color = array_map("ceil",$color);
-            else
-                $color = array_map("intval",$color);
+            $color = array_map("intval",$color);
             // RGB[A]
             if (count($color) < 3)
                 user_error("Array provided to map must be [r,g,b]");
@@ -203,9 +254,17 @@ class Canvas implements IDrawable {
         $this->refresh();
     }
 
-    public function draw(Canvas $dest, Rect $destrect = null, Rect $srcrect = null) {}
+    public function draw(Canvas $dest, Rect $destrect = null, Rect $srcrect = null) {
+        imagecopyresampled($dest->himage, $this->himage,
+                           $destrect->x, $destrect->y,
+                           $srcrect->x, $srcrect->y,
+                           $destrect->w, $destrect->h,
+                           $srcrect->w, $destrect->h);
+    }
 
-    public function measure() {}
+    public function measure() {
+        return new Rect(0, 0, $this->width, $this->height);
+    }
 
     public function __toString() {
         ob_start();
@@ -214,4 +273,67 @@ class Canvas implements IDrawable {
         return $img;
     }
 
+}
+
+interface ITrueColorDither { }
+interface IOrderedDither { }
+abstract class Dither {
+    protected
+            $r, $g, $b, $a, $x, $y;
+    private function cv2rgba($c) {
+    }
+    private function rgba2cv($c) {
+    }
+    private function cv($x) {
+        return ($x < 0x00)?0:(($x > 0xFF)?0xFF:$x);
+    }
+    public function ditherColor($x,$y,$c) {
+        $this->a = ($c >> 24) & 0xFF;
+        $this->g = ($c >> 16) & 0xFF;
+        $this->b = ($c >> 8) & 0xFF;
+        $this->r = ($c) & 0xFF;
+        $ret = $this->ditherFunc($x,$y);
+        return ($this->cv($this->a) << 24) | ($this->cv($this->g) << 16) | ($this->cv($this->b) << 8) | ($this->cv($this->r));
+    }
+    abstract protected function ditherFunc($x,$y);
+}
+class OrderedDither extends Dither implements ITrueColorDither,IOrderedDither {
+    public static
+        $mthreshold2x2 = [
+            [ 1, 3 ],
+            [ 4, 2 ]
+        ],
+        $mthreshold3x3 = [
+            [ 3, 7, 4 ],
+            [ 6, 1, 9 ],
+            [ 2, 8, 5 ]
+        ],
+        $mthreshold4x4 = [
+            [ 1,  9,  3, 11 ],
+            [ 13, 5, 15,  7 ],
+            [ 4,  12, 2, 10 ],
+            [ 16, 8, 14,  6 ]
+        ];
+    private
+        $matrix = [],
+        $bias = 0,
+        $adjust = 1;
+    const
+        ODT_2X2 = 1,
+        ODT_3X3 = 2,
+        ODT_4x4 = 3;
+    public function __construct(array $matrix) {
+        $max = max(max($matrix));
+        $this->bias = $max / 2;
+        $this->adjust = $this->bias / 2;
+        $this->matrix = $matrix;
+    }
+    protected function ditherFunc($x,$y) {
+        $x = $x % 3;
+        $y = $y % 3;
+        $tm = ($this->matrix[$x][$y] - $this->bias) / $this->adjust;
+        $this->r = $this->r + $tm;
+        $this->g = $this->g + $tm;
+        $this->b = $this->b + $tm;
+    }
 }
