@@ -14,6 +14,11 @@ use Countable;
  * The unserializing is built on top of the PHP tokenizer (token_get_all) and
  * is thus fast and reliable.
  *
+ * @todo
+ *   - Implement the remaining types.
+ *   - Attributes should also support namespaces
+ *   - Use ; to separate tags, as per SDL 1.1
+ *
  * @author Christopher Vagnetoft <noccylabs-at-gmail>
  * @license GNU GPL v3
  */
@@ -61,8 +66,11 @@ class SdlNode implements ArrayAccess, Countable {
         } else {
             $this->name = $name;
         }
-        foreach((array)$values as $value) $this->values[] = $this->getSingleTypedValue($value);
-        foreach((array)$attr as $k=>$value) $this->attr[$k] = $this->getSingleTypedValue($value);
+        // Extract the values as typed values
+        $this->values = array_map([$this,'getSingleTypedValue'], (array)$values);
+        foreach((array)$attr as $k=>$value) {
+            $this->attr[$k] = $this->getSingleTypedValue($value);
+        }
         $this->children = (array)$children;
         $this->comment = $comment;
     }
@@ -113,7 +121,6 @@ class SdlNode implements ArrayAccess, Countable {
         $_recurse = false;
         $_ret = false;
         $_ns = null;
-        $_ttype = null;
         $idx = 0;
         $state = self::SP_NODENAME;
 
@@ -127,9 +134,6 @@ class SdlNode implements ArrayAccess, Countable {
                     case T_OPEN_TAG:
                         break;
 
-                    // Tag numbers as numbers
-                    case T_DNUMBER:
-                        if (!$_ttype) $_ttype = self::LT_DFLOAT;
                     // Keywords, let these slip through as strings
                     case T_DEFAULT:
                     case T_CLASS:
@@ -138,9 +142,10 @@ class SdlNode implements ArrayAccess, Countable {
                     case T_NAMESPACE:
                     case T_NEW:
                     case T_ECHO:
+                    // And we have numbers as well
+                    case T_DNUMBER:
                     // Strings as keywords are handled here
                     case T_STRING:
-                        if (!$_ttype) $_ttype = self::LT_STRING;
                         if ($state == self::SP_NODENAME) {
                             // If we are expecting the node name, we got it
                             $_name = $str;
@@ -156,54 +161,8 @@ class SdlNode implements ArrayAccess, Countable {
                                 $_attrn = $str;
                                 $state = self::SP_ATTRIBUTE;
                             }
-                            /*
-                            switch($str) {
-                                case "null":
-                                    $_vals[] = "@NULL"; // [ null, self::LT_NULL]; // "@NULL";
-                                    $idx++;
-                                    break;
-                                case "true":
-                                case "yes":
-                                    $_vals[] = true; // [ true, self::LT_BOOLEAN ];
-                                    $idx++;
-                                    break;
-                                case "false":
-                                case "no":
-                                    $_vals[] = false; // [ false, self::LT_BOOLEAN ];
-                                    $idx++;
-                                    break;
-                                default:
-                                    // For numbers we need some magic
-                                    if (is_numeric($str)) {
-                                        $_vals[] = $str;
-                                    } else {
-                                        $_attrn = $str;
-                                        $state = self::SP_ATTRIBUTE;
-                                    }
-                            }
-                            */
                         } elseif ($state == self::SP_ATTRIBUTE) {
-                            // This should never happen if not for null or consts
-                            /*
-                            switch($str) {
-                                case "null":
-                                    $_attt[$_attrn] = self::LT_NULL;
-                                    $_attr[$_attrn] = $str;
-                                    break;
-                                case "true":
-                                case "yes":
-                                    $_attt[$_attrn] = self::LT_BOOLEAN;
-                                    $_attr[$_attrn] = "true";
-                                    break;
-                                case "false":
-                                case "no":
-                                    $_attt[$_attrn] = self::LT_BOOLEAN;
-                                    $_attr[$_attrn] = "false";
-                                    break;
-                                default:
-                                    echo "Unknown value string: ".$str."\n";
-                            }
-                            */
+
                             $value = null;
                             if ($this->getTypedValue($str,$tok[0],$value)) {
                                 $_attr[$_attrn] = $value;
@@ -267,26 +226,32 @@ class SdlNode implements ArrayAccess, Countable {
             } else {
                 switch($tok) {
                     case "{":
-                        //$depth++;
-                        //if ($state == self::SP_NODEVALUE) echo "\n";
+                        // Parse the current tag and recurse the children
                         $_final = true;
                         $_recurse = true;
                         $state = self::SP_NODENAME;
                         $idx = 0;
                         break;
                     case "}":
+                        //$_final = true;
                         $_ret = true;
-                        //$depth--;
-                        //$state = self::SP_NODENAME;
-                        //$idx = 0;
+                        break;
+                    case ";";
+                        // On semicolon we finalize the current tag and resume
+                        // looking for the next node name.
+                        $_final = true;
+                        $state = self::SP_NODENAME;
                         break;
                     case "=":
+                        // Pop the last found value as the attribute name
+                        // We should make sure that it is a valid attribute
+                        // here really.
                         $state = self::SP_ATTRIBUTE;
                         $_attrn = array_pop($_vals)[0];
-                        //echo "= ";
-                        // Check keyword type and prepare for value
                         break;
                     case ":":
+                        // Namespace parsing. Implementation needed for attribute
+                        // namespaces.
                         $_ns = $_name;
                         $_name = null;
                         $state = self::SP_NODENAME;
@@ -295,6 +260,7 @@ class SdlNode implements ArrayAccess, Countable {
                         throw new SdlParseException("Unhandled string in sdl: {$tok}");
                 }
             }
+            // The final flag creates the node.
             if ($_final) {
                 if ($_name || count($_vals)>0) {
                     if ($_ns) $_name = $_ns.':'.$_name; // Add namespace
@@ -308,6 +274,7 @@ class SdlNode implements ArrayAccess, Countable {
             }
             if ($_ret) { break; }
         }
+        // Return the remainder of the tokens after parsing a subtree.
         if (is_array($string)) {
             return $toks;
         }
