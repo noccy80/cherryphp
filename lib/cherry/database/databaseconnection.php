@@ -67,7 +67,19 @@ class DatabaseConnection {
     }
 
     public function query($sql) {
-        return $this->conn->query($sql); // fetchmode?
+        $args = func_get_args();
+        $argcount = func_num_args();
+        for($n = 1; $n < $argcount; $n++) {
+            $value = $args[$n];
+            if (is_string($value)) {
+                $args[$n] = "'".str_replace("'","\'",$value);
+            } else {
+                $args[$n] = intval($value);
+            }
+        }
+        $esql = call_user_func_array('sprintf',$args);
+        \App::app()->log("DB:Query: %s", $esql);
+        return $this->conn->query($esql); // fetchmode?
     }
 
     public function pdo() {

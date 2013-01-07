@@ -1,6 +1,7 @@
 <?php
 
 namespace Cherry\Database;
+use Cherry\Data\Ddl\SdlNode;
 
 class DatabaseTable {
 
@@ -35,12 +36,56 @@ class DatabaseTable {
     }
 
     public function applySdlNode(\Cherry\Data\Ddl\SdlNode $node) {
+        if ($node->getName() == 'table') {
+            if ($node->getValue() != $this->name) {
+                \App::app()->warn("Not applying SDL node to table as names differ: ".$node->getValue());
+                return false;
+            }
+            $cur = $this->getSdlNode();
+            foreach($node->getChildren('column') as $col) {
+                $curcol = $cur->getChild('column',$col->getValue());
+                // Check if the node 
+                if (($curcol == null) || ($curcol != $col)) {
+                    echo "Column ".$col->getName()." needs creating/applying!\n";
+                }
+            }
+        }
+    }
+    
+    public function getSdlNode() {
+        $table = $this;
+
+        // Print out the table nodes
+        $sdl = new SdlNode("table",$table->name);
+        $sdl->setComment("Table {$table->name} from database {$table->database->name}");
+        // Convert the columns to SDL
+        foreach($table->getColumns() as $co) {
+            $col = new SdlNode("column",$co->name, ['type'=>$co->type ]);
+            if (!empty($co->default)) $col->setAttribute('default',$co->default);
+            if ($co->auto) $col->setAttribute('auto',1);
+            $col->setAttribute('null',$co->null);
+            if (!empty($co->comment)) $col->setAttribute('comment',$co->comment);
+            $sdl->addChild($col);
+        }
+        // Convert the indexes to SDL
+        $idx = new SdlNode("indexes");
+        foreach($table->getIndexes() as $ix) {
+            $cols = $ix->columns;
+            $ii = new SdlNode($ix->type,$ix->name);
+            $ii->setComment("Index {$ix->name}");
+            $ii->addChild(new SdlNode(NULL,$cols));
+            $idx->addChild($ii);
+        }
+        $sdl->addChild($idx);
+        return $sdl;
         
     }
 
     private function getMeta() {
         try {
-            $rows = $this->db->query("SHOW COLUMNS FROM ".$this->table);
+            $rows = $this->db->query("SHOW FULL COLUMNS FROM ".$this->table);
+            $stat = $this->db->query("SHOW TABLE STATUS LIKE '".$this->table."'");
+            $this->tablemeta = $stat->fetch();
         } catch (Exception $e) {
             $this->metadata = false;
             return;
@@ -51,19 +96,21 @@ class DatabaseTable {
         }
         $cols = [];
         foreach($rows as $row) {
-            $cname = $row['Field'];
-            $ctype = $row['Type'];
-            $cnull = $row['Null'];
-            $ckey  = $row['Key'];
-            $cdef  = $row['Default'];
-            $cext  = $row['Extra'];
+            $cname = $row[0];
+            $ctype = $row[1];
+            $cnull = $row[3];
+            $ckey  = $row[4];
+            $cdef  = $row[5];
+            $cext  = $row[6];
+            $ccom  = $row[8];
             $cols[$cname] = (object)[
-                'name'=> $cname,
-                'type'=> $ctype,
-                'null'=> ($cnull=='YES'),
-                'default' => $cdef,
-                'key' => $ckey,
-                'auto' => (strpos($cext,'auto_increment')!==false)
+                'name'      => $cname,
+                'type'      => $ctype,
+                'null'      => ($cnull=='YES'),
+                'default'   => $cdef,
+                'key'       => $ckey,
+                'auto'      => (strpos($cext,'auto_increment')!==false),
+                'comment'   => $ccom
             ];
         }
         $this->metadata = $cols;
