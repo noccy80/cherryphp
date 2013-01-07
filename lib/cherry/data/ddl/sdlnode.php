@@ -360,6 +360,21 @@ class SdlNode implements ArrayAccess, Countable {
         return "\"".str_replace("\"","\\\"",$str)."\"";
     }
     
+    /**
+     * @private
+     * @brief Returns a typed value pair for a token.
+     * 
+     * This method also handles the keywords to ensure that they come out
+     * properly.
+     *
+     * @todo Throw exception on invalid keywords.
+     * @todo Parse dates and other value types.
+     *
+     * @param string $value The value string
+     * @param Mixed $tok The token identifier
+     * @param Array &$typedval The resulting value
+     * @return bool True if the typed value could be retrieved
+     */
     private function getTypedValue($value,$tok,&$typedval) {
         if (is_array($value)) {
             $typedval = $value;
@@ -411,6 +426,16 @@ class SdlNode implements ArrayAccess, Countable {
         }
         return false;
     }
+    
+    /**
+     * @private
+     * @brief Convert a single known value into a typed value.
+     *
+     * This is used for assignments.
+     *
+     * @param Mixed $value The value
+     * @return Mixed The typed value
+     */
     private function getSingleTypedValue($value) {
         $ret = null;
         if ($this->getTypedValue($value,null,$ret)) {
@@ -419,6 +444,14 @@ class SdlNode implements ArrayAccess, Countable {
             return $value;
         }
     }
+    
+    /**
+     * @private
+     * @brief Return the value in a native PHP value type.
+     *
+     * @param Mixed $value The value to cast
+     * @return Mixed The cast value
+     */
     private function getCastValue($value) {
         if (is_array($value)) {
             $type = $value[1];
@@ -441,6 +474,7 @@ class SdlNode implements ArrayAccess, Countable {
         } 
         return $value;
     }
+    
     /**
      * @brief Add a child node to the node.
      *
@@ -448,6 +482,15 @@ class SdlNode implements ArrayAccess, Countable {
      */
     public function addChild(SdlNode $node) {
         $this->children[] = $node;
+    }
+    
+    public function removeChild(SdlNode $node) {
+        $this->children = array_filter(
+            $this->children,
+            function($nv) {
+                return (!($nv === $node));
+            }
+        );
     }
 
     /**
@@ -525,6 +568,14 @@ class SdlNode implements ArrayAccess, Countable {
         //return $this->values;
     }
     
+    public function setValue($value) {
+        $this->values[0] = $this->getSingleTypedValue($value);
+    }
+    
+    public function addValue($value) {
+        $this->values[] = $this->getSingleTypedValue($value);
+    }
+    
     /**
      * @brief Return the first value of the node.
      *
@@ -532,41 +583,41 @@ class SdlNode implements ArrayAccess, Countable {
      *
      * @return mixed The first value of the node
      */
-    public function getFirstValue() {
+    public function getValue() {
         return $this->getCastValue($this->values[0]);
-    }
-
-    /**
-     * @brief Return all child nodes
-     *
-     * @return array The child nodes
-     */
-    public function getChildren() {
-        return $this->children;
     }
 
     /**
      * @brief Return all children whose node name match the string.
      *
+     * @param string $name Tag name or null for all.
      * @return array The matchind nodes or null.
      */
-    public function getChildrenByName($name) {
+    public function getChildren($name=null) {
+        // If $name is null, return all children
+        if (!$name)
+            return $this->children;
+        // Return all nodes of type $name
         $ret = [];
         foreach($this->children as $nod) {
             if ($nod->getName() == $name) $ret[] = $nod;
         }
         return $ret;
-        // Return all nodes of type $name
     }
 
     /**
      * @brief Return the first child whose node ame match the string.
      *
+     * @param string $name The node name to match
+     * @param string $withvalue The node value to match (or null)
      * @return SdlNode The first matching node or null
      */
-    public function getChildByName($name) {
+    public function getChild($name,$withvalue=null) {
         foreach($this->children as $nod) {
-            if ($nod->getName() == $name) return $nod;
+            if ($nod->getName() == $name) {
+                if (!$withvalue) return $nod;
+                if ($withvalue == $nod->getValue()) return $nod;
+            }
         }
         return null;
     }
@@ -576,7 +627,7 @@ class SdlNode implements ArrayAccess, Countable {
      *
      * @return array The attributes
      */
-    public function getAllAttributes() {
+    public function getAttributes() {
         return $this->attr;
     }
 
