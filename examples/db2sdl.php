@@ -7,10 +7,10 @@ use Cherry\Database\DatabaseConnection;
 use Cherry\Data\Ddl\SdlNode;
 
 // Register a connection
-DatabaseConnection::register("default", "mysql://noccy@localhost/nojesfabriken", 10, "R");
+DatabaseConnection::register("default", "mysql://test@localhost/test", 10, "R");
 // Or you can store the credentials with restricted access
 /*
-KeyStore::addCredentials("db.default","mysql://noccy@localhost/nojesfabriken", [
+KeyStore::addCredentials("db.default","mysql://test@localhost/test", [
     'allow'=>"Cherry\Database\DatabaseConnection"
 ]);
 */
