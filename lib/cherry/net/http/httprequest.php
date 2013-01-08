@@ -68,7 +68,7 @@ class HttpRequest extends EventEmitter {
     }
 
     public function getAllHeaders() {
-        return $this->client->getHeaders();
+        return $this->client->getAllHeaders();
     }
 
     public function getResponseJson() {
