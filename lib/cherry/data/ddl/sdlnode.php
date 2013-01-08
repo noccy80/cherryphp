@@ -17,6 +17,7 @@ use Countable;
  * @todo
  *   - Implement the remaining types.
  *   - Attributes should also support namespaces
+ *   - Multiline strings with "\"
  *   - Use ; to separate tags, as per SDL 1.1
  *
  * @author Christopher Vagnetoft <noccylabs-at-gmail>
@@ -410,6 +411,8 @@ class SdlNode implements ArrayAccess, Countable {
                 }
                 break;
             default:
+                // TODO: Check token to make sure it's a constant encapsed string, and do
+                // approproiate multi-line merging based on trailing \
                 if (is_string($value)) {
                     $typedval = [ $value, self::LT_STRING ];
                     return true;

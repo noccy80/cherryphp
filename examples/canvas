@@ -14,8 +14,10 @@ if (!( @include_once "lib/bootstrap.php" )) {
 
 use Cherry\Graphics\Canvas;
 use Cherry\Graphics\Font\TrueTypeFont;
+use Cherry\Graphics\OrderedDither;
 
 $c = new Canvas();
+$c->setDitherClass(new OrderedDither(OrderedDither::$mthreshold4x4));
 $tm = new \Cherry\Util\Timer();
 $c->create(640,480);
 $tm->mark("created");

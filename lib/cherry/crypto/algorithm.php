@@ -5,8 +5,8 @@ namespace Cherry\Crypto;
 class Algorithm {
     
     const MODE_CFB = 'cfb';
-    const MODE_CBC = 'cbc';
-    const MODE_ECB = 'ecb';
+    const MODE_CBC = 'cbc'; ///< Cipher Block Chaining
+    const MODE_ECB = 'ecb'; ///< Electronic Code Book
     const MODE_OFB = 'ofb';
     
     protected $algo;

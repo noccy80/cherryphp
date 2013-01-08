@@ -14,20 +14,36 @@ if (!( @include_once "lib/bootstrap.php" )) {
 
 $lepton = new \cherry\Lepton(__FILE__);
 
-use cherry\base\Event;
-use cherry\base\EventEmitter;
+use Cherry\Net\SocketServer;
+use Cherry\Net\Socket;
+use Cherry\Net\SocketClient;
+use Cherry\Net\Socket\Transport\TcpTransport;
+use Cherry\Net\Socket\Transport\TlsTransport;
 
-App::bundles()->load('cherry.net');
-App::bundles()->load('cherry.mvc');
-App::bundles()->load('cherry.crypto');
 
-$ss = new \cherry\net\SocketServer(6667);
-$ss->on('connection', function($ip,$port) {
-    printf("Creating new SocketSession for %s:%d\n", $ip, $port);
-    $socksess = new \cherry\net\SocketSession();
-    $socksess->setTransport(new \cherry\net\socket\transport\HttpTransport());
+$ss = new SocketServer(6667);
+$ss->on('connection', function($socket) {
+    $sock = new Socket($socket);
+    $sock->setTransport(new TcpTransport());
+    $sock->setEndpoint(new GameSession());
+    return $sock;
 });
 $ss->on('ready', function() {
     printf("Server is ready.\n");
 });
 $ss->start();
+
+class GameSession extends SocketEndpoint {
+    public function __construct() {
+        $this->addTimer(1000,[$this,'timer']);
+    }
+    public function timer() {
+        // Do something
+    }
+    public function onSocketAccept() { }
+    public function onSocketClose() { }
+    public function onSocketReceive($data) {
+        $this->upgradeTransport(new TlsTransport());
+    }
+    public function onSocketUpgrade() { }
+}

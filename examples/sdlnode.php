@@ -3,6 +3,7 @@
 require getenv('CHERRY_LIB').'/lib/bootstrap.php';
 
 use Cherry\Data\Ddl\SdlNode;
+use Cherry\Util\Timer;
 
 // Create a new root node, we need this.
 $root = new SdlNode("cyanogenmod");
@@ -32,4 +33,24 @@ $cm101 = new SdlNode("version", "10.1", [
 $root->addChild($cm101);
 
 // And the data can be serialized to SDL
-echo $root->encode();
+$t = new Timer();
+$t->mark("encoding");
+$sdl = $root->encode();
+$t->mark("done");
+echo (string)$t."\n";
+echo $sdl;
+
+// Read it back out again
+$test = new SdlNode("root");
+$t = new Timer();
+$t->mark("decoding");
+$test->loadString($sdl);
+$t->mark("done");
+echo (string)$t."\n";
+
+// Print some info about the various versions.
+foreach($test->getChildByName("cyanogenmod")->getChildren() as $child) {
+    echo "CM{$child[0]}: Based on Android AOSP {$child->android}.";
+    if ($child->multiuser) echo " Multiple user-profiles supported.";
+    echo "\n";
+}

@@ -119,5 +119,9 @@ abstract class EventEmitter {
 
 }
 
-class EventException extends \Exception { }
+class EventDispatch {
 
+
+}
+
+class EventException extends \Exception { }

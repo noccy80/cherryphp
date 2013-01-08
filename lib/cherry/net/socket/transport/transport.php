@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\net\socket\transport;
+namespace Cherry\Net\Socket\Transport;
 
 use cherry\base\Event;
 use cherry\base\EventEmitter;
