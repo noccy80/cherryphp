@@ -10,7 +10,6 @@ abstract class ConsoleApplication extends \Cherry\Application {
 
     private $arguments = array();
     private $commands = array();
-    private $logtarget = null;
 
     protected $parameters = array();
 
@@ -253,47 +252,13 @@ abstract class ConsoleApplication extends \Cherry\Application {
         pcntl_signal($signal,$handler,$restart);
     }
 
-    /**
-     * Log text to the current logging facility on the
-     * application level.
-     *
-     * @param string $str The printf pattern
-     * @param string ... The arguments
-     */
-    public function log($str,$vararg=null) {
-        $args = func_get_args();
-        $lstr = call_user_func_array('sprintf',$args);
-        if ($this->logtarget === null) {
-            echo $lstr."\n";
-        } elseif (is_callable($this->logtarget)) {
-           call_user_func($this->logtarget,$lstr);
-        } elseif (is_object($this->logtarget)) {
-            $this->logtarget($lstr);
-        } elseif (is_resource($this->logtarget)) {
-            fputs($this->logtarget,$lstr."\n");
-        } else {
-            echo $lstr."\n";
-        }
-    }
 
-    public function write($str,$vararg=null) {
+    public function write($str) {
         static $con;
         if (!$con) $con = Console::getAdapter();
         $args = func_get_args();
         call_user_func_array([$con,'write'],$args);
-    }
-
-    /**
-     * Set the log target as one of:
-     *  - Callable (closure)
-     *  - Class (implementing __invoke)
-     *  - Resource (from fopen or STDOUT, STDERR etc)
-     *  - NULL (stdout)
-     *
-     * @param string $target The log target
-     */
-    public function setLogTarget($target) {
-        $this->logtarget = $target;
+        parent::write(call_user_func_array('sprintf',$args));
     }
 
 }

@@ -72,6 +72,24 @@ You can see what loaders are available using the list-loaders command:
 
 ## Applications
 
-### \cherry\Mvc\Application
+The application class offers the basic logging facilities as well as the setup code for each type of application.
 
-### \cherry\Cli\Application
+The logging methods supported are:
+
+ * `log()` - Sends a message to the log target (to stdout or the target set up by `setLogTarget()`)
+ * `warn()` - Outputs a warning using `error_log()` or the appropriate facility for the application.
+ * `debug()` - Sends the message to the appropriate debugging facility.
+ * `write()` - For `ConsoleApplication` this method outputs the information directly to STDOUT while other classes saves it in a buffer for later access.
+
+All of these methods can be accessed from anywhere within the application via `App::app()`:
+
+    \App::app()->warn("foo must be less than 255");
+    \App::app()->write("Hello.\n");
+
+They are also directly available to the application class instance:
+
+    $this->warn("Warning: Something is wrong!");
+
+### \Cherry\Mvc\MvcApplication
+
+### \Cherry\Cli\ConsoleApplication

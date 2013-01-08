@@ -6,6 +6,9 @@ abstract class Application {
 
     protected $path = null;
     private static $instance = null;
+    private $logtarget = null;
+
+    private $_writebuffer;
     public static function getInstance() {
         return self::$instance;
     }
@@ -118,6 +121,60 @@ abstract class Application {
     }
 
     abstract function run();
+    
+    
+    /**
+     * Log text to the current logging facility on the
+     * application level.
+     *
+     * @param string $str The printf pattern
+     * @param string ... The arguments
+     */
+    public function log($str) {
+        $args = func_get_args();
+        $lstr = call_user_func_array('sprintf',$args);
+        if ($this->logtarget === null) {
+            echo $lstr."\n";
+        } elseif (is_callable($this->logtarget)) {
+           call_user_func($this->logtarget,$lstr);
+        } elseif (is_object($this->logtarget)) {
+            $this->logtarget($lstr);
+        } elseif (is_resource($this->logtarget)) {
+            fputs($this->logtarget,$lstr."\n");
+        } else {
+            echo $lstr."\n";
+        }
+    }
+    
+    /**
+     * Set the log target as one of:
+     *  - Callable (closure)
+     *  - Class (implementing __invoke)
+     *  - Resource (from fopen or STDOUT, STDERR etc)
+     *  - NULL (stdout)
+     *
+     * @param string $target The log target
+     */
+    public function setLogTarget($target) {
+        $this->logtarget = $target;
+    }
+    
+    public function debug($str) {
+        call_user_func_array('\Cherry\Debug',func_get_args());
+    }
+
+    public function warn($str) {
+        $msg = call_user_func_array('sprintf',func_get_args());
+        error_log($msg);
+    }
+    
+    public function write($str) {
+        $this->writebuffer .= $str;
+    }
+    
+    public function getWriteBuffer() {
+        return $this->writebuffer;
+    }
 
 }
 
