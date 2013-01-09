@@ -35,3 +35,5 @@ for($x = 0; $x < 640; $x++) {
         $c->setPixel($x, $y, [$r,$g,$b]);
     }
 }
+
+$c->save("canvas.jpg");
