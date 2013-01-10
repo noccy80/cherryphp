@@ -36,10 +36,10 @@ class Uuid {
      */
     function test($uuid) {
         $hu = null;
-        uuid_create($hu);
-        $status = @uuid_import($hu, \UUID_FMT_STR, $uuid);
-        $ret = ($status === \UUID_RC_OK);
-        uuid_destroy($hu);
+        \uuid_create($hu);
+        $status = \uuid_parse($hu, $uuid);
+        $ret = ($status === 0);
+        // \uuid_destroy($hu);
         return $ret;
     }
 
