@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 
 //LOADER:BEGIN
@@ -16,25 +15,25 @@ use Cherry\Graphics\Canvas;
 use Cherry\Graphics\Font\TrueTypeFont;
 use Cherry\Graphics\OrderedDither;
 
+// Create a canvas of 640x480
 $c = new Canvas();
-$c->setDitherClass(new OrderedDither(OrderedDither::$mthreshold4x4));
-$tm = new \Cherry\Util\Timer();
 $c->create(640,480);
-$tm->mark("created");
 
+// Use ordered dither with a 4x4 matrix
+$c->setDitherClass(
+    new OrderedDither(OrderedDither::$mthreshold4x4)
+);
+
+// Draw a colorful pattern
 for($x = 0; $x < 640; $x++) {
     for($y = 0; $y < 480; $y++) {
+        // Calculate the color for the pixel
         $r = ($x / 640) * 255;
         $g = 255 - ($x / 640) * 255;
         $b = ($y / 480) * 255;
+        // Set the pixel with the red, green and blue values we calculated
         $c->setPixel($x, $y, [$r,$g,$b]);
     }
 }
-$tm->mark("painted");
-/*
-$f = new TrueTypeFont("arial.ttf");
-$c->draw(new Text("Hello World"),[5,5]);
-*/
-$c->save('canvas.jpg');
-$tm->mark("saved");
-echo $tm."\n";
+
+$c->save("canvas.jpg");
