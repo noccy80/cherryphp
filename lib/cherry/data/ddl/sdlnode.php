@@ -61,7 +61,7 @@ class SdlNode implements ArrayAccess, Countable {
      * @param array $children The child nodes that belong to this node.
      * @param string $comment A textual description of the node. The comment will be serialized.
      */
-    public function __construct($name, $values = null, array $attr = null, array $children = null, $comment = null) {
+    public function __construct($name = null, $values = null, array $attr = null, array $children = null, $comment = null) {
         if (strpos($name,':')!==false) {
             list($this->ns,$this->name) = explode(':',$name,2);
         } else {
