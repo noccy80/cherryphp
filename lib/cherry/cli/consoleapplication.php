@@ -76,7 +76,7 @@ abstract class ConsoleApplication extends \Cherry\Application {
                 }
             }
             if ($copt) {
-                if (strlen($this->arguments) > 1) {
+                if (strlen($copt->argument) > 1) {
                     $i++; // Skip the next item
                 }
             } else {
@@ -216,12 +216,18 @@ abstract class ConsoleApplication extends \Cherry\Application {
 
     private static function showError($ca,$type,$message,$file,$line,$log,$bt) {
         if (function_exists('ncurses_end')) @ncurses_end();
-        $ca->error("\033[1m%s:\033[22m\n    %s\n",$type,$message);
-        $ca->error("\033[1mSource:\033[22m\n    %s (line %d)\n",$file,$line);
-        $ca->error("%s\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
-        $ca->error("\033[1mBacktrace:\033[22m\n%s\n", join("\n",self::indent($bt,4)));
-        $ca->error("\033[1mDebug log:\033[22m\n%s\n",join("\n",self::indent($log,4)));
-        $ca->error("(Hint: Change the LOG_LENGTH envvar to set the size of the debug log buffer)\n");
+        $header =   "\033[41;1m                                                                        \n".
+                    "  \033[1mFatal Exception\033[22m                                                       \n".
+                    "  {$message}                                                                      \n".
+                    "                                                                        \033[0m\n\n";
+        $ca->error($header);
+        //$ca->error("\033[1m%s:\033[22m\n    %s\n",$type,$message);
+        $ca->error("\033[31;1mSource:\033[0m\n    %s (line %d)\n",$file,$line);
+        $ca->error("%s\n\n",join("\n",self::indent(Debug::getCodePreview($file,$line),4)));
+        $ca->error("\033[31;1mBacktrace:\n\033[0m%s\n\n", join("\n",self::indent($bt,4)));
+        $ca->error("\033[31;1mDebug log:\033[0m\n%s\n\n",join("\n",self::indent($log,4)));
+        //$ca->error("(Hint: Change the LOG_LENGTH envvar to set the size of the debug log buffer)\n");
+        $ca->error("\033[33;1mCherryPHP\033[22m/%s (PHP/%s) %s %s\n", CHERRY_VERSION, PHP_VERSION, strtoupper(php_sapi_name()), PHP_OS);
     }
 
     private static function indent(array $arr, $indent) {
@@ -237,9 +243,16 @@ abstract class ConsoleApplication extends \Cherry\Application {
         $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
 
-        $bt = Debug::makeBacktrace($exception->getTrace());
-        $errfile = $exception->getFile();
-        $errline = $exception->getLine();
+        $fbt = $exception->getTrace();
+        if (defined("ERROR_POPBACK")) {
+            $errfile = $fbt[2]['file'];
+            $errline = $fbt[2]['line'];
+            array_shift($fbt);
+        } else {
+            $errfile = $exception->getFile();
+            $errline = $exception->getLine();
+        }
+        $bt = Debug::makeBacktrace($fbt,true);
         $this->showError($ca,'Exception',$exception->getMessage().' ('.$exception->getCode().')',$errfile,$errline,$log,$bt);
         exit(1);
     }

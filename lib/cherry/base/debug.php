@@ -107,7 +107,7 @@ class Debug {
 
     }
 
-    static function makeBacktrace($bt) {
+    static function makeBacktrace($bt,$ansi=false) {
 
         $bt = array_reverse($bt);
 
@@ -147,10 +147,12 @@ class Debug {
             switch($frame['type']) {
                 case '::':
                 case '->':
-                    $out[] = sprintf('#%d. %s%s%s(%s) %s',$fid,$frame['class'],$frame['type'],$frame['function'],$argstr,$fileline);
+                    $fmt = ($ansi)?"\033[2m#%d.\033[0m %s%s%s(%s) %s":"#%d. %s%s%s(%s) %s";
+                    $out[] = sprintf($fmt,$fid,$frame['class'],$frame['type'],$frame['function'],$argstr,$fileline);
                     break;
                 default:
-                    $out[] = sprintf('#%d. %s(%s) %s',$fid,$frame['function'],$argstr,$fileline);
+                    $fmt = ($ansi)?"\033[2m#%d.\033[0m %s(%s) %s":"#%d. %s(%s) %s";
+                    $out[] = sprintf($fmt,$fid,$frame['function'],$argstr,$fileline);
                     break;
             }
         }
@@ -164,7 +166,7 @@ class Debug {
         $linepart = array_slice($lines,$line-5,9);
         $lineout = array();
         for($n = 0; $n < count($linepart); $n++) {
-            $lineout[] = sprintf('%-3s%5d | %s',($n == 4)?'=>':'',$line - 4 + $n,$linepart[$n]);
+            $lineout[] = sprintf("%-3s\033[2m%05d\033[0m ¦ %s%s\033[0m",($n == 4)?"=>":'',$line - 4 + $n,($n==4)?"\033[1;7m":"",$linepart[$n]."  ");
         }
         return $lineout;
 
