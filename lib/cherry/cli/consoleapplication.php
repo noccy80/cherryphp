@@ -216,10 +216,10 @@ abstract class ConsoleApplication extends \Cherry\Application {
 
     private static function showError($ca,$type,$message,$file,$line,$log,$bt) {
         if (function_exists('ncurses_end')) @ncurses_end();
-        $header =   "\033[41;1m                                                                        \n".
-                    "  \033[1mFatal Exception\033[22m                                                       \n".
-                    "  {$message}                                                                      \n".
-                    "                                                                        \033[0m\n\n";
+        $header =   "\033[41;1m\033[K\n".
+                    "  \033[1mFatal Exception\033[22m\033[K\n".
+                    "  {$message}\033[K\n".
+                    "\033[K\033[0m\n\n";
         $ca->error($header);
         //$ca->error("\033[1m%s:\033[22m\n    %s\n",$type,$message);
         $ca->error("\033[31;1mSource:\033[0m\n    %s (line %d)\n",$file,$line);

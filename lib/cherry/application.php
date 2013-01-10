@@ -49,13 +49,14 @@ abstract class Application {
     public static function __php_handleAssert($file, $line, $code, $desc = null) {
 
         \Cherry\debug("Assertion failed in %s on line %d", $file, $line);
-        $log = DebugLog::getDebugLog();
+        /*$log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
 
         $str = sprintf("in %s on line %d",$file, $line );
         $bt = Debug::getBacktrace(1);
-        self::showError($ca,'Assertion failed',$str,$file,$line,$log,$bt);
-
+        self::showError($ca,'Assertion failed',$str,$file,$line,$log,$bt);*/
+        throw new \ErrorException("Assertion failed: {$code}", 0, 0, $file, $line);
+        
         exit(1);
     }
 
