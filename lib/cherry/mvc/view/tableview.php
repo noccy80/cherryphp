@@ -51,25 +51,27 @@ EOT;
             if (($ipp) && ($ri > $ipp)) break;
         }
         $table = html::table(join($rows),[ 'class' => $this->options['table-class'], 'style'=>'width:100%;' ]);
-        $page = 0;
-        $numpages = floor((count($data)-1)/$ipp) + 1;
-        $pagelinks = html::a(' &laquo; First ', [ 'href'=>'javascript:return false;' ]);
-        $pagelinks.= html::a(' &lsaquo; Prev ', [ 'href'=>'javascript:return false;' ]);
-        for ($n = 1; $n <= $numpages; $n++)
-            $pagelinks.= html::a(' {page} ', [ 'href'=>'javascript:return false;' ], [ 'page'=>$n ]);
-        $pagelinks.= html::a(' Next &rsaquo; ', [ 'href'=>'javascript:return false;' ]);
-        $pagelinks.= html::a(' Last &raquo; ', [ 'href'=>'javascript:return false;' ]);
-        $table.= html::div('Page {page} of {pages} ({items} items) {links}',
-            [
-                'class' => $this->options['footer-class']
-            ],
-            [
-                'page' => $page + 1,
-                'pages' => $numpages,
-                'items' => count($data),
-                'links' => $pagelinks
-            ]
-        );
+        if ($ipp) {
+            $page = 0;
+            $numpages = floor((count($data)-1)/$ipp) + 1;
+            $pagelinks = html::a(' &laquo; First ', [ 'href'=>'javascript:return false;' ]);
+            $pagelinks.= html::a(' &lsaquo; Prev ', [ 'href'=>'javascript:return false;' ]);
+            for ($n = 1; $n <= $numpages; $n++)
+                $pagelinks.= html::a(' {page} ', [ 'href'=>'javascript:return false;' ], [ 'page'=>$n ]);
+            $pagelinks.= html::a(' Next &rsaquo; ', [ 'href'=>'javascript:return false;' ]);
+            $pagelinks.= html::a(' Last &raquo; ', [ 'href'=>'javascript:return false;' ]);
+            $table.= html::div('Page {page} of {pages} ({items} items) {links}',
+                [
+                    'class' => $this->options['footer-class']
+                ],
+                [
+                    'page' => $page + 1,
+                    'pages' => $numpages,
+                    'items' => count($data),
+                    'links' => $pagelinks
+                ]
+            );
+        }
         return html::div($table,['style'=>'width:99%']);
     }
 
@@ -85,7 +87,7 @@ EOT;
         parent::__construct();
         // Constructor
         $this->data = $data;
-        $this->options = array_merge($this->options,$options);
+        $this->options = array_merge($this->options,(array)$options);
     }
 
 }

@@ -27,7 +27,7 @@ class PhpView extends View {
         $this->view = $view;
     }
 
-    function __ob_callback($str) {
+    function parseViewTags($str) {
         $pos = strpos($str,'<@');
         if ($pos === false) {
             return $str;
@@ -61,7 +61,7 @@ class PhpView extends View {
                     if (array_key_exists($id,$this->subviews))
                         $cont = $this->subviews[$id]->render(true);
                     else
-                        $cont = '<span color="red">Error: No such content id '.$id.'</span>';
+                        $cont = '<span style="color:red">Error: No such content id '.$id.'</span>';
                 }
             } elseif ($tag == '@embed') {
                 // Switch based on the module
@@ -109,12 +109,12 @@ class PhpView extends View {
         if (defined('IS_PROFILING'))
             \App::profiler()->log("Loading and parsing view");
         ob_start();
-        ob_start(array($this,'__ob_callback'));
         include $file;
-        ob_end_flush();
+        //ob_start(array($this,'__ob_callback'));
+        //ob_end_flush();
         $fout = ob_get_contents();
         ob_end_clean();
-
+        $fout = $this->parseViewTags($fout);
         return $fout;
 
     }
