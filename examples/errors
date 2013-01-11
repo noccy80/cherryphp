@@ -17,12 +17,17 @@ $lepton = new \cherry\Lepton(__FILE__);
 use cherry\base\Event;
 use cherry\base\EventEmitter;
 
-\Cherry\debug('Will grab consoleadapter, and then fail gloriuosly!');
+class ErrorApp extends \Cherry\Cli\ConsoleApplication {
+    public function main() {
+        \Cherry\debug('Will grab consoleadapter, and then fail gloriuosly!');
+        
+        $ca = \Cherry\Cli\Console::getAdapter();
+        $ca->write("Console acquired: %s\n",get_class($ca));
 
-$ca = \Cherry\Cli\Console::getAdapter();
-$ca->write("Console acquired: %s\n",get_class($ca));
+        $foo = 'hello';
+        \assert($foo != 'hello');
+        \user_error("Oh Glorious Fail!");
+    }
+}
 
-$foo = 'hello';
-\assert($foo != 'hello');
-\user_error("Oh Glorious Fail!");
-
+App::run(new ErrorApp());
