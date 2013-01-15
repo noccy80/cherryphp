@@ -95,7 +95,7 @@ class Document {
     public function end() {
         if ($this->ob_active) {
             $this->body .= ob_get_contents();
-            ob_end_clean();
+            if (ob_get_level()>0) ob_end_clean();
             $this->ob_active = false;
         }
     }

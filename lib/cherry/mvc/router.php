@@ -48,7 +48,7 @@ class Router {
                 if (strpos($route,':')!==false)
                     list($tctl,$tparms) = explode(':',$route);
                 else
-                    list($tctl,$tparms) = [ $route, []];
+                    list($tctl,$tparms) = [ $route, ''];
                 $tcclass = explode('/',$tctl);
                 $tcmethod = array_pop($tcclass);
                 $tparms = (array)explode(',',$tparms);
