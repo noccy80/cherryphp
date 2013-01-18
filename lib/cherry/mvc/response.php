@@ -43,6 +43,7 @@ class Response {
     }
 
     public function send404($file) {
+        while(ob_get_level()>0) ob_end_clean();
         $this->setStatus(404,'File not found');
         $errstr = "<h1>File not found.</h1>\n<p>The resource could not be found.</p>\n";
         $this->contentlength = strlen($errstr);
@@ -96,7 +97,7 @@ class Response {
             echo $doc;
         }
     }
-
+    
     public function getCachable() {
         return $this->cachable;
     }

@@ -30,13 +30,18 @@ abstract class Controller {
         $this->document = Document::begin(Document::DT_HTML5,'en-us','UTF-8');
         $this->response->setDocument($this->document);
         $this->setup();
-        call_user_func_array([$this,$action.'Action'], $args);
+        $handler = [$this,$action.'Action'];
+        if (is_callable($handler)) {
+            call_user_func_array($handler, $args);
+            $this->response->output();
+        } else {
+            $this->show_404();
+        }
         //$this->indexAction($doc);
         // Output the document
-        $this->response->output();
     }
     abstract function setup();
     protected function show_404() {
-        $this->response->send404();
+        $this->response->send404($this->request->getUri());
     }
 }

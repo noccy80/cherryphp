@@ -88,6 +88,7 @@ class AutoLoader {
                 $fl = $loc.strtolower($cfn).$ext;
                 // \Cherry\Debug("Autoload: {$class} (path {$fl}");
                 if (file_exists($fl) && is_readable($fl)) {
+                    \cherry\debug("Autoloading: %s", $fl);
                     require_once $fl;
                     return true;
                 }
@@ -97,6 +98,7 @@ class AutoLoader {
                 $fl = $loc.$cfn.$ext;
                 // \Cherry\Debug("Autoload: {$class} (path {$fl}");
                 if (file_exists($fl) && is_readable($fl)) {
+                    \cherry\debug("Autoloading: %s", $fl);
                     require_once $fl;
                     return true;
                 }
@@ -107,6 +109,7 @@ class AutoLoader {
                     $fl = $loc.(($case==1)?strtolower($cfn):$cfn).$ext;
                     // \Cherry\Debug("Autoload: {$class} (path {$fl}");
                     if (file_exists($fl) && is_readable($fl)) {
+                        \cherry\debug("Autoloading: %s", $fl);
                         require_once $fl;
                         return true;
                     }
