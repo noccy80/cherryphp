@@ -132,6 +132,7 @@ abstract class Application {
      * @param string ... The arguments
      */
     public function log($str) {
+        static $fhtarget = null;
         $args = func_get_args();
         $lstr = call_user_func_array('sprintf',$args);
         if ($this->logtarget === null) {
@@ -142,6 +143,10 @@ abstract class Application {
             $this->logtarget($lstr);
         } elseif (is_resource($this->logtarget)) {
             fputs($this->logtarget,$lstr."\n");
+        } elseif (is_writable($this->logtarget)) {
+            if (!$fhtarget)
+                $fhtarget = fopen($this->logtarget,"a+");
+            fwrite($fhtarget,$lstr."\n");
         } else {
             echo $lstr."\n";
         }
