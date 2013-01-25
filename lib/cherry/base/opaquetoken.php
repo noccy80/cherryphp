@@ -12,12 +12,13 @@ class OpaqueToken extends ArrayObject {
 
     public function __construct() {
         $this->salt = rand(0,65535);
+        $crypto = 'tripledes';
         $this->crypto = $crypto;
         parent::__construct();
     }
 
     public function unfreeze($token) {
-        $key = KeyStore::query('opaquetoken.key');
+        $key = KeyStore::getInstance()->queryCredentials('opaquetoken.key');
         $data = base64_decode($token);
         $data = Crypto::tripledes($key)->decrypt($data);
         $data = unserialize($data);
@@ -25,7 +26,7 @@ class OpaqueToken extends ArrayObject {
     }
 
     public function freeze() {
-        $key = KeyStore::query('opaquetoken.key');
+        $key = KeyStore::getInstance()->queryCredentials('opaquetoken.key');
         $data = serialize($this->getArrayCopy());
         $crypt = Crypto::tripledes($key)->encrypt($data);
         return base64_encode($crypt);
@@ -33,8 +34,3 @@ class OpaqueToken extends ArrayObject {
 
 }
 
-/**
- * KeyStore; use the cookie to set access rights.
- */
-$cookie = KeyStore::set("opaquetoken.key", "f02nfoDer2##fC;.Rfk");
-KeyStore::allow($cookie, "opaquetoken.key", [ "Cherry\\Base\\OpaqueToken" ]);
