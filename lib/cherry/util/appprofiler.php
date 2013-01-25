@@ -3,6 +3,10 @@
 namespace Cherry\Util;
 
 class AppProfiler {
+
+    public static
+            $tracetarget = null,
+            $tracelog = null;
     private
             $target = null,
             $start = null,
@@ -22,6 +26,49 @@ class AppProfiler {
             REPORT_SUMMARY = 'summary',
             REPORT_FULL = 'full';
 
+
+    public static function profile($file=null) {
+        declare(ticks = 1);
+        if ($file == null) {
+            $file = 'profiler.log';
+        }
+        self::$tracetarget = $file;
+        self::$tracelog = fopen(self::$tracetarget,"w");
+        register_tick_function("Cherry\\Util\\AppProfiler::__appprofiler_ontick");
+    }
+
+    public static function analyze() {
+        unregister_tick_function("Cherry\\Util\\AppProfiler::__appprofiler_ontick");
+        fclose(self::$tracelog);
+        self::$tracelog = fopen(self::$tracetarget,"r");
+        while (!feof(self::$tracelog)) {
+            $log = json_decode(fgets(self::$tracelog));
+            var_dump($log);
+        }
+    }
+
+    public static function __appprofiler_ontick() {
+        static $time,$ltrace;
+        if (!$time) $time = microtime(true);
+        $trace = debug_backtrace(0,2);
+        if ($trace[1] == $ltrace[1]) return;
+        $ltrace = $trace;
+        if (count($trace) == 0) {
+            var_dump($trace);
+        }
+        $exe_time = (microtime(true) - $time) * 1000;
+        $stats = array(
+            "current_time" => microtime(true),
+            "memory" => memory_get_usage(false),
+            //"file" => $trace[1]["file"].': '.$trace[1]["line"],
+            //"function" => (!empty($trace[1]["function"]))?$trace[1]["function"]:"n/a",
+            //"called_by" => $trace[2]["function"].' in '.$trace[2]["file"].': '.$trace[2]["line"],
+            "ns" => $exe_time
+            );
+        $stats = array_merge($stats,$trace[1]);
+        fwrite(self::$tracelog,json_encode($stats)."\n");
+        $time = microtime(true);
+    }
 
     public function enter($module) {
         $this->push($module);

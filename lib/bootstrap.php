@@ -68,7 +68,10 @@ Autoloaders::register(new Autoloader(CHERRY_LIB.'/lib'));
 $al = new \Cherry\Base\Autoloader(CHERRY_LIB.'/lib');
 $al->register();
 
-require_once CHERRY_LIB.'/lib/bundles.php';
+if (getenv("PROFILE") == "1") {
+    \Cherry\Util\AppProfiler::profile();
+}
+
 require_once CHERRY_LIB.'/lib/cherry/base/config.php';
 require_once CHERRY_LIB.'/lib/cherry/base/event.php';
 require_once CHERRY_LIB.'/lib/cherry/extension.php';
