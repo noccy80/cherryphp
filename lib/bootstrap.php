@@ -53,7 +53,7 @@ if (PHP_VERSION_ID >= 50400) {
 
 require_once CHERRY_LIB.'/lib/cherry/base/debug.php';
 require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
-
+require_once CHERRY_LIB.'/lib/cherry/base/_globals.php';
 /*
 //require_once CHERRY_LIB.'/lib/cherry/autoloader.php';
 //$loader = new Autoloader('Cherry\*', CHERRY_LIB._DS_.'lib', 'Cherry' );
@@ -87,6 +87,7 @@ function unipath($path) {
         $path = str_replace(DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $path);
     return $path;
 }
+
 
 class ScopeTimer {
     private $info, $tstart;
