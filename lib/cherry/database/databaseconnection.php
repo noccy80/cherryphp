@@ -57,9 +57,11 @@ class DatabaseConnection {
         if (!array_key_exists($pool,self::$dbpool)) {
             if (array_key_exists($pool,self::$config)) {
                 self::$dbpool[$pool] = new self(self::$config[$pool]);
+            } else {
+                self::$dbpool[$pool] = new self($pool);
             }
-        }
-        return self::$dbpool[$pool];
+        } else echo "In cache.\n";
+        return self::$dbpool[$pool];        
     }
 
     public function prepare($statement) {
