@@ -6,12 +6,16 @@ use Cherry\Debug;
 use Cherry\DebugLog;
 use Cherry\Cli\Console;
 
-abstract class ConsoleApplication extends \Cherry\Application {
+class ConsoleApplication extends \Cherry\Application {
 
     private $arguments = array();
     private $commands = array();
 
     protected $parameters = array();
+
+    function run() {
+        return $this->main();
+    }
 
     function __construct() {
         global $argv;
@@ -98,11 +102,6 @@ abstract class ConsoleApplication extends \Cherry\Application {
         return null;
     }
 
-    function run() {
-        $this->main();
-    }
-
-    abstract function main();
     public function getApplicationInfo() {
         return [
             'appname' => 'ConsoleApplication',
