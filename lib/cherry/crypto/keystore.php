@@ -33,7 +33,9 @@ class KeyStore {
         $bt = array_slice($bt,2,1);
         $bc = \array_map(function($v) { return (!empty($v['class'])?$v['class'].'::':'').$v['function']; }, $bt);
         foreach($bc as $func) {
+            \Cherry\Debug("KeyStore: Checking {$func}");
             foreach($rules as $rule) {
+                \Cherry\Debug(" .. {$rule}");
                 if (\fnmatch($rule,$func,\FNM_NOESCAPE)) return true;
             }
         }
