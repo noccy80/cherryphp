@@ -75,7 +75,7 @@ class SdlNode implements ArrayAccess, Countable {
         $this->children = (array)$children;
         $this->comment = $comment;
     }
-    
+
     /**
      * @brief Load a file as children to the current node.
      *
@@ -86,7 +86,7 @@ class SdlNode implements ArrayAccess, Countable {
         $fc = file_get_contents($file);
         $this->loadString($fc);
     }
-    
+
     /**
      * @brief Load a string as children to the current node.
      *
@@ -99,7 +99,7 @@ class SdlNode implements ArrayAccess, Countable {
     /**
      * @brief DEPRECATED: Decode a string into the node.
      * @see loadString()
-     * 
+     *
      *
      */
     public function decode($string) {
@@ -360,11 +360,11 @@ class SdlNode implements ArrayAccess, Countable {
         }
         return "\"".str_replace("\"","\\\"",$str)."\"";
     }
-    
+
     /**
      * @private
      * @brief Returns a typed value pair for a token.
-     * 
+     *
      * This method also handles the keywords to ensure that they come out
      * properly.
      *
@@ -425,11 +425,11 @@ class SdlNode implements ArrayAccess, Countable {
                     }
                     $typedval = [ floatval($value), self::LT_DFLOAT ];
                     return true;
-                } 
+                }
         }
         return false;
     }
-    
+
     /**
      * @private
      * @brief Convert a single known value into a typed value.
@@ -447,7 +447,7 @@ class SdlNode implements ArrayAccess, Countable {
             return $value;
         }
     }
-    
+
     /**
      * @private
      * @brief Return the value in a native PHP value type.
@@ -474,10 +474,10 @@ class SdlNode implements ArrayAccess, Countable {
                     throw new SdlParseException("Internal error: Casting from unhandled internal value type.");
                     $str = $val;
             }
-        } 
+        }
         return $value;
     }
-    
+
     /**
      * @brief Add a child node to the node.
      *
@@ -486,11 +486,11 @@ class SdlNode implements ArrayAccess, Countable {
     public function addChild(SdlNode $node) {
         $this->children[] = $node;
     }
-    
+
     public function removeChild(SdlNode $node) {
         $this->children = array_filter(
             $this->children,
-            function($nv) {
+            function($nv) use ($node) {
                 return (!($nv === $node));
             }
         );
@@ -504,14 +504,14 @@ class SdlNode implements ArrayAccess, Countable {
     public function getName() {
         return $this->name;
     }
-    
+
     public function getNameNs() {
         if ($this->ns)
             return $this->ns.':'.$this->name;
         else
             return ':'.$this->name;
     }
-    
+
     /**
      * @brief Set the name of the node.
      *
@@ -520,7 +520,7 @@ class SdlNode implements ArrayAccess, Countable {
     public function setName($name) {
         $this->name = $name;
     }
-    
+
     /**
      * @brief Return the namespace of the node
      *
@@ -529,7 +529,7 @@ class SdlNode implements ArrayAccess, Countable {
     public function getNamespace() {
         return $this->ns;
     }
-    
+
     /**
      * @brief Set the namespace of the node
      *
@@ -560,7 +560,7 @@ class SdlNode implements ArrayAccess, Countable {
     }
 
     /**
-     * @brief Return all the values of the node 
+     * @brief Return all the values of the node
      *
      * @return array The values
      */
@@ -570,15 +570,15 @@ class SdlNode implements ArrayAccess, Countable {
         return $vo;
         //return $this->values;
     }
-    
+
     public function setValue($value) {
         $this->values[0] = $this->getSingleTypedValue($value);
     }
-    
+
     public function addValue($value) {
         $this->values[] = $this->getSingleTypedValue($value);
     }
-    
+
     /**
      * @brief Return the first value of the node.
      *
