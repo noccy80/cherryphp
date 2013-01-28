@@ -3,7 +3,9 @@
 namespace Cherry\Crypto;
 
 use Cherry\Traits\SingletonAccess;
+use Cherry\Crypto\Algorithm as Crypto;
 use App;
+use debug;
 
 /**
  * @brief Protected key store.
@@ -24,6 +26,22 @@ class KeyStore {
     use SingletonAccess;
     private $keys = [];
 
+    public function __construct($store=null, $key=null) {
+        if (!$store) $store = \Cherry\Base\PathResolver::getInstance()->getPath("{DATA}/default.cks");
+        if (file_exists($store)) {
+            $this->attachFile($store,$key);
+        }
+    }
+
+    public function attachFile($file, $key=null) {
+        if (file_exists($store)) {
+            debug("KeyStore: Opening %s", $store);
+            $buf = file_get_contents($store);
+            $buf = Crypto::tripledes($key)->decrypt($buf);
+            $keys = unserialize($buf);
+        }
+    }
+
     /**
      *
      * @param array $rules The rules to check
@@ -33,9 +51,9 @@ class KeyStore {
         $bt = array_slice($bt,2,1);
         $bc = \array_map(function($v) { return (!empty($v['class'])?$v['class'].'::':'').$v['function']; }, $bt);
         foreach($bc as $func) {
-            \Cherry\Debug("KeyStore: Checking {$func}");
+            debug("KeyStore: Checking {$func}");
             foreach($rules as $rule) {
-                \Cherry\Debug(" .. {$rule}");
+                debug(" .. {$rule}");
                 if (\fnmatch($rule,$func,\FNM_NOESCAPE)) return true;
             }
         }
@@ -50,7 +68,7 @@ class KeyStore {
         $cfgallow = (array)App::config()->get("keystore.overrides.".$key);
         $this->keys[$key] = (object)[
             'value' => $value,
-            'rules' => array_merge($allow,$cfgallow)
+            'rules' => array_unique(array_merge($allow,$cfgallow))
         ];
     }
 
@@ -67,4 +85,5 @@ class KeyStore {
         }
         return false;
     }
+
 }
