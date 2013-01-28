@@ -18,7 +18,7 @@ abstract class MvcApplication extends \cherry\Application {
 
     abstract function setup();
 
-    function run() {
+    function main() {
         $this->setup();
         App::router()->route();
     }

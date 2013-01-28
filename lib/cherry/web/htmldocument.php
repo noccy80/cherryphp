@@ -9,9 +9,16 @@ if (!defined('_NL_')) define('_NL_',"\n");
 class HtmlDocumentStylesheetList {
     private $styles = [];
     public function __construct() { }
-    public function add($style,$type="text/css") { }
-    public function addLink($url,$type="text/css") { }
+    public function add($style,$type="text/css") {
+        $this->styles[] = [ 'inline', $style, $type ];
+    }
+    public function addLink($url,$type="text/css") {
+        $this->styles[] = [ 'link', $url, $type ];
+    }
     public function getTags() { }
+    public function getData() {
+        return $this->styles;
+    }
 }
 
 class HtmlDocumentScriptList {
@@ -72,7 +79,7 @@ class HtmlDocument {
             $meta = [],         ///< Meta headers
             $scripts = [],      ///< Linked scripts
             $inlinescripts = [],///< Inline scripts
-            $styles = [],       ///< Styles
+            $stylesheets = null,///< Styles
             $title = null,      ///< Document title
             $chunked = false,   ///<
             $body = '',         ///<
@@ -98,9 +105,9 @@ class HtmlDocument {
     public function __get($key) {
         switch($key) {
             case 'stylesheets':
-                return new HtmlDocumentStylesheetList();
+                return $this->stylesheets;
             case 'scripts':
-                return new HtmlDocumentScriptList();
+                return $this->scripts;
             default:
                 break;
         }
@@ -127,7 +134,18 @@ class HtmlDocument {
      *
      */
     public function setTitle($title) {
-        $this->title = $title;
+        $args = func_get_args();
+        $this->title = call_user_func_array('sprintf',$args);
+    }
+
+    public function prependTitle($title) {
+        $args = func_get_args();
+        $this->title = call_user_func_array('sprintf',$args) . $this->title;
+    }
+
+    public function appendTitle($title) {
+        $args = func_get_args();
+        $this->title = $this->title . call_user_func_array('sprintf',$args);
     }
 
     /**
@@ -159,13 +177,6 @@ class HtmlDocument {
         } else {
             $this->inlinescripts[$type][] = $string."\n";
         }
-    }
-
-    public function addStyleSheet($file) {
-        $this->styles[] = [ 'link', $file ];
-    }
-    public function addInlineStyleSheet($string) {
-        $this->styles[] = [ 'inline', $string ];
     }
 
     /**
@@ -250,6 +261,9 @@ class HtmlDocument {
     public function __construct($doctype = HtmlDocument::DT_HTML5, $lang = null, $charset = null) {
         $this->doctype = $doctype;
         $this->lang = $lang;
+        $this->stylesheets = new HtmlDocumentStylesheetList();
+        $this->scripts = new HtmlDocumentScriptList();
+
         if ($charset) $this->setCharset($charset);
     }
 
@@ -289,7 +303,8 @@ class HtmlDocument {
             }
         }
         $inlinestyle = '';
-        foreach($this->styles as $style) {
+        $styles = $this->stylesheets->getData();
+        foreach($styles as $style) {
             list($type,$file) = $style;
             if ($type == 'link')
                 $doc.= sprintf('<link rel="stylesheet" href="%s">', $file);

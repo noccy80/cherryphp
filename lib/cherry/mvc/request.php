@@ -1,10 +1,11 @@
 <?php
 
-namespace cherry\Mvc;
+namespace Cherry\Mvc;
 
 use Cherry\Base\Event;
 
-class Request {
+class Request implements \ArrayAccess {
+    use \Cherry\Traits\SingletonAccess;
 
     // Constants
     const CTX_APACHE = 'apache';
@@ -20,9 +21,22 @@ class Request {
             $remotehost = null,
             $remoteport = null,
             $sapi = null,
+            $segments = [],
             $protocol = null,
             $cache_control = null;
 
+    public function __get($key) {
+        switch($key) {
+            case 'remoteip':    return $this->remoteip;
+            case 'remotehost':  return $this->remotehost;
+            case 'remoteport':  return $this->remoteport;
+            case 'sapi':        return $this->sapi;
+            case 'protocol':    return $this->protocol;
+            case 'uri':         return $this->uri;
+            case 'method':      return $this->method;
+            default:            throw new \UnexpectedValueException("No such property: {$key}");
+        }
+    }
     public function __construct($context=null) {
         $this->context = $context;
         Event::invoke(\Cherry\Mvc\EventsEnum::REQUEST_CREATE,$this);
@@ -58,6 +72,12 @@ class Request {
                 if (!$this->method) $this->method = (empty($_SERVER['REQUEST_METHOD']))?'GET':$_SERVER['REQUEST_METHOD'];
         }
         $this->uri = ($this->uri)?:'/';
+        if (strpos($this->uri,"?")) {
+            $uri = substr($this->uri,0,strpos($this->uri,"?"));
+        } else {
+            $uri = $this->uri;
+        }
+        $this->segments = explode("/",trim($uri,"/"));
         $this->method = ($this->method)?:'GET';
     }
 
@@ -85,6 +105,34 @@ class Request {
         return $this->protocol;
     }
 
+    public function offsetGet($index) {
+        if (is_numeric($index)) {
+            if ($index < count($this->segments))
+                return $this->segments[$index];
+            return null;
+        }
+        if (array_key_exists($index,$_GET)) {
+            return $_GET[$index];
+        } elseif (array_key_exists($index,$_POST)) {
+            return $_POST[$index];
+        } else {
+            return null;
+        }
+    }
+
+    public function offsetSet($index,$value) { }
+
+    public function offsetUnset($index) { }
+
+    public function offsetExists($index) {
+        if (is_numeric($index)) {
+            return ($index < count($this->segments));
+        }
+        return (
+            array_key_exists($index,$_GET) ||
+            array_key_exists($index,$_POST)
+        );
+    }
 
 }
 

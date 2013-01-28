@@ -13,8 +13,12 @@ abstract class Application {
         return self::$instance;
     }
 
-    public function __construct($app=null) {
-
+    public function __construct($apppath=null) {
+        if ($apppath) {
+            define("APPPATH",realpath($apppath));
+        } else {
+            define("APPPATH",getcwd());
+        }
         if (is_callable([ $this, 'handleException' ])) {
             \Cherry\debug("Registering application exception handler...");
             set_error_handler(array($this,'__php_handleError'), E_ALL);
@@ -24,9 +28,19 @@ abstract class Application {
             assert_options(ASSERT_WARNING, 0);
             assert_options(ASSERT_QUIET_EVAL, 1);
             assert_options(ASSERT_CALLBACK, array($this,'__php_handleAssert'));
+            register_shutdown_function(array($this,'__php_handleShutdown'));
         }
 
         if (!self::$instance) self::$instance = $this;
+    }
+
+    public static function __php_handleShutdown() {
+        if (($err = error_get_last())) {
+            $errmask = (E_ERROR | E_PARSE | E_CORE_ERROR | E_USER_ERROR);
+            if (($err['type'] & $errmask) == $errmask) {
+                error_log("Error: {$err['message']} (in {$err['file']} line {$err['line']})");
+            }
+        }
     }
 
     public static function __php_handleError($errno,$errstr,$file,$line,$errctx) {
@@ -56,7 +70,7 @@ abstract class Application {
         $bt = Debug::getBacktrace(1);
         self::showError($ca,'Assertion failed',$str,$file,$line,$log,$bt);*/
         throw new \ErrorException("Assertion failed: {$code}", 0, 0, $file, $line);
-        
+
         exit(1);
     }
 
@@ -122,8 +136,8 @@ abstract class Application {
     }
 
     abstract function run();
-    
-    
+
+
     /**
      * Log text to the current logging facility on the
      * application level.
@@ -137,6 +151,8 @@ abstract class Application {
         $lstr = call_user_func_array('sprintf',$args);
         if ($this->logtarget === null) {
             echo $lstr."\n";
+        } elseif (is_array($this->logtarget)) {
+            array_map([$this,'log'],$lstr);
         } elseif (is_callable($this->logtarget)) {
            call_user_func($this->logtarget,$lstr);
         } elseif (is_object($this->logtarget)) {
@@ -151,7 +167,7 @@ abstract class Application {
             echo $lstr."\n";
         }
     }
-    
+
     /**
      * Set the log target as one of:
      *  - Callable (closure)
@@ -164,7 +180,7 @@ abstract class Application {
     public function setLogTarget($target) {
         $this->logtarget = $target;
     }
-    
+
     public function debug($str) {
         call_user_func_array('\Cherry\Debug',func_get_args());
     }
@@ -173,11 +189,11 @@ abstract class Application {
         $msg = call_user_func_array('sprintf',func_get_args());
         error_log($msg);
     }
-    
+
     public function write($str) {
         $this->writebuffer .= $str;
     }
-    
+
     public function getWriteBuffer() {
         return $this->writebuffer;
     }
