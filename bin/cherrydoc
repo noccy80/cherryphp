@@ -45,19 +45,11 @@ class CherryDocApplication extends \cherry\Cli\ConsoleApplication {
                             'Input file (.ini)',
                             array($this,'projectfile'));
 
-        // Bind events that we can find useful
-        Event::observe('onbeforeapplication',array($this,'onBefore'));
-        Event::observe('onafterapplication',array($this,'onAfter'));
-        
         // Set some defaults (arguments are not parsed yet)
         $this->apppath = './application';
         $this->segments = new StdClass();
     }
-    function onBefore() {
-    }
-    function onAfter() {
-        \cherry\log(\cherry\LOG_DEBUG,'Cleaning up...');
-    }
+
     /**
      * Main function, when we get here everything has been parsed and loaded Ok.
      */
@@ -74,6 +66,7 @@ class CherryDocApplication extends \cherry\Cli\ConsoleApplication {
             return 1;
         }
     }
+
     /**
      * Function to return some basic application information
      */
@@ -105,7 +98,7 @@ class CherryDocApplication extends \cherry\Cli\ConsoleApplication {
             if (fnmatch("*.yaml",$file)) {
                 $this->segments->conf[] = $file;
             }
-            if (fnmatch("*.yamd",$file) || fnmatch("*.html",$file)) {
+            if (fnmatch("*.*md",$file) || fnmatch("*.html",$file)) {
                 $this->segments->text[] = $file->getPathName();
             }
         }
@@ -120,6 +113,7 @@ class CherryDocApplication extends \cherry\Cli\ConsoleApplication {
         foreach($texts as $text) {
             printf("Parsing %s ...", $text);
             list($meta,$md,$html) = $this->readSection($text);
+            
             $sects[] = $this->parseTemplate($sectiontemplate,$html);
             printf("%d bytes\n", strlen($html));
         }
@@ -166,10 +160,17 @@ class CherryDocApplication extends \cherry\Cli\ConsoleApplication {
             $header = yaml_parse_file($file,0);
             $text = file_get_contents($file);
             $text = trim(substr($text,strpos($text,'---')+3));
+            $text = $this->preprocess($text);
+            $html = markdown($text);
+        } elseif (fnmatch('*.md',$file)) {
+            $header = array();
+            $text = file_get_contents($file);
+            $text = $this->preprocess($text);
             $html = markdown($text);
         } else {
             $header = array();
             $text = file_get_contents($file);
+            $text = $this->preprocess($text);
             $html = $text;
         }
         
@@ -177,7 +178,34 @@ class CherryDocApplication extends \cherry\Cli\ConsoleApplication {
     
     }
     
+    private function preprocess($text) {
+        $dots = strpos($text,"@dot");
+        while ($dots!==false) {
+            $dote = strpos($text,"@enddot",$dots);
+            $textb = substr($text,0,$dots);
+            $texta = substr($text,$dote+7);
+            $textdot = substr($text,$dots+5,$dote-$dots-5);
+            $textdot = "digraph g {\n".$textdot."\n}";
+            $dotfile = 'dot-'.md5($textdot).'.dot';
+            $dotimage = 'dot-'.md5($textdot).'.png';
+            file_put_contents($dotfile,$textdot);
+            shell_exec("dot -Tpng -o{$dotimage} {$dotfile}");
+            $dottag = '<img src="'.$dotimage.'" style="display:block;">';
+            $text = $textb.$dottag.$texta;
+            $dots = strpos($text,"@dot");
+        }
+        
+        $tl = explode("\n",$text);
+        foreach($tl as $i=>$row) {
+            if (substr($row,0,6) == '@note ') {
+                $tl[$i] = '<div class="note">'.substr($row,6).'</div>';
+            }
+        }
+        $text = join("\n",$tl);
+        return $text;
+        
+    }
+    
 }
 
-$app = new CherryDocApplication(dirname(__FILE__));
-$app->run();
+App::run(new CherryDocApplication(dirname(__FILE__)));
