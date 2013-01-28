@@ -18,6 +18,7 @@ define('DEBUG_VERBOSE',(getenv('DEBUG_VERBOSE')==1));
 if (getenv('DEBUG_ERRORS')==1)
     error_reporting(E_ERROR | E_WARNING | E_PARSE | E_COMPILE_ERROR);
 
+/*
 // Fallbacks
 if (defined('CHERRY_APP'))
     define('CHERRY_APPROOT',CHERRY_APP);
@@ -42,14 +43,15 @@ if (file_exists(CHERRY_APPROOT.'/application.ini')) {
 } else {
     define('CHERRY_CFGDIR',CHERRY_APPDIR.'/config');
 }
+*/
 if (!defined('PHP_VERSION_ID')) {
     $version = explode('.', PHP_VERSION);
     define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
 }
 require_once CHERRY_LIB.'/lib/data/fifoqueue.php';
-if (PHP_VERSION_ID >= 50400) {
+/*if (PHP_VERSION_ID >= 50400) {
     require_once CHERRY_LIB.'/lib/traits.php';
-}
+}*/
 
 require_once CHERRY_LIB.'/lib/cherry/base/debug.php';
 require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';

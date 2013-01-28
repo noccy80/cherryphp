@@ -7,7 +7,7 @@ class App {
     private static $_config = null;
     private static $_extensions = [];
 
-    public function __construct() {
+    private function __construct() {
         user_error("The App class is intended to be called static.");
     }
 
