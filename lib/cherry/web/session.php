@@ -1,6 +1,6 @@
 <?php
 
-namespace Cherry\Mvc;
+namespace Cherry\Web;
 
 use App;
 
