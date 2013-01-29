@@ -18,23 +18,24 @@ class OpaqueTokenExample extends ConsoleApplication {
         // Stuff some data into the token
         $tok['session_id'] = 1234;
         $tok['username'] = "Bob";
-        $tok['blob'] = str_repeat("abcdef",25);
+        $tok['blob'] = [
+            'page.from' => '/article/123',
+            'page.referer' => 'http://site.com'
+        ];
         // Print out what we got
         echo "Original token:\n";
-        echo "  session: {$tok['session_id']}\n";
-        echo "  username: {$tok['username']}\n";
-        echo "  blob: {$tok['blob']}\n";
+        echo var_inspect($tok,false,false)."\n\n";
+
         // Freeze the token and display it
         $ftok = $tok->freeze();
-        echo "Frozen token:\n  " , $ftok , "\n";
-        echo "  length: ".strlen($ftok)."\n";
-        
+        echo "Frozen token:\n";
+        echo var_inspect($ftok,false,true)."\n\n";
+        //echo "  length: ".strlen($ftok)."\n";
+
         // To unfreeze the token
         $tok2 = new OpaqueToken($ftok);
         echo "Unfrozen token:\n";
-        echo "  session: {$tok2['session_id']}\n";
-        echo "  username: {$tok2['username']}\n";
-        echo "  blob: {$tok2['blob']}\n";
+        echo var_inspect($tok2,false,true)."\n\n";
    }
 }
 
