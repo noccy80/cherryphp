@@ -23,10 +23,23 @@ class HtmlDocumentStylesheetList {
 
 class HtmlDocumentScriptList {
     private $scripts = [];
+    private $inlinescripts = [];
     public function __construct() { }
-    public function add($script,$type="text/javascript") { }
-    public function addLink($url,$type="text/javascript") { }
-    public function getTags() { }
+    public function add($script,$type="text/javascript") {
+        if (!array_key_exists($type,$this->inlinescripts)) {
+            $this->inlinescripts[$type] = [];
+        }
+        $this->inlinescripts[$type][] = $string."\n";
+    }
+    public function addLink($url,$type="text/javascript") {
+        $this->scripts[] = [ $url, $type ];
+    }
+    public function getScripts() {
+        return $this->scripts;
+    }
+    public function getInlineScripts() {
+        return $this->inlinescripts;
+    }
 }
 
 /**
@@ -156,28 +169,6 @@ class HtmlDocument {
         return $this->title;
     }
 
-    /**
-     * @brief Add a script url to the document.
-     *
-     */
-    public function addScript($file,$type='text/javascript') {
-        $this->scripts[] = [ $file, $type ];
-    }
-
-    /**
-     * @brief Add an inline script to the document.
-     *
-     */
-    public function addInlineScript($string, $type='text/javascript', $id = null) {
-        if (!array_key_exists($type,$this->inlinescripts)) {
-            $this->inlinescripts[$type] = [];
-        }
-        if ($id) {
-            $this->inlinescripts[$type][$id] = $string."\n";
-        } else {
-            $this->inlinescripts[$type][] = $string."\n";
-        }
-    }
 
     /**
      * @brief Set a meta header value.
@@ -313,14 +304,14 @@ class HtmlDocument {
         }
         if ($inlinestyle) $doc.= '<style type="text/css">'.$inlinestyle.'</style>';
         // HTML5 doesn't use the type attribute.
-        foreach($this->scripts as $script) {
+        foreach($this->scripts->getScripts() as $script) {
             list($file,$type) = $script;
             if ($this->doctype == self::DT_HTML5)
                 $doc.= sprintf('<script src="%s"></script>', $file);
             else
                 $doc.= sprintf('<script src="%s" type="%s"></script>', $file, $type);
         }
-        foreach($this->inlinescripts as $k=>$v) {
+        foreach($this->scripts->getInlineScripts() as $k=>$v) {
             $doc.= sprintf('<script type="%s">%s</script>', $k, join(_NL_,$v));
         }
         $doc.= '</head>';
