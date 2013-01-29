@@ -1,0 +1,123 @@
+#!/usr/bin/php
+<?php
+
+define("XENON","cherryphp/trunk");
+require_once("xenon/xenon.php");
+
+class EditSerialize extends Cherry\Cli\ConsoleApplication {
+    private $data = null;
+    private $compressed = false;
+    public function setup() {
+    }
+    public function main() {
+        if (count($this->parameters)==0) {
+            $data = [];
+            $filename = "<new>";
+        } else {
+            $filename = $this->parameters[0];
+            if (!is_readable($filename)) {
+                $this->warn("Can't read file.");
+                return 1;
+            }
+            $raw = file_get_contents($filename);
+            // Try to unserialize
+            $data = unserialize($raw);
+            if (!$data) {
+                // Try ungzipping it first
+                $raw = gzuncompress($data);
+                $this->compressed = true;
+                $data = unserialize($raw);
+                if (!$data) {
+                    $this->warn("Could not read file contents.");
+                    return 1;
+                }
+            }
+        }
+
+        $this->data = $data;
+        $running = true;
+        $fn = basename($filename);
+        $gztag = ($this->compressed)?'[gzip]':'';
+        $node = [
+            (object)['name'=>"root", 'data'=>$this->data]
+        ];
+        $nextcmd = null;
+        while($running) {
+            $ss = count($node);
+            $path = [];
+            for($n = count($node) - 1; $n > 0; $n--) {
+                $path[] = $node[$n]->name;
+            }
+            $path[] = "\033[1m{$node[0]->name}\033[0m";
+            $pathstr = join("/",$path);
+            $prompt = "{$fn}{$gztag}:{$pathstr}";
+            if (!$nextcmd) {
+                $cmd = readline("{$prompt} > ");
+            } else {
+                $cmd = $nextcmd;
+                $nextcmd = null;
+            }
+            $args = explode(" ",$cmd);
+            switch($args[0]) {
+                case "print":
+                    $pi = 20;
+                    $p = 0; $c = 0; $cc = count($node[0]->data); $lc = 0;
+                    $pc = floor($cc / $pi)+1; $pn = 1;
+                    $cont = null;
+                    foreach($node[0]->data as $k=>$v) {
+                        $this->write("    [$k] =>  %s\n", var_inspect($v));
+                        $p = ($p + 1) % $pi; $c++;
+                        if ($p == 0) {
+                            $pn++;
+                            $this->write("Page %d of %d (%d-%d of %d records)\n", $pn, $pc, $lc+1, $c, $cc);
+                            $lc = $c;
+                            $cont = readline("{$prompt} [...]> ");
+                            if ($cont != "") break;
+                        }
+                    }
+                    if ($p != 0) {
+                        $this->write("Page %d of %d (%d-%d of %d records)\n", $pn, $pc, $lc+1, $c, $cc);
+                    }
+                    $nextcmd = $cont;
+                    break;
+                case "push":
+                    if (!empty($node[0]->data[$args[1]])) {
+                        $this->write("push: %s\n", $args[1]);
+                        array_unshift($node,(object)['name'=>$args[1],'data'=>$node[0]->data[$args[1]]]);
+                    } else {
+                        $this->write("bad index/key\n");
+                    }
+                    break;
+                case "pop":
+                    if (count($node)>1) {
+                        array_shift($node);
+                    } else {
+                        $this->write("can't pop last item from stack\n");
+                    }
+                    break;
+                case "create":
+                    if (count($args)<2) {
+                        $this->write("create needs key or index.\n");
+                        break;
+                    }
+                    $node[0]->data[$args[1]] = [];
+                    $nextcmd = "push ".$args[1];
+                    break;
+                case "exit":
+                    $running = false;
+                    break;
+                case "help":
+                    $this->write("    \033[1mpush\033[0m <key>        Enter a child node.\n");
+                    $this->write("    \033[1mpop\033[0m               Return to parent node.\n");
+                    $this->write("    \033[1mprint\033[0m [match]     List nodes [matching string].\n");
+                    $this->write("    \033[1mexit\033[0m              Exit the program.\n");
+                    break;
+                default:
+                    $this->write("Bad command.\n");
+            }
+
+        }
+    }
+}
+
+App::run(new EditSerialize(__DIR__));

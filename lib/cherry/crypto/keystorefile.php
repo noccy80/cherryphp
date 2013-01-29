@@ -26,20 +26,23 @@ class KeyStoreFile {
     private $keys = [];
     private $key = null;
 
-    public function __construct($store, $key=null) {
+    public function __construct($store, $key=null, $crypto='tripledes') {
         if (!$key) $key = 0xDEADBEEF;
         if (file_exists($store)) {
             debug("KeyStore: Opening %s", $store);
             $buf = file_get_contents($store);
             $buf = Crypto::tripledes($key)->decrypt($buf);
-            $keys = unserialize($buf);
+            $buf = gzuncompress($buf);
+            $this->keys = unserialize($buf);
         }
+
         $this->store = $store;
         $this->key = $key;
     }
 
     public function save() {
         $buf = serialize($this->keys);
+        $buf = gzcompress($buf,9);
         $buf = Crypto::tripledes($this->key)->encrypt($buf);
         file_put_contents($this->store,$buf);
     }

@@ -1,0 +1,30 @@
+#!/usr/bin/php
+<?php
+
+require_once getenv("CHERRY_LIB") . "/lib/bootstrap.php";
+
+use Cherry\Cli\ConsoleApplication;
+
+class MakePhar extends ConsoleApplication {
+
+    public function init() {
+        $this->addArgument('h','help','Show this help');
+        $this->addArgument('a:','app','Application manifest file to use (.app)');
+        $this->addArgument('v','verbose','Be verbose in operation');
+    }
+
+    public function main() {
+        if ($this->hasArgument('h')) {
+            $this->usage();
+            return 1;
+        }
+        if (1 == ini_get("phar.readonly")) {
+            $this->write("Error: You need to disable 'phar.readonly' in your php.ini before using makephar!\n");
+            return 1;
+        }
+    }
+
+}
+
+
+App::run(new MakePhar());

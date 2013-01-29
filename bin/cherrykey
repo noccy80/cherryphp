@@ -1,0 +1,75 @@
+#!/usr/bin/php
+<?php
+
+define("XENON","cherryphp/trunk");
+require_once("xenon/xenon.php");
+
+class CherryKey extends \Cherry\Cli\ConsoleApplication {
+    public function setup() {
+        $this->addArgument("f:","file","KeyStore file to operate on");
+        $this->addArgument("h","help","This help");
+        $this->addCommand("create","Create a new keystore");
+        $this->addCommand("add <key> [value]","Add a new key");
+        $this->addCommand("set <key> [value]","Update an existing key");
+        $this->addCommand("acl <add|remove|purge> [class]","Edit ACL for a key");
+    }
+    public function main() {
+        if ($this->hasArgument("h") || count($this->parameters) == 0)
+            return $this->usage();
+        $ksfile = ($this->hasArgument("f")?$this->getArgument("f"):null);
+        switch ($this->parameters[0]) {
+            case 'create':
+                if (!$ksfile) {
+                    $this->warn("Error: Need -f to create a keystore.");
+                    return 1;
+                }
+                return $this->create($ksfile);
+                break;
+            case 'add':
+                if (count($this->parameters)==3) {
+                    $this->addtoken($ksfile,$this->parameters[1],$this->parameters[2]);
+                } else {
+                    $this->addtoken($ksfile,$this->parameters[1]);
+                }
+                break;
+            default:
+                echo "Unknown command.\n";
+                break;
+        }
+    }
+    private function create($keyfile) {
+        echo "Creating KeyStore file {$keyfile}\n";
+        $algo = readline("Algorithm [tripledes,blowfish,twofish,rijndael-256]: ")?:'tripledes';
+        echo "Select a password for this keystore. You will need it to attach the store later.\n";
+        $pass = \readpass("New password: ");
+        $conf = \readpass("Confirm: ");
+        if ($pass != $conf) {
+            $this->warn("Passwords do not match.");
+            return 1;
+        }
+        $s = new \Cherry\Crypto\KeyStoreFile($keyfile,$pass,$algo);
+        $s->save();
+    }
+    private function addtoken($keyfile,$key,$value=null) {
+        $pass = \readpass("KeyStore password: ");
+        if (!$value)
+            $value = \readpass("Secret: ");
+            $acl = $this->makeacl();
+    }
+    private function makeacl() {
+        echo "Path can be either a template or a class::func combination.\n" .
+            "One per line, continue by entering an empty line.\n";
+        while(($cmd = readline("Acl: "))) {
+            switch($cmd) {
+                case 'DATABASE':
+                    $acl[] = "Cherry\\Database\\DatabaseConnection";
+                    break;
+                default:
+                    $acl[] = $cmd;
+            }
+        }
+        var_dump($acl);
+    }
+}
+
+exit(App::run(new CherryKey()));

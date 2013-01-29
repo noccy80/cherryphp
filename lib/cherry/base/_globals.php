@@ -81,6 +81,15 @@ function indent($string,$indent=4) {
     return $is.str_replace($le,$le.$is,$string);
 }
 
+function readpass($prompt) {
+    echo $prompt;
+    system('stty -echo');
+    $password = trim(fgets(STDIN));
+    system('stty echo');
+    echo "\n";
+    return $password;
+}
+
 if (_IS_WINDOWS) {
     // Define functions that are not available in windoze
 }
