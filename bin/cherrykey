@@ -21,8 +21,9 @@ class CherryKey extends \Cherry\Cli\ConsoleApplication {
         $this->addCommand("acl <add|remove|purge> [class]","Edit ACL for a key");
     }
     private function initsession() {
-        $sesskey = getenv("KEYSTORE_SESSION");
+        $sesskey = trim(getenv("KEYSTORE_SESSION"));
         if (!$sesskey) return false;
+        $sesskey = substr($sesskey,0,8);
         $sessfile = dirname($this->ksfile).'/.'.basename($this->ksfile).'.sess';
         if (file_exists($sessfile)) {
             $buf = file_get_contents($sessfile);
@@ -39,8 +40,9 @@ class CherryKey extends \Cherry\Cli\ConsoleApplication {
         }
     }
     private function savesession() {
-        $sesskey = getenv("KEYSTORE_SESSION");
+        $sesskey = trim(getenv("KEYSTORE_SESSION"));
         if (!$sesskey) return false;
+        $sesskey = substr($sesskey,0,8);
         $sessfile = dirname($this->ksfile).'/.'.basename($this->ksfile).'.sess';
         $sess = (object)[
             'key'=>$this->kskey,
@@ -50,7 +52,6 @@ class CherryKey extends \Cherry\Cli\ConsoleApplication {
         $buf = serialize($sess);
         $buf = gzcompress($buf);
         $buf = \Cherry\Crypto\Algorithm::tripledes($sesskey)->encrypt($buf);
-        echo "Saving session {$sessfile}\n";
         file_put_contents($sessfile,$buf);
     }
     public function main() {
