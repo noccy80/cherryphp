@@ -17,10 +17,13 @@ class PathResolver {
         $ret = str_replace('{DATA}',$this->apppath.'/data',$ret);
         $ret = str_replace('{CACHE}',$this->apppath.'/cache',$ret);
         $ret = str_replace('{PUBLIC}',$this->apppath.'/public',$ret);
+        $ret = str_replace('{SYSTEM}','/etc/cherryphp',$ret);
+        $ret = str_replace('{USER}',rtrim(getenv("HOME"),'/').'/.cherryphp',$ret);
         return $ret;
     }
 
     public function setAppPath($path) {
+        \debug("Application path set to {$path}");
         $this->apppath = realpath($path);
     }
 

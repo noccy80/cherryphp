@@ -33,13 +33,19 @@ class KeyStore {
         }
     }
 
-    public function attachFile($file, $key=null) {
+    public function attachFile($store, $key=null) {
         if (file_exists($store)) {
             debug("KeyStore: Opening %s", $store);
             $buf = file_get_contents($store);
             $buf = Crypto::tripledes($key)->decrypt($buf);
-            $keys = unserialize($buf);
+            if ($buf) {
+                $buf = gzuncompress($buf);
+                $keys = unserialize($buf);
+                $this->keys = array_merge($this->keys,(array)$keys);
+                return true;
+            }
         }
+        return false;
     }
 
     /**
@@ -53,7 +59,7 @@ class KeyStore {
         foreach($bc as $func) {
             debug("KeyStore: Checking {$func}");
             foreach($rules as $rule) {
-                debug(" .. {$rule}");
+                //debug(" - {$rule}");
                 if (\fnmatch($rule,$func,\FNM_NOESCAPE)) return true;
             }
         }
@@ -79,10 +85,13 @@ class KeyStore {
     public function queryCredentials($key) {
         if (array_key_exists($key,$this->keys)) {
             if (!$this->checkAccess($this->keys[$key]->rules)) {
+                \debug("KeyStore: Access denied for {$key}");
                 throw new \Exception("Improper keystore access from non-allowed path for key {$key}");
             }
+            \debug("KeyStore: Query ok for {$key}");
             return $this->keys[$key]->value;
         }
+        \debug("KeyStore: No match for {$key}");
         return false;
     }
 

@@ -5,31 +5,101 @@ define("XENON","cherryphp/trunk");
 require_once("xenon/xenon.php");
 
 class CherryKey extends \Cherry\Cli\ConsoleApplication {
+    private $ksfile = null;
+    private $kskey = null;
+    private $ksalgo = 'tripledes';
+    private $sesskey = null;
+    private $sessfile = null;
     public function setup() {
         $this->addArgument("f:","file","KeyStore file to operate on");
+        $this->addArgument("p:","prompt","Prompt to display when asking for secret");
+        $this->addArgument("s","shadow","Don't display secret when typing");
         $this->addArgument("h","help","This help");
         $this->addCommand("create","Create a new keystore");
         $this->addCommand("add <key> [value]","Add a new key");
         $this->addCommand("set <key> [value]","Update an existing key");
         $this->addCommand("acl <add|remove|purge> [class]","Edit ACL for a key");
     }
+    private function initsession() {
+        $sesskey = getenv("KEYSTORE_SESSION");
+        if (!$sesskey) return false;
+        $sessfile = dirname($this->ksfile).'/.'.basename($this->ksfile).'.sess';
+        if (file_exists($sessfile)) {
+            $buf = file_get_contents($sessfile);
+            $buf = \Cherry\Crypto\Algorithm::tripledes($sesskey)->decrypt($buf);
+            if (!$buf) return false;
+            $buf = gzuncompress($buf);
+            if (!$buf) return false;
+            $sess = unserialize($buf);
+            if (time() < $sess->expires) {
+                $this->kskey = $sess->key;
+                $this->ksalgo = $sess->algo;
+                return true;
+            }
+        }
+    }
+    private function savesession() {
+        $sesskey = getenv("KEYSTORE_SESSION");
+        if (!$sesskey) return false;
+        $sessfile = dirname($this->ksfile).'/.'.basename($this->ksfile).'.sess';
+        $sess = (object)[
+            'key'=>$this->kskey,
+            'algo'=>$this->ksalgo,
+            'expires'=>time()+(60*5)
+        ];
+        $buf = serialize($sess);
+        $buf = gzcompress($buf);
+        $buf = \Cherry\Crypto\Algorithm::tripledes($sesskey)->encrypt($buf);
+        echo "Saving session {$sessfile}\n";
+        file_put_contents($sessfile,$buf);
+    }
     public function main() {
         if ($this->hasArgument("h") || count($this->parameters) == 0)
             return $this->usage();
-        $ksfile = ($this->hasArgument("f")?$this->getArgument("f"):null);
+        $this->kskey = getenv("KEYSTORE_KEY")?:null;
+        $this->ksfile = ($this->hasArgument("f")?$this->getArgument("f"):null);
+        $this->initsession();
         switch ($this->parameters[0]) {
             case 'create':
-                if (!$ksfile) {
+                if (!$this->ksfile) {
                     $this->warn("Error: Need -f to create a keystore.");
                     return 1;
                 }
-                return $this->create($ksfile);
+                return $this->create($this->ksfile);
                 break;
             case 'add':
                 if (count($this->parameters)==3) {
-                    $this->addtoken($ksfile,$this->parameters[1],$this->parameters[2]);
+                    $this->addtoken($this->ksfile,$this->parameters[1],$this->parameters[2]);
                 } else {
-                    $this->addtoken($ksfile,$this->parameters[1]);
+                    $this->addtoken($this->ksfile,$this->parameters[1]);
+                }
+                break;
+            case 'list':
+                $this->listKeys($this->ksfile);
+                break;
+            case 'acl':
+                if (count($this->parameters) == 1) {
+                    $this->aclhelp();
+                } else {
+                    switch($this->parameters[1]) {
+                        case 'add':
+                            $this->acladd($this->ksfile,$this->parameters[2],$this->parameters[3]);
+                            break;
+                        case 'remove':
+                            break;
+                        case 'purge':
+                            break;
+                        case 'list':
+                            $this->acllist($this->ksfile);
+                            break;
+                        case 'templates':
+                            echo ".DATABASE\n";
+                            echo ".CHERRY\n";
+                            break;
+                        default:
+                            $this->warn("Bad acl command.");
+                            break;
+                    }
                 }
                 break;
             default:
@@ -37,24 +107,108 @@ class CherryKey extends \Cherry\Cli\ConsoleApplication {
                 break;
         }
     }
+
     private function create($keyfile) {
+        if (file_exists($keyfile)) {
+            $this->warn("KeyStore file exists and -f not used.");
+            return 1;
+        }
         echo "Creating KeyStore file {$keyfile}\n";
         $algo = readline("Algorithm [tripledes,blowfish,twofish,rijndael-256]: ")?:'tripledes';
-        echo "Select a password for this keystore. You will need it to attach the store later.\n";
-        $pass = \readpass("New password: ");
-        $conf = \readpass("Confirm: ");
-        if ($pass != $conf) {
-            $this->warn("Passwords do not match.");
-            return 1;
+        if (!$this->kskey) {
+            echo "Select a password for this keystore. You will need it to attach the store later.\n";
+            $pass = \readpass("New password: ");
+            $conf = \readpass("Confirm: ");
+            if ($pass != $conf) {
+                $this->warn("Passwords do not match.");
+                return 1;
+            }
+            $this->kskey = $pass;
+            $this->savesession();
+        } else {
+            $pass = $this->kskey;
         }
         $s = new \Cherry\Crypto\KeyStoreFile($keyfile,$pass,$algo);
         $s->save();
     }
+    private function acllist($keyfile) {
+        $pass = $this->getPassword();
+        $ks = new \Cherry\Crypto\KeyStoreFile($keyfile,$pass,'tripledes');
+        if ($ks->getError()) {
+            $this->warn("Unable to access keystore. Is the password correct?");
+            return 1;
+        }
+        $kd = $ks->getAcl();
+        echo "Registered keys:\n";
+        foreach($kd as $key=>$acl) {
+            echo " - {$key}\n";
+            foreach($acl as $rule) {
+                echo "    + {$rule}\n";
+            }
+        }
+    }
+    private function acladd($keyfile,$key,$rule) {
+        $pass = $this->getPassword();
+        $ks = new \Cherry\Crypto\KeyStoreFile($keyfile,$pass,'tripledes');
+        if ($ks->getError()) {
+            $this->warn("Unable to access keystore. Is the password correct?");
+            return 1;
+        }
+        if ($ks->addAcl($key,$rule)) {
+            $ks->save();
+            echo "KeyStore updated.\n";
+        } else {
+            echo "Could not add acl rule. Does the key exist?\n";
+        }
+    }
+    private function listKeys($keyfile,$key,$value=null) {
+        if ($this->kskey)
+            $pass = $this->kskey;
+        else
+            $pass = \readpass("KeyStore password: ");
+        $ks = new \Cherry\Crypto\KeyStoreFile($keyfile,$pass,'tripledes');
+        if ($ks->getError()) {
+            $this->warn("Unable to access keystore. Is the password correct?");
+            return 1;
+        }
+        $kd = $ks->getCredentials();
+        echo "Registered keys:\n";
+        foreach($kd as $key) {
+            echo " - {$key}\n";
+        }
+    }
+    private function getPassword() {
+        if ($this->kskey) {
+            $pass = $this->kskey;
+        } else {
+            $pass = \readpass("KeyStore password: ");
+            $this->kskey = $pass;
+            $this->savesession();
+        }
+        return $pass;
+    }
     private function addtoken($keyfile,$key,$value=null) {
-        $pass = \readpass("KeyStore password: ");
-        if (!$value)
-            $value = \readpass("Secret: ");
-            $acl = $this->makeacl();
+        $pass = $this->getPassword();
+        $ks = new \Cherry\Crypto\KeyStoreFile($keyfile,$pass,'tripledes');
+        if ($ks->getError()) {
+            $this->warn("Unable to access keystore. Is the password correct?");
+            return 1;
+        }
+        if (!$value) {
+            if ($this->hasArgument("p")) {
+                $prompt = $this->getArgument("p");
+            } else {
+                echo "Provide the secret that you would like to store in the KeyStore file\n";
+                $prompt = "Secret: ";
+            }
+            if ($this->hasArgument('s'))
+                $value = \readpass($prompt);
+            else
+                $value = \readline($prompt);
+        }
+        $ks->setCredentials($key,$value,[]);
+        echo "Use 'cherrykey acl' to assign permissions for this key.\n";
+        $ks->save();
     }
     private function makeacl() {
         echo "Path can be either a template or a class::func combination.\n" .

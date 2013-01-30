@@ -18,13 +18,14 @@ class DatabaseConnection {
 
         $this->sm = new SchemaManager($this);
         $ci = parse_url($uri);
-        if ($ci['path'][0]!='/') {
+        if (strpos($uri,"://")===false) {
             // Connectionstring is in PDO format
         } else {
+            $type=      $ci['scheme'];
             $username = !empty($ci['user'])?$ci['user']:get_current_user();
             $password = !empty($ci['pass'])?$ci['pass']:null;
             $host =     !empty($ci['host'])?$ci['host']:'localhost';
-            $database = trim($ci['path'],"/");
+            $database = !empty($ci['path'])?trim($ci['path'],"/"):null;
             $dsn = "mysql:host={$host};";
             if ((!empty($ci['port'])) && ($ci['port'] != 3306)) {
                 $port = $ci['port'];
@@ -36,7 +37,20 @@ class DatabaseConnection {
             // Connectionstring is in URL format
         }
         // Scrolling cursor not supported with MySQL nor SQLite so warn on these
-
+        if (!$password) {
+            // Try to get from keystore
+            $ks = \Cherry\Crypto\KeyStore::getInstance();
+            if ($database) {
+                try {
+                    $curi = "{$type}://{$username}@{$host}/{$database}";
+                    $password = $ks->queryCredentials($curi);
+                } catch (Exception $e) { \debug("Unable to access credentials for connection {$curi}"); }
+            }
+            if (!$password) try {
+                $curi = "{$type}://{$username}@{$host}";
+                $password = $ks->queryCredentials($curi);
+            } catch (Exception $e) { \debug("Unable to access credentials for connection {$curi}"); }
+        }
 
         // Temporarily change the PHP exception handler while we . . .
         set_exception_handler(array(__CLASS__, 'exception_handler'));
@@ -61,7 +75,7 @@ class DatabaseConnection {
                 self::$dbpool[$pool] = new self($pool);
             }
         } else echo "In cache.\n";
-        return self::$dbpool[$pool];        
+        return self::$dbpool[$pool];
     }
 
     public function prepare($statement) {
@@ -80,9 +94,9 @@ class DatabaseConnection {
         }
         $esql = call_user_func_array('sprintf',$argo);
         \App::app()->debug("DB:Escape: %s", $esql);
-        return $esql; 
+        return $esql;
     }
-    
+
     public function query($sql) {
         $args = func_get_args();
         $argo = $args;

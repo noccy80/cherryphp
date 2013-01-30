@@ -25,6 +25,9 @@ class KeyStoreFile {
 
     private $keys = [];
     private $key = null;
+    private $lasterror = null;
+
+    const ERR_KEYSTORE_ERROR = 0x01;
 
     public function __construct($store, $key=null, $crypto='tripledes') {
         if (!$key) $key = 0xDEADBEEF;
@@ -33,11 +36,21 @@ class KeyStoreFile {
             $buf = file_get_contents($store);
             $buf = Crypto::tripledes($key)->decrypt($buf);
             $buf = gzuncompress($buf);
-            $this->keys = unserialize($buf);
+            if (!$buf) {
+                $this->lasterror = self::ERR_KEYSTORE_ERROR;
+                $this->keys = [];
+            } else
+                $this->keys = @unserialize($buf);
         }
 
         $this->store = $store;
         $this->key = $key;
+    }
+
+    public function getError() {
+        $err = $this->lasterror;
+        $this->lasterror = null;
+        return $err;
     }
 
     public function save() {
@@ -52,12 +65,36 @@ class KeyStoreFile {
      * @param string $key The key to add
      */
     public function setCredentials($key,$value,array $allow=null) {
-        $cfgallow = (array)App::config()->get("keystore.overrides.".$key);
+        if (array_key_exists($key,$this->keys)) {
+            $this->keys[$key]->value = $value;
+            $acl = array_unique(array_merge($allow,$this->keys[$key]->rules));
+            $this->keys[$key]->rules = $acl;
+        }
         $this->keys[$key] = (object)[
             'value' => $value,
-            'rules' => array_unique(array_merge($allow,$cfgallow))
+            'rules' => array_unique($allow)
         ];
     }
 
+    public function addAcl($key,$rule) {
+        if (array_key_exists($key,$this->keys)) {
+            $acl = array_unique(array_merge([$rule],$this->keys[$key]->rules));
+            $this->keys[$key]->rules = $acl;
+            return true;
+        }
+        return false;
+    }
+
+    public function getCredentials() {
+        return array_keys($this->keys);
+    }
+
+    public function getAcl() {
+        $ret = [];
+        foreach($this->keys as $key=>$value) {
+            $ret[$key] = $value->rules;
+        }
+        return $ret;
+    }
 
 }

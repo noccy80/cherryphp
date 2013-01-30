@@ -5,6 +5,8 @@ namespace Cherry\Cli;
 use debug;
 use Cherry\DebugLog;
 use Cherry\Cli\Console;
+use Cherry\Crypto\KeyStore;
+use Cherry\Base\PathResolver;
 
 class ConsoleApplication extends \Cherry\Application {
 
@@ -14,7 +16,37 @@ class ConsoleApplication extends \Cherry\Application {
     protected $parameters = array();
 
     function run() {
+        $ks = KeyStore::getInstance();
+        $pr = PathResolver::getInstance();
+        $ks_user = $pr->getPath("{USER}/user.cks");
+        $ks_system = $pr->getPath("{SYSTEM}/system.cks");
+        if (file_exists($ks_user)) {
+            $key = getenv("KEYSTORE_USERKEY");
+            if ($key) {
+                $ks->attachFile($ks_user,$key);
+                putenv("KEYSTORE_USERKEY");
+            } else {
+                \debug("Info: To auto-mount the user KeyStore, define the KEYSTORE_USERKEY envvar.");
+            }
+        } else {
+            \debug("Keystore {$ks_user} not found.");
+        }
+        if (file_exists($ks_system)) {
+            $key = getenv("KEYSTORE_SYSTEMKEY");
+            if ($key) {
+                $ks->attachFile($ks_system,$key);
+                putenv("KEYSTORE_SYSTEMKEY");
+            } else {
+                \debug("Info: To auto-mount the system KeyStore, define the KEYSTORE_SYSTEMKEY envvar.");
+            }
+        } else {
+            \debug("Keystore {$ks_system} not found.");
+        }
         return $this->main();
+    }
+
+    function __destruct() {
+        if (is_callable([$this,'shutdown'])) $this->shutdown();
     }
 
     function __construct($apppath=null,$argv=null) {
@@ -116,11 +148,11 @@ class ConsoleApplication extends \Cherry\Application {
     }
 
     protected function addCommand($command,$info,$bind=null) {
-        $co = new \Data\DataBlob(array(
+        $co = (object)array(
             'command' => $command,
             'info' => $info,
             'bind' => $bind
-        ));
+        );
         $this->commands[] = $co;
     }
     protected function addArgument($arg,$long,$info,$bind=null) {
@@ -135,20 +167,20 @@ class ConsoleApplication extends \Cherry\Application {
             $type = 'boolean';
             $value = false;
         }
-        $ao = new \Data\DataBlob(array(
+        $ao = (object)array(
             'argument' => $arg,
             'longargument' => $long,
             'information' => $info,
             'type' => $type,
             'bind' => $bind,
             'value' => $value
-        ));
+        );
         $this->arguments[$ak] = $ao;
     }
 
     function setup() {
         if (is_callable([$this,'init'])) {
-            debug("Warning: Application is using init() to setup rather than setup().");
+            $this->warn("Warning: Application is using deprecated init() to setup rather than setup().");
             $this->init();
             return;
         }
