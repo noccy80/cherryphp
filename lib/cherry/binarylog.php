@@ -72,15 +72,14 @@ class BinaryLog {
 
     public function write($data,$header=null) {
         $flags = 0x00;
-        if (!empty($this->headerfunc)) {
+        if (!empty($header)) {
+            $flags |= self::SL_FLAG_HEADER;
+            $data = [ $header, $data ];
+        } elseif (!empty($this->headerfunc)) {
             if (is_array($this->headerfunc))
                 $header = call_user_func($this->headerfunc[0],$data);
             else
                 $header = call_user_func($this->headerfunc,$data);
-        }
-        if (!empty($header)) {
-            $flags |= self::SL_FLAG_HEADER;
-            $data = [ $header, $data ];
         }
         $ser = serialize($data);
         $len = strlen($ser);
