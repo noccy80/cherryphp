@@ -14,7 +14,7 @@ class BinaryLogExample extends \Cherry\Cli\ConsoleApplication {
 
     function writelog() {
         // Open the binary log test.slf
-        $sl = new BinaryLog("test.slf","w+");
+        $sl = new BinaryLog("test.slf","a+");
         // Header function is invoked for every write to the log. You can also
         // specify the header block as the 2nd parameter to write(). The true at
         // the end indicates that the function should be pushed onto the stack

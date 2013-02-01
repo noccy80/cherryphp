@@ -65,7 +65,7 @@ class EditSerialize extends Cherry\Cli\ConsoleApplication {
                     $pc = floor($cc / $pi)+1; $pn = 1;
                     $cont = null;
                     foreach($node[0]->data as $k=>$v) {
-                        $this->write("    [$k] =>  %s\n", var_inspect($v));
+                        $this->write("    [\033[1m$k\033[0m] =>  %s\n", var_inspect($v));
                         $p = ($p + 1) % $pi; $c++;
                         if ($p == 0) {
                             $pn++;

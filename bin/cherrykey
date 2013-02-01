@@ -12,6 +12,7 @@ class CherryKey extends \Cherry\Cli\ConsoleApplication {
     private $sessfile = null;
     public function setup() {
         $this->addArgument("f:","file","KeyStore file to operate on");
+        $this->addArgument("F","force","Overwrite if file exists (force)");
         $this->addArgument("p:","prompt","Prompt to display when asking for secret");
         $this->addArgument("s","shadow","Don't display secret when typing");
         $this->addArgument("h","help","This help");
