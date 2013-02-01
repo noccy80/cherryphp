@@ -19,6 +19,7 @@ abstract class Application {
         } else {
             define("APPPATH",getcwd());
         }
+        $this->path = APPPATH;
         if (is_callable([ $this, 'handleException' ])) {
             \Cherry\debug("Registering application exception handler...");
             set_error_handler(array($this,'__php_handleError'), E_ALL);
@@ -151,6 +152,8 @@ abstract class Application {
         $lstr = call_user_func_array('sprintf',$args);
         if ($this->logtarget === null) {
             echo $lstr."\n";
+        } elseif ($this->logtarget === false) {
+            return;
         } elseif (is_array($this->logtarget)) {
             array_map([$this,'log'],$lstr);
         } elseif (is_callable($this->logtarget)) {
