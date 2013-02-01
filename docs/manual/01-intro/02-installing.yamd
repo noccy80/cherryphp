@@ -9,7 +9,7 @@ keywords:
 ## Linux
 
 Unpack the tarball or check out the git tree. Move the entire cherryphp folder
-into `/usr/lib/cherryphp`. Proceed by adding the path to the `lib` subfolder to
+into `/usr/share/cherryphp`. Proceed by adding the path to the `lib` subfolder to
 your php include path in `/etc/php5/cli/php.ini` and/or `/etc/php5/apache2/php.ini`.
 
 Restart Apache, and you should be good to go.
@@ -19,7 +19,7 @@ and invoke the cherry tool:
 
     $ sudo ./cherry install-all
 
-To set up the utility scripts, navigate to `/usr/lib/cherryphp/bin` and invoke
+To set up the utility scripts, navigate to `/usr/share/cherryphp/bin` and invoke
 the command `./cherry install-tools`:
 
     $ cd /usr/lib/cherryphp/bin
