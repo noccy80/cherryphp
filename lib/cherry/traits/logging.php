@@ -10,9 +10,9 @@ trait Logging {
         if (func_num_args()>1)
             $str = call_user_func_array("sprintf",func_get_args());
         if (!$this->_logcb)
-            echo $str."\n";
+            \debug(__CLASS__.': '.$str);
         else
-            call_user_func($this->_logcb,$str);
+            call_user_func($this->_logcb,__CLASS__.': '.$str);
     }
 
     public function setLogCallback(callable $cb = null) {

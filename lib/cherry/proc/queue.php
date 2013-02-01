@@ -3,6 +3,7 @@
 namespace Cherry\Proc;
 
 use Cherry;
+use debug;
 
 class Queue {
     
@@ -22,17 +23,17 @@ class Queue {
             touch($mf);
         $this->key = fileinode($mf);
         if (!msg_queue_exists($this->key)) {
-            Cherry\Debug("Creating IPC queue (0x%x) for %s", $this->key, $mf);
+            debug("Creating IPC queue (0x%x) for %s", $this->key, $mf);
             $this->queue = msg_get_queue($this->key, 0600);
         } else {
-            Cherry\Debug("Reopening IPC queue (0x%x) for %s", $this->key, $mf);
+            debug("Reopening IPC queue (0x%x) for %s", $this->key, $mf);
             $this->queue = msg_get_queue($this->key, 0600);
         }
     }
     
     public function send($data,$type=1) {
         if (!msg_send($this->queue,$type,$data,true,true,$error)) {
-            Cherry\Debug("Error sending to IPC queue 0x%x: %s", $this->key, $error);
+            debug("Error sending to IPC queue 0x%x: %s", $this->key, $error);
         }
     }
     
@@ -40,7 +41,7 @@ class Queue {
         if (!msg_receive($this->queue,$type,$msgtype,65535,$msgdata,true,MSG_IPC_NOWAIT,$error)) {
             if ($error == MSG_ENOMSG)
                 return null;
-            Cherry\Debug("Error reading from IPC queue 0x%x: %s", $this->key, $error);
+            debug("Error reading from IPC queue 0x%x: %s", $this->key, $error);
             return null;
         }
         return $msgdata;

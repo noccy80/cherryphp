@@ -300,9 +300,11 @@ class ConsoleApplication extends \Cherry\Application {
     protected function attachSignal($signal, $handler, $restart=false) {
         if (!is_callable($handler))
             user_error("Signal handler is not callable.");
-        if ($signal === null) $signal = SIG_DFL;
-        if ($signal === false) $signal = SIG_IGN;
-        pcntl_signal($signal,$handler,$restart);
+        if ($handler === null) $handler = SIG_DFL;
+        if ($handler === false) $handler = SIG_IGN;
+        if (!pcntl_signal($signal,$handler,$restart)) {
+            \debug("Warning: Could not attach signal %d", $signal);
+        }
     }
 
 
