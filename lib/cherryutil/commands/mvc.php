@@ -1,6 +1,6 @@
 <?php
 
-namespace cherryutil\commands;
+namespace CherryUtil\commands;
 use cherryutil\Command;
 use cherryutil\CommandBundle;
 use cherryutil\CommandList;

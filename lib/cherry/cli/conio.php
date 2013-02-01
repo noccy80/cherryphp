@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\cli;
+namespace Cherry\Cli;
 
 class Console {
 
@@ -15,7 +15,7 @@ class Console {
         }
         return self::$instance;
     }
-    
+
     public function warn($string,$args=null) {
         $args = func_get_args();
         if ($this->updatemode || $this->linemode) {
@@ -33,7 +33,7 @@ class Console {
         fprintf(STDOUT,"%s", $pre);
         fprintf(STDERR,"%s", $str);
     }
-    
+
     public function write($string,$args=null) {
         $args = func_get_args();
         if ($this->updatemode) {
@@ -48,7 +48,7 @@ class Console {
         }
         fprintf(STDOUT,"%s", $pre.$str);
     }
-    
+
     public function update($string,$args=null) {
         $args = func_get_args();
         $pre = '';
@@ -62,16 +62,16 @@ class Console {
         fprintf(STDOUT,"%s", $pre.$str);
         $this->updatemode = true;
     }
-    
+
     public function prompt($prompt, $default) {
-    
+
         $prompt = sprintf("%s [%s]: ", $prompt, $default);
         $str = readline($prompt);
         if ($str) return $str;
         return $default;
-    
+
     }
-    
+
     public function putColumns(array $data, $colwidth) {
         list($drows,$dcols) = $this->getSize();
         $cols = floor($dcols / $colwidth) - 2;
@@ -82,7 +82,7 @@ class Console {
         if (!$fl) $this->write("\n");
     }
 
-    public function getSize() { 
+    public function getSize() {
         if (_IS_LINUX) {
             preg_match_all("/rows.([0-9]+);.columns.([0-9]+);/", strtolower(exec('stty -a |grep columns')), $output);
             if(sizeof($output) == 3) {

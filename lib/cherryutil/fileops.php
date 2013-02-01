@@ -1,6 +1,6 @@
 <?php
 /**
- * @namespace cherryutil\fileops
+ * @namespace CherryUtil\fileops
  * @brief File operation helpers for cherryutil
  *
  */

@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\base;
+namespace Cherry\Base;
 
 /**
  * @brief Class to wrap a callback.

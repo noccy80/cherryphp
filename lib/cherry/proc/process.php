@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\proc;
+namespace Cherry\Proc;
 
 abstract class BaseProcess {
 }
@@ -48,7 +48,7 @@ class Process extends BaseProcess {
     }
 
     function writeLine($line) {
-    
+
     }
 
     function __destruct() {

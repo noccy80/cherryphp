@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\net\proxy;
+namespace Cherry\Net\Proxy;
 
 abstract class Proxy {
     protected $credentials = null;

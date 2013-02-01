@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\net;
+namespace Cherry\Net;
 
 use cherry\base\Event;
 use cherry\base\EventEmitter;

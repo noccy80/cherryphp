@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\Mvc;
+namespace Cherry\Mvc;
 
 use Cherry\Extension\ExtensionManager;
 use Cherry\Extension\ExtensionException;

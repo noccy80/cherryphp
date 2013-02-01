@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\net\socket;
+namespace Cherry\Net\Socket;
 
 class TcpSocket extends Socket {
     protected $proxy = null;

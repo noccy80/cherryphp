@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\Mvc\Controller;
+namespace Cherry\Mvc\Controller;
 
 abstract class Base {
 

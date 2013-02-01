@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\crypto;
+namespace Cherry\Crypto;
 
 abstract class UuidImpl {
 

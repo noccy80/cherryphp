@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry;
+namespace Cherry;
 
 $_os = strtolower(PHP_OS);
 define('_DS_',DIRECTORY_SEPARATOR);

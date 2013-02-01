@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\mvc\view;
+namespace Cherry\Mvc\View;
 use cherry\mvc\view;
 class LipsumView extends Base{
 
@@ -34,12 +34,12 @@ EOF;
         }
         $this->contents = join("\n",$pout);
     }
-    
+
     function getViewContents() {
         return $this->contents;
-    
+
     }
-    
+
     function load($foo) {
         echo $this->contents;
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\Mvc\Router;
+namespace Cherry\Mvc\Router;
 
 abstract class Base {
 

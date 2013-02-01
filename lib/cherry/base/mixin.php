@@ -1,11 +1,11 @@
 <?php
 
-namespace cherry\base;
+namespace Cherry\Base;
 
 abstract class MixIn {
 
     function extend($object) {
-        
+
     }
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\Mvc;
+namespace Cherry\Mvc;
 
 abstract class Controller {
     protected

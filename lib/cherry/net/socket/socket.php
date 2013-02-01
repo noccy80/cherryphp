@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\net\socket;
+namespace Cherry\Net\Socket;
 use cherry\base\EventEmitter;
 use cherry\net\proxy\Proxy;
 

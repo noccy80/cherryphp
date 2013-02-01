@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\mvc\view;
+namespace Cherry\Mvc\View;
 
 use Cherry\Base\Event;
 
@@ -15,7 +15,7 @@ class Frame extends Base {
         $this->frame = $frame;
         $this->app = \cherry\Lepton::getInstance()->getApplication();
     }
-    
+
     function __ob_callback($str) {
         $out = '';
         $offs = 0;
@@ -39,7 +39,7 @@ class Frame extends Base {
                 for($n = 1;$n<count($parts);$n++) {
                     $attrsep = strpos($parts[$n],'=');
                     if ($attrsep===false) {
-                        $this->attr[$parts[$n]] = true;   
+                        $this->attr[$parts[$n]] = true;
                     } else {
                         $aname = substr($parts[$n],0,$attrsep);
                         $aval = substr($parts[$n],$attrsep+1);
@@ -87,7 +87,7 @@ class Frame extends Base {
     }
 
     function load($view) {
-    
+
         $paths = $this->app->getConfiguration('application','paths');
 
         $base = CHERRY_APP . '/application/views/scripts/';
@@ -109,7 +109,7 @@ class Frame extends Base {
         ob_end_clean();
 
         printf("%s",$fout);
-        
+
         /*
         // Specify configuration
         $config = array(

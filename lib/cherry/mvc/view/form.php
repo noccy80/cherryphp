@@ -1,6 +1,6 @@
 <?php
 
-namespace cherry\Mvc\View;
+namespace Cherry\Mvc\View;
 
 class FormView extends Base {
     
