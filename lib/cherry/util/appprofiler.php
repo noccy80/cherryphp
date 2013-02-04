@@ -59,7 +59,13 @@ class AppProfiler {
         static $time,$ltrace;
         if (!$time) $time = microtime(true);
         $trace = debug_backtrace(0,2);
+        if (count($trace)<2) {
+            $trace[1] = $trace[0];
+        }
         if ($trace[1] == $ltrace[1]) return;
+        array_walk_recursive($trace[1],function(&$v,$k){
+            if (is_object($v)) $v = "[object:".get_class($v)."]";
+        });
         $ltrace = $trace;
         if (count($trace) == 0) {
             var_dump($trace);
@@ -77,7 +83,7 @@ class AppProfiler {
             //"called_by" => $trace[2]["function"].' in '.$trace[2]["file"].': '.$trace[2]["line"],
             "ns" => $exe_time
             );
-        $stats = array_merge($stats,$trace[1]);
+        $stats = array_merge((array)$stats,(array)$trace[1]);
         if (self::$binlog) {
             self::$tracelog->write($stats);
         } else {

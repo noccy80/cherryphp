@@ -108,7 +108,10 @@ class CherryProfiler extends Cherry\Cli\ConsoleApplication {
             if (!empty($sample->type)) {
                 $mn = $sample->class.$sample->type.$sample->function;
             } else {
-                $mn = $sample->function;
+                if (!empty($sample->function))
+                    $mn = $sample->function;
+                else
+                    $mn = "[unknown]";
             }
             //var_dump($sample);
 
@@ -171,7 +174,21 @@ class CherryProfiler extends Cherry\Cli\ConsoleApplication {
             }
             $calltime = join("",$out);
             $avg = $dur / $times;
-            printf("    %-50s %5d %8.3fns %6.3fns %s\n", $mtd, $times, $dur, $avg, $calltime);
+            if (strlen($mtd)<50) {
+                $printmtd = $mtd;
+            } else {
+                $mtda = explode("\\",$mtd);
+                $head = array_shift($mtda);
+                while(count($mtda)>1) {
+                    $item = array_shift($mtda);
+                    $test = $head."\\..\\".join("\\",$mtda);
+                    if (strlen($test)<50) {
+                        $printmtd = $test;
+                        break;
+                    }
+                }
+            }
+            printf("    %-50s %5d %8.3fns %6.3fns %s\n", $printmtd, $times, $dur, $avg, $calltime);
         }
     }
 

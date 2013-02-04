@@ -217,7 +217,7 @@ class SdlNode implements ArrayAccess, Countable {
                         break;
                     case T_COMMENT:
                         $str = trim(substr($str,3));
-                        if ($_comment) $comment.="\n".$str;
+                        if ($_comment) $_comment.="\n".$str;
                         else $_comment = $str;
                         break;
                     default:
