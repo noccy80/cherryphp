@@ -8,6 +8,7 @@ class BinaryLog {
     private $header = null;
     private $eof = false;
     private $headerfunc = null;
+    private $compress = false;
 
     ///@var Frame continues in next frame (partial)
     const SL_FLAG_CONTINUED = 0x01;
@@ -15,6 +16,8 @@ class BinaryLog {
     const SL_FLAG_HEADER = 0x02;
     ///@var Frame has CRC32 appended.
     const SL_FLAG_CRC32 = 0x04;
+    ///@var Frame is compressed
+    const SL_FLAG_COMPRESSED = 0x08;
 
     /**
      * @brief Constructor
@@ -39,6 +42,7 @@ class BinaryLog {
                 throw new \UnexpectedArgumentException();
         }
         $this->hlog = fopen($filename,$mode);
+        if (!$this->hlog) throw new \Exception("Could not open log file");
     }
 
     public function __destruct() {
@@ -70,6 +74,10 @@ class BinaryLog {
         }
     }
 
+    public function setCompress($compress) {
+        $this->compress = (bool)$compress;
+    }
+
     public function write($data,$header=null) {
         $flags = 0x00;
         if (!empty($header)) {
@@ -82,6 +90,10 @@ class BinaryLog {
                 $header = call_user_func($this->headerfunc,$data);
         }
         $ser = serialize($data);
+        if ($this->compress) {
+            $flags |= self::SL_FLAG_COMPRESSED;
+            $ser = gzcompress($ser);
+        }
         $len = strlen($ser);
         // 2 byte length, 1 byte flags. then data
         $out = pack("sCa{$len}", $len, $flags, $ser);
@@ -97,6 +109,11 @@ class BinaryLog {
         if ($hdr) {
             $hdr = unpack("ssize/Cflags", $hdr);
             $str = fread($this->hlog,$hdr['size']);
+            if (($hdr['flags'] & self::SL_FLAG_COMPRESSED)) {
+                $str = gzuncompress($str);
+                if (!$str)
+                    throw new \Exception("Binary log damaged");
+            }
             $data = unserialize($str);
             if (($hdr['flags'] & self::SL_FLAG_HEADER)) {
                 $this->header = $data[0];

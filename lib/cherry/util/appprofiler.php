@@ -17,7 +17,9 @@ class AppProfiler {
             $meminitial = null,
             $meminitialfull = null,
             $reportinglevel = null;
-    const
+    private static
+            $binlog = true;
+        const
             LOGEVT_ENTER = '->:',
             LOGEVT_LEAVE = '<-:',
             LOGEVT_LOG = '  :';
@@ -27,13 +29,19 @@ class AppProfiler {
             REPORT_FULL = 'full';
 
 
-    public static function profile($file=null) {
+    public static function profile($file=null,$binary=false) {
         declare(ticks = 1);
         if ($file == null) {
             $file = 'profiler.log';
         }
+        self::$binlog = (bool)$binary;
         self::$tracetarget = $file;
-        self::$tracelog = fopen(self::$tracetarget,"w");
+        if (self::$binlog) {
+            self::$tracelog = new \Cherry\BinaryLog(self::$tracetarget,"w");
+            self::$tracelog->setCompress(true);
+        } else {
+            self::$tracelog = fopen(self::$tracetarget,"w");
+        }
         register_tick_function("Cherry\\Util\\AppProfiler::__appprofiler_ontick");
     }
 
@@ -57,6 +65,10 @@ class AppProfiler {
             var_dump($trace);
         }
         $exe_time = (microtime(true) - $time) * 1000;
+        if (memory_get_usage(true) > 10000000) {
+            \debug("Memory usage > 10MB. Disabling profiling.");
+            unregister_tick_function("Cherry\\Util\\AppProfiler::__appprofiler_ontick");
+        }
         $stats = array(
             "current_time" => microtime(true),
             "memory" => memory_get_usage(false),
@@ -66,7 +78,11 @@ class AppProfiler {
             "ns" => $exe_time
             );
         $stats = array_merge($stats,$trace[1]);
-        fwrite(self::$tracelog,json_encode($stats)."\n");
+        if (self::$binlog) {
+            self::$tracelog->write($stats);
+        } else {
+            fwrite(self::$tracelog,json_encode($stats)."\n");
+        }
         $time = microtime(true);
     }
 

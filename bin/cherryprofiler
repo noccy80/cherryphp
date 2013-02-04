@@ -1,0 +1,218 @@
+#!/usr/bin/php
+<?php
+
+define("XENON","cherryphp/trunk");
+require_once("xenon/xenon.php");
+
+use Cherry\Cli\Glyph as g;
+
+class CherryProfiler extends Cherry\Cli\ConsoleApplication {
+
+    private $data = [];
+    private $calls = [];
+    private $alloc = [];
+    private $calltime = [];
+    private $memtime = [];
+    private $startns = null;
+
+    public function setup() {
+        $this->addArgument('h','help','Show this help');
+        $this->addArgument("b","binary","Profile log is in binary format");
+        $this->addArgument("m:","max","Max samples to analyze");
+        $this->addArgument("x:","maxmem","Max memory for parser (in MiB)");
+        $this->addArgument('f','functions','Show function calls');
+    }
+
+    public function main() {
+        if ($this->hasArgument('h')) {
+            $this->usage();
+            return;
+        }
+        if (count($this->parameters) == 0) {
+            echo "Try -h.\n";
+            return 1;
+        }
+
+        if ($this->hasArgument('f')) {
+            $fn = $this->parameters[0];
+            $this->loadLog($fn);
+            $this->analyzeFunctions();
+        } else {
+            echo "Try adding -f, -m or do -h\n";
+            return 1;
+        }
+
+    }
+
+    private function loadLog($fn) {
+        $read = 0;
+
+        if ($this->hasArgument('m'))
+            $maxsamples = $this->getArgument('m');
+        else
+            $maxsamples = 1<<16;
+
+        if ($this->hasArgument('x'))
+            $maxmemory = $this->getArgument('x')*1024*1024;
+        else
+            $maxmemory = 128*1024*1024;
+
+        if ($this->hasArgument('b')) {
+            $log = new \Cherry\BinaryLog($fn,"r");
+            echo "Reading binary profile log ...  ";
+            while(!$log->isEof()) {
+                echo g::work("pulse");
+                $read++;
+                if (memory_get_usage(true)>$maxmemory) {
+                    echo "\nMemory limit of {$maxmemory} reached, use -x to override.\n";
+                    break;
+                }
+                if ($read>$maxsamples) {
+                    echo "\nSample limit of {$maxsamples} reached, use -m to override.\n";
+                    break;
+                }
+                $header = null;
+                $row = $log->read($header);
+                if ($row) {
+                    $row = (object)$row;
+                    if (!$this->startns) $this->startns = $row->current_time;
+                    $this->data[] = $row;
+                }
+            }
+        } else {
+            $fh = fopen($fn,"r");
+            assert($fh);
+            echo "Reading profile log ...  ";
+            while(!feof($fh)) {
+                echo g::work("pulse");
+                $read++;
+                if ($read>65535) {
+                    echo "More than 64k samples. Only loading first 10k.\n";
+                    break;
+                }
+                $row = fgets($fh,8192);
+                $row = json_decode($row);
+                //var_dump($row);
+                if (!$this->startns) $this->startns = $row->current_time;
+                if ($row) $this->data[] = $row;
+            }
+            fclose($fh);
+        }
+        echo "\r\033[2K";
+
+    }
+
+    private function analyzeFunctions() {
+        $lastmn = null;
+        foreach($this->data as $sample) {
+            if (!empty($sample->type)) {
+                $mn = $sample->class.$sample->type.$sample->function;
+            } else {
+                $mn = $sample->function;
+            }
+            //var_dump($sample);
+
+            if (!array_key_exists($mn,$this->calltime)) {
+                $this->calltime[$mn] = [];
+            }
+            $this->calltime[$mn][] = $sample->current_time - $this->startns;
+
+            if (!array_key_exists($mn,$this->calls)) {
+                $this->calls[$mn] = [1,$sample->ns,0];
+            } else {
+                $this->calls[$mn][0]++;
+                $this->calls[$mn][1]+= $sample->ns;
+            }
+            if ($mn != $lastmn) {
+                $this->calls[$mn][2]++;
+                $lastmn = $mn;
+            }
+        }
+        // Optimize call times
+        $max = max(max($this->calltime));
+        $scale = ($max/40);
+        uasort($this->calls,function($i,$j){
+            if ($i[1] == $j[1]) return 0;
+            if ($i[1] < $j[1]) return -1;
+            return 1;
+        });
+        printf("\033[1mTime spent in functions:\033[0m\n");
+        $tlw = 60;
+        $hdr = sprintf("    %-50s %5s %-10s %-8s ","Function","Hits","Time","Avg");
+        for($n = 0; $n < $tlw/10; $n++) {
+            $hdr .= sprintf("%-10s",(int)($n/$scale)."ms");
+        }
+        echo "\033[7m{$hdr}\033[0m\n";
+        foreach($this->calls as $mtd=>$time) {
+            list($times,$dur,$calls) = $time;
+            // Set up an empty grid
+            $out = [];
+            for($n = 0; $n < $tlw; $n++) {
+                if (($n)%10==0)
+                    $out[$n] = "\033[38m".g::lightshade()."\033[0m";
+                else
+                    $out[$n] = "\033[1;30m".g::lightshade()."\033[0m";
+            }
+            // Map the calling times
+            $bc = [];
+            foreach($this->calltime[$mtd] as $ct) {
+                $act = (int)($ct / $scale);
+                if (!array_key_exists($act,$bc))
+                    $bc[$act] = 1;
+                else
+                    $bc[$act]++;
+                if ($bc[$act]>2)
+                    $block = g::fullblock();
+                elseif ($bc[$act]>1)
+                    $block = g::blockmid2();
+                else
+                    $block = g::blockmid();
+                $out[$act] = "\033[1;36m".$block."\033[0m";
+            }
+            $calltime = join("",$out);
+            $avg = $dur / $times;
+            printf("    %-50s %5d %8.3fns %6.3fns %s\n", $mtd, $times, $dur, $avg, $calltime);
+        }
+    }
+
+    private function analyzeMemory() {
+        $lastmn = null;
+        $lastalloc = 0;
+        foreach($this->data as $sample) {
+            if (!empty($sample->type)) {
+                $mn = $sample->class.$sample->type.$sample->function;
+            } else {
+                $mn = $sample->function;
+            }
+            //var_dump($sample);
+            if ($mn != $lastmn) {
+                if ($lastalloc==0) $lastalloc = $sample->memory;
+                if (!array_key_exists($mn,$this->alloc)) {
+                    $this->alloc[$mn] = [0,0];
+                    $allocd = $sample->memory - $lastalloc;
+                    if ($allocd>0) {
+                        $this->alloc[$mn][0]+= $allocd;
+                    } else {
+                        $this->alloc[$mn][1]-= $allocd;
+                    }
+                    $lastalloc = $sample->memory;
+                    $lastmn = $mn;
+                }
+            }
+
+        }
+        uasort($this->alloc,function($i,$j){
+            if ($i == $j) return 0;
+            if ($i < $j) return -1;
+            return 1;
+        });
+        printf("\033[1mAllocation by function:\033[0m\n");
+        foreach($this->alloc as $mtd=>$alloc) {
+            $salloc = $alloc[0] / 1024;
+            $sfree = $alloc[1] / 1024;
+            printf("    %-50s \033[31m%8.3f \033[32m%8.3f\033[0m\n", $mtd, $salloc, $sfree);
+        }
+
+    }
+}
+App::run(new CherryProfiler());

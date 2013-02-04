@@ -70,10 +70,25 @@ Autoloaders::register(new Autoloader(CHERRY_LIB.'/lib'));
 $al = new \Cherry\Base\Autoloader(CHERRY_LIB.'/lib');
 $al->register();
 
-if (getenv("PROFILE") == "1") {
-    \Cherry\Util\AppProfiler::profile();
+if (getenv("PROFILE")) {
+    $pc = explode(":",getenv("PROFILE"));
+    $binlog = false;
+    $fn = null;
+    if ($pc[0] == "1") {
+        if (count($pc)>1)
+            $fn = $pc[1];
+        if (!$fn)
+            $fn = 'profile.cpd';
+        if (count($pc)>2) {
+            $opts = explode(",",strtoupper($pc[2]));
+            if (in_array("BIN",$opts)) {
+                $binlog = true;
+                $fn = str_replace(".cpd",".cpb",$fn);
+            }
+        }
+        \Cherry\Util\AppProfiler::profile($fn,$binlog);
+    }
 }
-
 require_once CHERRY_LIB.'/lib/cherry/base/config.php';
 require_once CHERRY_LIB.'/lib/cherry/base/event.php';
 require_once CHERRY_LIB.'/lib/cherry/extension.php';
