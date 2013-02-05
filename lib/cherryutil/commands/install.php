@@ -95,7 +95,8 @@ class InstallCommands extends CommandBundle {
             'cherry',
             'cherryview',
             'cherrykey',
-            'editserialize'
+            'editserialize',
+            'cherryprofiler'
         );
         foreach($tools as $tool) {
             $foh->install(CHERRY_LIB.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.$tool,$bindir.DIRECTORY_SEPARATOR.$tool,0777);

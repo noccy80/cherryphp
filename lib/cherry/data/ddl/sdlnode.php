@@ -143,6 +143,10 @@ class SdlNode implements ArrayAccess, Countable {
                     case T_NAMESPACE:
                     case T_NEW:
                     case T_ECHO:
+                    case T_INCLUDE:
+                    case T_IF:
+                    case T_VAR:
+                    case T_STATIC:
                     // And we have numbers as well
                     case T_DNUMBER:
                     // Strings as keywords are handled here

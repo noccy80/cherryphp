@@ -22,6 +22,46 @@ class CherryProfiler extends Cherry\Cli\ConsoleApplication {
         $this->addArgument("x:","maxmem","Max memory for parser (in MiB)");
         $this->addArgument('f','functions','Show function calls');
     }
+    
+    public function getApplicationInfo() {
+        return [
+            'appname'=>'CherryProfiler',
+            'version'=>'1.0.0',
+            'description'=>'Cherry Profile Log Analyzer'
+        ];
+    }
+    
+    public function usageInfo() {
+    
+        $this->write(<<<EOF
+To create a profiling dump, define the PROFILE environment variable before
+calling invoking your cherry-based script. The envvar should look like this:
+
+    PROFILE=[0|1[:<logfile>[:<flags>]]
+
+The first digit enables (1) or disables (0) profiling. The second parameter
+is the name of the logfile to save to (defaulting to private.cpd, or for a
+binary log private.cpb). The flag field is zero or more of these flags,
+separated by comma (","):
+
+    BIN - Binary log
+    COMPRESS - Compressed log (only valid for binary logs)
+    VERBOSE - Show information during program execution
+    
+The file extensions used are ".cpd" (for Cherry Profiling Data) and ".cpb"
+(for Cherry Profiling BinLog)
+
+To profile cherryprofiler displaying this help into a binary log, and later
+print out the function summary.
+
+    $ PROFILE=1:profiler.cpb:BIN cherryprofiler -h
+    ...
+    $ cherryprofiler -b -f profiler.cpb
+
+
+EOF
+);
+    }
 
     public function main() {
         if ($this->hasArgument('h')) {
