@@ -8,24 +8,29 @@ use Cherry\Expm\Process\CoRoutine;
 // Using a class as a coroutine is more awesome!
 class PrimesCoroutine extends CoRoutine {
     public function main($start,$step,$max) {
+        $n = 0;
+        $ts = microtime(true);
         for($cur = $start; $cur < $max; $cur+=$step) {
-            $this->testPrime($cur);
+            $n++;
+            if ($this->testPrime($cur)) {
+                $this->sendMessage([ 'done'=>false, 'found'=>$n ]);
+            }
+            usleep(5000);
         }
-        $this->sendMessage([ 'done'=>true ]);
+        $te = microtime(true) - $ts;
+        $this->sendMessage([ 'done'=>true, 'rate'=>($n/$te) ]);
     }
     public function testPrime($n) {
         $mx = sqrt($n);
         for($m = 2; $m <= $mx; $m++) {
             $r = ($n / $m);
-            if ($r == (int)$r) return;
+            if ($r == (int)$r) return false;
         }
-        //$this->write("{$n}\n");
-        $this->sendMessage([ 'done'=>false, 'found'=>$n ]);
-        usleep(10000);
+        return true;
     }
 }
 
-$cr = 4;
+$cr = 10;
 $ca = [];
 $tc = [];
 $tl = [];
@@ -44,6 +49,7 @@ while($done < $cr) {
     foreach($ca as $idx=>$co) {
         while (($msg = $co->pollMessage())) {
             if ($msg['done']) {
+                printf("Thread completed: %.2f primes/sec\n", $msg['rate']);
                 $done++;
                 echo ".";
             } else {
