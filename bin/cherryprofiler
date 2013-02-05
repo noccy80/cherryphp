@@ -181,7 +181,7 @@ EOF
         });
         printf("\033[1mTime spent in functions:\033[0m\n");
         $tlw = 60;
-        $hdr = sprintf("    %-50s %5s %-10s %-8s ","Function","Hits","Time","Avg");
+        $hdr = sprintf("    %-50s %5s %-11s %-9s ","Function","Hits","Time","Avg");
         for($n = 0; $n < $tlw/10; $n++) {
             $hdr .= sprintf("%-10s",(int)($n/$scale)."ms");
         }
@@ -228,7 +228,7 @@ EOF
                     }
                 }
             }
-            printf("    %-50s %5d %8.3fns %6.3fns %s\n", $printmtd, $times, $dur, $avg, $calltime);
+            printf("    %-50s %5d %9.3fns %7.3fns %s\n", $printmtd, $times, $dur, $avg, $calltime);
         }
     }
 
