@@ -2,14 +2,23 @@
 
 namespace xenon;
 
+$dm = (int)xenon::config('framework.debuglevel');
+if ($dm == 0) setenv("DEBUG=0");
+if ($dm >= 1) setenv("DEBUG=1");
+if ($dm >= 2) setenv("DEBUG_VERBOSE=1");
+
 $path = getenv("CHERRY_LIB");
 require_once $path . '/lib/bootstrap.php';
 \Cherry\Base\PathResolver::getInstance()->setAppPath(XENON_ROOT);
 
-define("XENON_FWAPI","\\xenon\\cherryphp");
+define("XENON_FWAPI",'\xenon\cherryphp');
 
 class cherryphp {
     public function addAutoloader($path,$base=null) {
         (new \Cherry\Base\Autoloader($path,$base))->register();
     }
+}
+
+foreach((array)xenon::config('framework.preload') as $preload) {
+    class_exists($preload,true);
 }
