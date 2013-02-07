@@ -74,7 +74,7 @@ class DatabaseConnection {
             } else {
                 self::$dbpool[$pool] = new self($pool);
             }
-        } else echo "In cache.\n";
+        }
         return self::$dbpool[$pool];
     }
 
