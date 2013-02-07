@@ -50,6 +50,7 @@ class SdlNode implements ArrayAccess, Countable {
     private $attr       = [];
     private $children   = [];
     private $comment    = null;
+    private $doccomment = null;
     private $ns         = null;
 
     /**
@@ -117,6 +118,7 @@ class SdlNode implements ArrayAccess, Countable {
         $_attr = [];
         $_name = null;
         $_vals = [];
+        $_doccomment = null;
         $_comment = null;
         $_final = false;
         $_recurse = false;
@@ -133,6 +135,57 @@ class SdlNode implements ArrayAccess, Countable {
                 switch($tok[0]) {
                     // Ignore open tag
                     case T_OPEN_TAG:
+                        break;
+
+                    // Keywords, let these slip through as strings
+                    case T_LOGICAL_OR:
+                    case T_DEFAULT:
+                    case T_CLASS:
+                    case T_INTERFACE:
+                    case T_EXTENDS:
+                    case T_ISSET:
+                    case T_NAMESPACE:
+                    case T_NEW:
+                    case T_ECHO:
+                    case T_INCLUDE:
+                    case T_IF:
+                    case T_VAR:
+                    case T_STATIC:
+                    case T_PRINT:
+                    case T_USE:
+                    case T_ELSE:
+                    case T_ELSEIF:
+                    // And we have numbers as well
+                    case T_DNUMBER:
+                    // Strings as keywords are handled here
+                    case T_STRING:
+                        if ($state == self::SP_NODENAME) {
+                            // If we are expecting the node name, we got it
+                            $_name = $str;
+                            $state = self::SP_NODEVALUE;
+                        } elseif ($state == self::SP_NODEVALUE) {
+                            // If we are expecting a node value, this must be
+                            // an attribute or a reserved keyword.
+                            $nvalue = null;
+                            if ($this->getTypedValue($str,$tok[0],$nvalue)) {
+                                $_vals[] = $nvalue;
+                                $idx++;
+                            } else {
+                                $_attrn = $str;
+                                $state = self::SP_ATTRIBUTE;
+                            }
+                        } elseif ($state == self::SP_ATTRIBUTE) {
+
+                            $value = null;
+                            if ($this->getTypedValue($str,$tok[0],$value)) {
+                                $_attr[$_attrn] = $value;
+                            } else {
+                                $_attr[$_attrn] = $str;
+                            }
+                            $state = self::SP_NODEVALUE;
+                        } else {
+
+                        }
                         break;
 
                     // Strings and numbers
@@ -209,11 +262,14 @@ class SdlNode implements ArrayAccess, Countable {
 
                         }
                         break;
-/*
+                    case T_DOC_COMMENT:
+                        $str = trim(substr($str,3));
+                        if ($_doccomment) $_cdocomment.="\n".$str;
+                        else $_doccomment = $str;
+                        break;
                     default:
                         $type = token_name($tok[0]);
                         throw new SdlParseException("Unhandled token in sdl: {$tok[1]} of type {$type} (line {$tok[2]}");
-*/
                 }
             } else {
                 switch($tok) {
@@ -260,6 +316,7 @@ class SdlNode implements ArrayAccess, Countable {
                     if ($_recurse) $toks = $cnod->decode($toks);
                     $this->children[] = $cnod;
                     $_comment = null;
+                    $_doccomment = null;
                 }
                 $_name = null; $_vals = []; $_attr = [];
                 $_final = false; $_recurse = false; $_ns = null;
