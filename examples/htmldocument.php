@@ -17,9 +17,9 @@ class HelloCherry extends ConsoleApplication {
 
         // Write to the document using the htmltag helper
         $doc(h::p("Hello World!")->setStyle('font-weight:bold'));
-        $doc(h::div()->writeMulti(
-                h::input()->checkbox(),
-                h::input()->checkbox()->disabled()
+        $doc(h::div(
+                h::input()->makecheckbox(),
+                h::input()->makecheckbox()->disabled()
             )->setStyle('border:solid 1px red; background-color:#fee;'));
 
         // And finally output it

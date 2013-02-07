@@ -50,6 +50,7 @@ class SdlNode implements ArrayAccess, Countable {
     private $attr       = [];
     private $children   = [];
     private $comment    = null;
+    private $doccomment = null;
     private $ns         = null;
 
     /**
@@ -117,6 +118,7 @@ class SdlNode implements ArrayAccess, Countable {
         $_attr = [];
         $_name = null;
         $_vals = [];
+        $_doccomment = null;
         $_comment = null;
         $_final = false;
         $_recurse = false;
@@ -136,9 +138,11 @@ class SdlNode implements ArrayAccess, Countable {
                         break;
 
                     // Keywords, let these slip through as strings
+                    case T_LOGICAL_OR:
                     case T_DEFAULT:
                     case T_CLASS:
                     case T_INTERFACE:
+                    case T_EXTENDS:
                     case T_ISSET:
                     case T_NAMESPACE:
                     case T_NEW:
@@ -147,6 +151,10 @@ class SdlNode implements ArrayAccess, Countable {
                     case T_IF:
                     case T_VAR:
                     case T_STATIC:
+                    case T_PRINT:
+                    case T_USE:
+                    case T_ELSE:
+                    case T_ELSEIF:
                     // And we have numbers as well
                     case T_DNUMBER:
                     // Strings as keywords are handled here
@@ -224,6 +232,11 @@ class SdlNode implements ArrayAccess, Countable {
                         if ($_comment) $_comment.="\n".$str;
                         else $_comment = $str;
                         break;
+                    case T_DOC_COMMENT:
+                        $str = trim(substr($str,3));
+                        if ($_doccomment) $_cdocomment.="\n".$str;
+                        else $_doccomment = $str;
+                        break;
                     default:
                         $type = token_name($tok[0]);
                         throw new SdlParseException("Unhandled token in sdl: {$tok[1]} of type {$type} (line {$tok[2]}");
@@ -273,6 +286,7 @@ class SdlNode implements ArrayAccess, Countable {
                     if ($_recurse) $toks = $cnod->decode($toks);
                     $this->children[] = $cnod;
                     $_comment = null;
+                    $_doccomment = null;
                 }
                 $_name = null; $_vals = []; $_attr = [];
                 $_final = false; $_recurse = false; $_ns = null;
@@ -629,13 +643,21 @@ class SdlNode implements ArrayAccess, Countable {
         return null;
     }
 
+    public function hasChildren() {
+        return (count($this->children) > 0);
+    }
+
     /**
      * @brief Return all the attributes of the node.
      *
      * @return array The attributes
      */
     public function getAttributes() {
-        return $this->attr;
+        $ao = [];
+        foreach($this->attr as $k=>$v) {
+            $ao[$k] = $this->getCastValue($v);
+        }
+        return $ao;
     }
 
     /**

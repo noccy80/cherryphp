@@ -17,7 +17,13 @@ class Glyph {
         'block6of8' => '&#x2586;',
         'block7of8' => '&#x2587;',
         'blockmid' => '&#x2500;',
-        'blockmid2' => '&#x25AC;'
+        'blockmid2' => '&#x25AC;',
+        'diag1' => '&#x2571;',
+        'diag2' => '&#x2572;',
+        'diagcross' => '&#x2573;',
+        'check0' => '&#x2B1C;',
+        'check1' => '&#x2B1B;',
+        'cross' => '&#x274C;'
     ];
     private static $work = [
         'snake' => [
