@@ -16,6 +16,8 @@ class DatabaseConnection {
 
     public function __construct($uri, $opts=array()) {
 
+        if (!$uri) throw new \UnexpectedValueException("DatabaseConnection::__construct() expects an URI");
+
         $this->sm = new SchemaManager($this);
         $ci = parse_url($uri);
         if (strpos($uri,"://")===false) {
@@ -72,7 +74,11 @@ class DatabaseConnection {
             if (array_key_exists($pool,self::$config)) {
                 self::$dbpool[$pool] = new self(self::$config[$pool]);
             } else {
-                self::$dbpool[$pool] = new self($pool);
+                if (strpos($pool,"://")!==false) {
+                    self::$dbpool[$pool] = new self($pool);
+                } else {
+                    throw new \UnexpectedValueException("Unable to connect to pool {$pool}");
+                }
             }
         }
         return self::$dbpool[$pool];
@@ -118,7 +124,7 @@ class DatabaseConnection {
 
     public function execute($sql,$varargs=null) {
         $args = func_get_args();
-        $stmt = shift($args);
+        $stmt = \shift($args);
     }
 
     public static function exception_handler($exception) {
