@@ -1,0 +1,12 @@
+<phpunit bootstrap="tests/_bootstrap.php">
+    <testsuites>
+        <testsuite name="Cherry">
+            <directory>./tests/src/</directory>
+        </testsuite>
+    </testsuites>
+    <logging>
+        <log type="coverage-html" target="docs/phpunit/coverage" charset="UTF-8" yui="true" highlight="true" />
+        <log type="testdox-html" target="docs/phpunit/testdox.html" />
+        <log type="junit" target="docs/phpunit/logfile.xml" logIncompleteSkipped="true" />
+    </logging>
+</phpunit>
