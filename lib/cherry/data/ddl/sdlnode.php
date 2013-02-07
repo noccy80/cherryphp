@@ -25,25 +25,26 @@ use Countable;
  */
 class SdlNode implements ArrayAccess, Countable {
 
-    // Literal types
-    const   LT_STRING   = 1; // "string" or `string`
-    const   LT_CHAR     = 2; // Character as 'c'   --- UNSUPPORTED
-    const   LT_INT      = 3; // 123
-    const   LT_LONGINT  = 4; // 123L or 123l   --- UNSUPPORTED
-    const   LT_FLOAT    = 5; // 123.45F or 123.45f   --- UNSUPPORTED
-    const   LT_DFLOAT   = 6; // 123.45 or 123.45d or 123.45D   --- PARTIALLY
-    const   LT_DECIMAL  = 7; // 123.45BD or 123.45bd   --- UNSUPPORTED
-    const   LT_BOOLEAN  = 8; // Boolean, yes no or true false
-    const   LT_DATE     = 9; // YYYY/MM/DD   --- UNSUPPORTED
-    const   LT_DATETIME = 10; // yyyy/mm/dd hh:mm(:ss)(.xxx)(-ZONE)   --- UNSUPPORTED
-    const   LT_TIMESPAN = 11; //  (d'd':)hh:mm:ss(.xxx)   --- UNSUPPORTED
-    const   LT_BINARY   = 12; // [base64data]   --- UNSUPPORTED
-    const   LT_NULL     = 13; // null
+    // Literal types - U = unsupported, P = partial support
+    const   LT_STRING   = 1;  //     "string" or `string`
+    const   LT_CHAR     = 2;  // [U] Character as 'c'
+    const   LT_INT      = 3;  //     123
+    const   LT_LONGINT  = 4;  // [U] 123L or 123l
+    const   LT_FLOAT    = 5;  // [U] 123.45F or 123.45f
+    const   LT_DFLOAT   = 6;  // [P] 123.45 or 123.45d or 123.45D
+    const   LT_DECIMAL  = 7;  // [U] 123.45BD or 123.45bd
+    const   LT_BOOLEAN  = 8;  //     Boolean, yes no or true false
+    const   LT_DATE     = 9;  // [U] YYYY/MM/DD
+    const   LT_DATETIME = 10; // [U] yyyy/mm/dd hh:mm(:ss)(.xxx)(-ZONE)
+    const   LT_TIMESPAN = 11; // [U] (d'd':)hh:mm:ss(.xxx)
+    const   LT_BINARY   = 12; //     [base64data]
+    const   LT_NULL     = 13; //     null
     // States for parser
     const   SP_NODENAME  = 0; // Expecting node name
     const   SP_NODEVALUE = 1; // Expecting node value
     const   SP_VALUELIST = 2; // We are in a value list
     const   SP_ATTRIBUTE = 3; // We are assigning to an attribute
+    const   SP_NODEB64C = 4; // Base64-chunk for node value.
 
     private $name       = null;
     private $values     = null;
@@ -103,7 +104,8 @@ class SdlNode implements ArrayAccess, Countable {
      *
      *
      */
-    public function decode($string) {
+    public function decode($string,array $options=null) {
+        $opts = (object)array_merge([ 'verify_base64'=>true ], (array)$options);
         if (!is_array($string)) {
             $subnodes = [];
             $depth = 0;
@@ -115,6 +117,7 @@ class SdlNode implements ArrayAccess, Countable {
 
         // Local state for parser
         $_attrn = null;
+        $_b64data = null;
         $_attr = [];
         $_name = null;
         $_vals = [];
@@ -155,6 +158,7 @@ class SdlNode implements ArrayAccess, Countable {
                     case T_USE:
                     case T_ELSE:
                     case T_ELSEIF:
+                    case T_IS_EQUAL:
                     // And we have numbers as well
                     case T_DNUMBER:
                     // Strings as keywords are handled here
@@ -175,7 +179,6 @@ class SdlNode implements ArrayAccess, Countable {
                                 $state = self::SP_ATTRIBUTE;
                             }
                         } elseif ($state == self::SP_ATTRIBUTE) {
-
                             $value = null;
                             if ($this->getTypedValue($str,$tok[0],$value)) {
                                 $_attr[$_attrn] = $value;
@@ -183,8 +186,10 @@ class SdlNode implements ArrayAccess, Countable {
                                 $_attr[$_attrn] = $str;
                             }
                             $state = self::SP_NODEVALUE;
+                        } elseif ($state == self::SP_NODEB64C) {
+                            $_b64data.=$str;
                         } else {
-
+                            throw new SdlParseException("Value token without state.");
                         }
                         break;
 
@@ -222,6 +227,8 @@ class SdlNode implements ArrayAccess, Countable {
 
                     case T_WHITESPACE:
                         if (strpos($str, "\n")!==false) {
+                            // Continue if we are parsing base64 data
+                            if ($state == self::SP_NODEB64C) break;
                             $_final = true;
                             $state = self::SP_NODENAME;
                             $idx = 0;
@@ -232,36 +239,7 @@ class SdlNode implements ArrayAccess, Countable {
                         if ($_comment) $_comment.="\n".$str;
                         else $_comment = $str;
                         break;
-                    // Keywords, let these slip through as strings
-                    default:
-                        if ($state == self::SP_NODENAME) {
-                            // If we are expecting the node name, we got it
-                            $_name = $str;
-                            $state = self::SP_NODEVALUE;
-                        } elseif ($state == self::SP_NODEVALUE) {
-                            // If we are expecting a node value, this must be
-                            // an attribute or a reserved keyword.
-                            $nvalue = null;
-                            if ($this->getTypedValue($str,$tok[0],$nvalue)) {
-                                $_vals[] = $nvalue;
-                                $idx++;
-                            } else {
-                                $_attrn = $str;
-                                $state = self::SP_ATTRIBUTE;
-                            }
-                        } elseif ($state == self::SP_ATTRIBUTE) {
 
-                            $value = null;
-                            if ($this->getTypedValue($str,$tok[0],$value)) {
-                                $_attr[$_attrn] = $value;
-                            } else {
-                                $_attr[$_attrn] = $str;
-                            }
-                            $state = self::SP_NODEVALUE;
-                        } else {
-
-                        }
-                        break;
                     case T_DOC_COMMENT:
                         $str = trim(substr($str,3));
                         if ($_doccomment) $_cdocomment.="\n".$str;
@@ -283,6 +261,29 @@ class SdlNode implements ArrayAccess, Countable {
                     case "}":
                         //$_final = true;
                         $_ret = true;
+                        break;
+                    case "[":
+                        // Begin base64 chunk
+                        if ($state == self::SP_NODEVALUE) {
+                            $state = self::SP_NODEB64C;
+                            $_b64data = null;
+                        } else {
+                            throw new SdlParseException("Unexpected '[' in data.");
+                        }
+                        break;
+                    case "]";
+                        // End base64 chunk
+                        if ($state == self::SP_NODEB64C) {
+                            $state = self::SP_NODEVALUE;
+                            $nvalue = null;
+                            $str = base64_decode($str);
+                            if ($this->getTypedValue($str,'base64',$nvalue)) {
+                                $_vals[] = $nvalue;
+                                $idx++;
+                            }
+                        } else {
+                            throw new SdlParseException("Unexpected ']' in data.");
+                        }
                         break;
                     case ";";
                         // On semicolon we finalize the current tag and resume
@@ -390,6 +391,9 @@ class SdlNode implements ArrayAccess, Countable {
             switch($type) {
                 case self::LT_BOOLEAN:
                     return ($val?'true':'false');
+                case self::LT_BINARY:
+                    $sd = \wordwrap(\base64_encode($val),74);
+                    return '['.$sd.']';
                 case self::LT_NULL:
                     return 'null';
                 case self::LT_DFLOAT:
@@ -420,7 +424,7 @@ class SdlNode implements ArrayAccess, Countable {
      * @todo Parse dates and other value types.
      *
      * @param string $value The value string
-     * @param Mixed $tok The token identifier
+     * @param Mixed $tok The token identifier (or keyword, such as "base64")
      * @param Array &$typedval The resulting value
      * @return bool True if the typed value could be retrieved
      */
@@ -438,6 +442,10 @@ class SdlNode implements ArrayAccess, Countable {
         } elseif ($value === false) {
                 $typedval = [ false, self::LT_BOOLEAN ];
                 return true;
+        }
+        if ($tok == 'base64') {
+            $typedval = [ $value, self::LT_BINARY ];
+            return true;
         }
         switch($value) {
             case "null":
@@ -487,9 +495,20 @@ class SdlNode implements ArrayAccess, Countable {
      * @param Mixed $value The value
      * @return Mixed The typed value
      */
-    private function getSingleTypedValue($value) {
+    private function getSingleTypedValue($value,$type=null) {
         $ret = null;
-        if ($this->getTypedValue($value,null,$ret)) {
+        switch($type) {
+            case self::LT_BINARY:
+                $type = 'base64';
+                break;
+            case self::LT_BOOLEAN:
+                $type = \T_STRING;
+                break;
+            default:
+                $type = null;
+                break;
+        }
+        if ($this->getTypedValue($value,$type,$ret)) {
             return $ret;
         } else {
             return $value;
@@ -517,6 +536,8 @@ class SdlNode implements ArrayAccess, Countable {
                 case self::LT_INT:
                     return $val;
                 case self::LT_STRING:
+                    return $val;
+                case self::LT_BINARY:
                     return $val;
                 default:
                     throw new SdlParseException("Internal error: Casting from unhandled internal value type.");
@@ -619,12 +640,12 @@ class SdlNode implements ArrayAccess, Countable {
         //return $this->values;
     }
 
-    public function setValue($value) {
-        $this->values[0] = $this->getSingleTypedValue($value);
+    public function setValue($value,$index=0,$type=null) {
+        $this->values[$index] = $this->getSingleTypedValue($value,$type);
     }
 
-    public function addValue($value) {
-        $this->values[] = $this->getSingleTypedValue($value);
+    public function addValue($value,$type=null) {
+        $this->values[] = $this->getSingleTypedValue($value,$type);
     }
 
     /**
@@ -668,6 +689,11 @@ class SdlNode implements ArrayAccess, Countable {
      * @return SdlNode The first matching node or null
      */
     public function getChild($name,$withvalue=null) {
+        if (is_integer($name)) {
+            if (!empty($this->children[$name]))
+                return $this->children[$name];
+            return null;
+        }
         foreach($this->children as $nod) {
             if ($nod->getName() == $name) {
                 if (!$withvalue) return $nod;
