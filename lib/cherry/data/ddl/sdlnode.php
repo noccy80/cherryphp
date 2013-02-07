@@ -86,7 +86,7 @@ class SdlNode implements ArrayAccess, Countable {
     public function loadFile($file) {
         // TODO: Check for errors
         $fc = file_get_contents($file);
-        $this->loadString($fc);
+        $this->decode($fc);
     }
 
     /**
@@ -110,10 +110,11 @@ class SdlNode implements ArrayAccess, Countable {
             $subnodes = [];
             $depth = 0;
             // Opening tag required for the parser to do it's thing.
-            $toks = token_get_all("<?php {$string}");
+            $toks = token_get_all("<?php {$string}\n");
         } else {
             $toks = $string;
         }
+        
 
         // Local state for parser
         $_attrn = null;
@@ -407,7 +408,7 @@ class SdlNode implements ArrayAccess, Countable {
             if (!is_string($str)) return $str;
         } elseif (is_bool($str)) {
             return ($str?'true':'false');
-        } elseif ($str=="@NULL") {
+        } elseif (is_null($str) || ($str=="@NULL")) {
             return "null";
         }
         return "\"".str_replace("\"","\\\"",$str)."\"";
@@ -540,8 +541,8 @@ class SdlNode implements ArrayAccess, Countable {
                 case self::LT_BINARY:
                     return $val;
                 default:
-                    throw new SdlParseException("Internal error: Casting from unhandled internal value type.");
-                    $str = $val;
+                    \debug("Warning: Casting from unhandled internal value type.");
+                    return (string)$val;
             }
         }
         return $value;
@@ -556,6 +557,11 @@ class SdlNode implements ArrayAccess, Countable {
         $this->children[] = $node;
     }
 
+    /**
+     * @brief Remove a child; node must match exact (===)
+     *
+     * @param SdlNode $node The node to delete.
+     */
     public function removeChild(SdlNode $node) {
         $this->children = array_filter(
             $this->children,
@@ -574,8 +580,13 @@ class SdlNode implements ArrayAccess, Countable {
         return $this->name;
     }
 
+    /**
+     * @brief Return the name with the namespace prepended.
+     *
+     * @return string The name with the namespace prepended.
+     */
     public function getNameNs() {
-        if ($this->ns)
+        if (!empty($this->ns))
             return $this->ns.':'.$this->name;
         else
             return ':'.$this->name;
@@ -640,23 +651,37 @@ class SdlNode implements ArrayAccess, Countable {
         //return $this->values;
     }
 
+    /**
+     * @brief Set the value at a index.
+     *
+     * @param Mixed $value The value to set
+     * @param int $index The index (default 0)
+     * @param int $type The type to assign (null=detect)
+     */
     public function setValue($value,$index=0,$type=null) {
         $this->values[$index] = $this->getSingleTypedValue($value,$type);
     }
 
+    /**
+     * @brief Add the value to an attribute.
+     *
+     * This function will not overwrite anything.
+     *
+     * @param Mixed $value The value to set
+     * @param int $type The type to assign (null=detect)
+     */
     public function addValue($value,$type=null) {
         $this->values[] = $this->getSingleTypedValue($value,$type);
     }
 
     /**
-     * @brief Return the first value of the node.
+     * @brief Return a value from the node.
      *
-     * This function is useful if you don't want to use arrayaccess, i.e. $node[0]
-     *
+     * @param int $index The index to retrieve.
      * @return mixed The first value of the node
      */
-    public function getValue() {
-        return $this->getCastValue($this->values[0]);
+    public function getValue($index=0) {
+        return $this->getCastValue($this->values[$index]);
     }
 
     /**
@@ -676,7 +701,12 @@ class SdlNode implements ArrayAccess, Countable {
         }
         return $ret;
     }
-    
+
+    /**
+     * @brief Check if a node has child nodes
+     *
+     * @return bool True if the node has child nodes
+     */
     public function hasChildren() {
         return (count($this->children)>0);
     }
@@ -743,6 +773,11 @@ class SdlNode implements ArrayAccess, Countable {
     public function setAttribute($name,$value) {
         $this->attr[$name] = $value;
     }
+    
+    public function removeAttribute($name) {
+        $this->attr[$name] = null;
+        unset($this->attr[$name]); 
+    }
 
     // From countable
     public function count() {
@@ -773,9 +808,7 @@ class SdlNode implements ArrayAccess, Countable {
     }
 
     public function __get($key) {
-        if (array_key_exists($key,$this->attr))
-            return $this->getCastValue($this->attr[$key]);
-        return null;
+        return $this->getAttribute($key);
     }
     public function __set($key,$value) {
         if (is_array($value))
@@ -783,7 +816,7 @@ class SdlNode implements ArrayAccess, Countable {
         $this->attr[$key]=$this->getSingleTypedValue($value);
     }
     public function __unset($key) {
-        unset($this->attr[$key]);
+        $this->removeAttribute($key);
     }
 
 }

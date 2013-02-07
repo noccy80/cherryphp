@@ -34,15 +34,21 @@ class SdlTestCase extends \PHPUnit_Framework_TestCase {
         $node = new SdlNode(null,[ "foo", "bar" ]);
         $this->assertTrue($node instanceof SdlNode);
         $this->assertEquals(count($node->getValues()), 2);
-        $this->assertEquals($node[0],"foo");
-        $this->assertEquals($node[1],"bar");
+        $this->assertEquals("foo",$node[0]);
+        $this->assertEquals("bar",$node[1]);
+        $this->assertEquals("foo",$node->getValue(0));
+        $this->assertEquals("bar",$node->getValue(1));
     }
     
     public function testCreateTree() {
         $node1 = new SdlNode("root");
         $node2 = new SdlNode("subnode","foo");
         $node1->addChild($node2);
-        $this->node = $node1;
+        $this->assertTrue($node1->hasChildren());
+        $this->assertInstanceOf('\Cherry\Data\Ddl\SdlNode',$node1->getChild("subnode"));
+        $cl = $node1->getChildren("subnode");
+        $this->assertEquals(1,count($cl));
+        $this->assertInstanceOf('\Cherry\Data\Ddl\SdlNode',$cl[0]);
     }
     
     public function testSerialize() {
@@ -144,6 +150,22 @@ EOT;
         $this->assertEquals(trim($sdl2),trim($enc2),"Encoded data after adding binary data does not match expected data");
         
     }
+    
+    /**
+     * @expectedException \Cherry\Data\Ddl\SdlParseException
+     */
+    public function testBinaryExceptions() {
+        $test = new SdlNode("test");
+        $test->loadString("[[");
+    }
+
+        /**
+     * @expectedException \Cherry\Data\Ddl\SdlParseException
+     */
+    public function testBinaryExceptionsTwo() {
+        $test = new SdlNode("test");
+        $test->loadString("]]");
+    }
 
     public function testBooleanValues() {
 
@@ -163,7 +185,7 @@ EOT;
         $this->assertEquals(false,$test[1],"Boolean value does not match");
         
         $enc = $test->encode();
-        $this->assertEquals(trim($sdl),trim($enc),"Encoded data after adding noolean values does not match expected data");
+        $this->assertEquals(trim($sdl),trim($enc),"Encoded data after adding boolean values does not match expected data");
         
     }
 
@@ -181,6 +203,41 @@ EOT;
         $this->assertEquals(trim($sdl),trim($enc),"Encoded data after adding null values does not match expected data");
         
     }
+    
+    public function testUnknownValueType() {
+        $method = new ReflectionMethod(
+          '\Cherry\Data\Ddl\SdlNode', 'getCastValue'
+        );
+        $method->setAccessible(true);
+ 
+        $this->assertEquals('string', $method->invoke(new SdlNode, [ "string", -1 ]));        
+    }
+
+    public function testTypedValue() {
+        $method = new ReflectionMethod(
+          '\Cherry\Data\Ddl\SdlNode', 'getTypedValue'
+        );
+        $method->setAccessible(true);
+        $value = null;
+        $ret = $method->invokeArgs(new SdlNode, ["foo", T_STRING, &$value]);
+        $this->assertEquals(["foo",1],$value);
+        $this->assertEquals(true, $ret);
+        
+    }
+
+    public function testEscape() {
+        $method = new ReflectionMethod(
+          '\Cherry\Data\Ddl\SdlNode', 'escape'
+        );
+        $method->setAccessible(true);
+ 
+        $this->assertEquals('false', $method->invoke(new SdlNode, false));   
+        $this->assertEquals('true', $method->invoke(new SdlNode, true));   
+        $this->assertEquals('null', $method->invoke(new SdlNode, null));   
+        $this->assertEquals('8192', $method->invoke(new SdlNode, 8192));   
+        $this->assertEquals('3.14', $method->invoke(new SdlNode, 3.14));   
+        $this->assertEquals("\"Hello\"", $method->invoke(new SdlNode, "Hello"));   
+    }
 
     public function testNumericValues() {
 
@@ -191,13 +248,88 @@ EOT;
         $test->addValue(1);
         $test->addValue(2);
         $test->addValue(3.14);
-        $this->assertEquals(1,$test[0],"First value in tag is not 1");
+        $this->assertEquals(1,$test[0]);
+        $this->assertEquals(2,$test[1]);
+        $this->assertEquals(3.14,$test[2]);
         
         $enc = $test->encode();
         $this->assertEquals(trim($sdl),trim($enc),"Encoded data after adding integer values does not match expected data");
         
     }
     
-}
+    public function testNumericValueLists() {
+        $sdl = "root { 1 2 3 4 5 6 }";
+        $test = new SdlNode("root");
+        $test->loadString($sdl);
+        $this->assertEquals(1,count($test->getChildren()));
+    }
+    
+    public function testValues() {
+        
+        $test = new SdlNode("root");
+        $this->assertEquals(0, count($test));
+        $test->addValue(0);
+        $this->assertEquals(1, count($test));
+        $test->addValue("Hello");
+        $this->assertEquals(2, count($test));
+        $this->assertEquals(null, $test[99]);
+        
+    }
+    
+    public function testAttributes() {
+        
+        $test = new SdlNode("root");
+        $test->setAttribute("name","bob");
+        $this->assertEquals("bob",$test->name);
+        $test->name = "joe";
+        $this->assertEquals("joe",$test->name);
+        unset($test->name);
+        $this->assertEquals(null,$test->name);
+        $test->loadString("pet name=\"bobo\" type=\"dog\" alive=true age=14");
+        $this->assertEquals("dog", $test->getChild("pet")->type, "String ttribute don't match parsed value");
+        $this->assertEquals(true, $test->getChild("pet")->alive, "Bool attribute don't match parsed value");
+        $this->assertEquals(14, $test->getChild("pet")->age, "Numeric attribute don't match parsed value");
+        $this->assertEquals("bobo", $test->getChild("pet")->name, "String attribute don't match parsed value");
 
-//TestCase::register('SdlTestCase');
+        $attr = $test->getChild("pet")->getAttributes();
+        $match = [
+            'name' => 'bobo',
+            'type' => 'dog',
+            'age' => 14,
+            'alive' => true
+        ];
+        $this->assertEquals($match,$attr,"Unexpected attribute set returned");
+
+    }
+    
+    public function testComments() {
+        
+        $test = new SdlNode("commented");
+        $comment = "This is a comment";
+        $test->setComment($comment);
+        $this->assertEquals($comment,$test->getComment());
+        
+    }
+    
+    public function testNamespacesWithName()  {
+        
+        $test = new SdlNode("foo:test");
+        $this->assertEquals("test",$test->getName());
+        $this->assertEquals("foo",$test->getNamespace());
+        $this->assertEquals("foo:test",$test->getNameNs());
+        
+        $test->setNamespace("bar");
+        $this->assertEquals("bar",$test->getNamespace());
+        $this->assertEquals("bar:test",$test->getNameNs());
+
+        $test->setName("arf");
+        $this->assertEquals("bar",$test->getNamespace());
+        $this->assertEquals("bar:arf",$test->getNameNs());
+
+        $test->setNamespace(null);
+        $this->assertEquals(null,$test->getNamespace());
+        $this->assertEquals(":arf",$test->getNameNs());
+        
+    }
+    
+}
