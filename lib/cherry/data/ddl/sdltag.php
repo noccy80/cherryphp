@@ -2,9 +2,6 @@
 
 namespace Cherry\Data\Ddl;
 
-use ArrayAccess;
-use Countable;
-
 /**
  * @brief SDL (Simple Declarative Language) node implementation.
  *
@@ -23,7 +20,7 @@ use Countable;
  * @author Christopher Vagnetoft <noccylabs-at-gmail>
  * @license GNU GPL v3
  */
-class SdlNode implements ArrayAccess, Countable {
+class SdlTag implements \ArrayAccess, \Countable {
 
     // Literal types - U = unsupported, P = partial support
     const   LT_STRING   = 1;  //     "string" or `string`
@@ -314,7 +311,7 @@ class SdlNode implements ArrayAccess, Countable {
             if ($_final) {
                 if ($_name || count($_vals)>0) {
                     if ($_ns) $_name = $_ns.':'.$_name; // Add namespace
-                    $cnod = new SdlNode($_name,$_vals,$_attr,null,$_comment);
+                    $cnod = new SdlTag($_name,$_vals,$_attr,null,$_comment);
                     if ($_recurse) $toks = $cnod->decode($toks);
                     $this->children[] = $cnod;
                     $_comment = null;
@@ -551,18 +548,18 @@ class SdlNode implements ArrayAccess, Countable {
     /**
      * @brief Add a child node to the node.
      *
-     * @param SdlNode $node The node to append
+     * @param SdlTag $node The node to append
      */
-    public function addChild(SdlNode $node) {
+    public function addChild(SdlTag $node) {
         $this->children[] = $node;
     }
 
     /**
      * @brief Remove a child; node must match exact (===)
      *
-     * @param SdlNode $node The node to delete.
+     * @param SdlTag $node The node to delete.
      */
-    public function removeChild(SdlNode $node) {
+    public function removeChild(SdlTag $node) {
         $this->children = array_filter(
             $this->children,
             function($nv) use ($node) {
@@ -716,7 +713,7 @@ class SdlNode implements ArrayAccess, Countable {
      *
      * @param string $name The node name to match
      * @param string $withvalue The node value to match (or null)
-     * @return SdlNode The first matching node or null
+     * @return SdlTag The first matching node or null
      */
     public function getChild($name,$withvalue=null) {
         if (is_integer($name)) {

@@ -2,7 +2,7 @@
 
 require getenv('CHERRY_LIB').'/lib/bootstrap.php';
 
-use Cherry\Data\Ddl\SdlNode;
+use Cherry\Data\Ddl\SdlTag;
 use Cherry\Util\Timer;
 
 // This is a node with base64-encoded data.
@@ -11,11 +11,11 @@ testnode [SGVsbG8gV29ybGQh];
 EOT;
 
 // Read it back out again
-$test = new SdlNode("root");
+$test = new SdlTag("root");
 $test->loadString($sdl);
 
-$node = new SdlNode("testnode2");
-$node->setValue("Putting binary data in the SDL node", 0, SdlNode::LT_BINARY);
+$node = new SdlTag("testnode2");
+$node->setValue("Putting binary data in the SDL node", 0, SdlTag::LT_BINARY);
 $test->addChild($node);
 
 echo "Current state of SDL tree:\n";

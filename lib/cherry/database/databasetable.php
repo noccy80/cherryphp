@@ -1,7 +1,7 @@
 <?php
 
 namespace Cherry\Database;
-use Cherry\Data\Ddl\SdlNode;
+use Cherry\Data\Ddl\SdlTag;
 
 class DatabaseTable {
 
@@ -35,13 +35,13 @@ class DatabaseTable {
         return $this->metadata;
     }
 
-    public function applySdlNode(\Cherry\Data\Ddl\SdlNode $node) {
+    public function applySdlTag(\Cherry\Data\Ddl\SdlTag $node) {
         if ($node->getName() == 'table') {
             if ($node->getValue() != $this->name) {
                 \App::app()->warn("Not applying SDL node to table as names differ: ".$node->getValue());
                 return false;
             }
-            $cur = $this->getSdlNode();
+            $cur = $this->getSdlTag();
             foreach($node->getChildren('column') as $col) {
                 $curcol = $cur->getChild('column',$col->getValue());
                 // Check if the node 
@@ -52,15 +52,15 @@ class DatabaseTable {
         }
     }
     
-    public function getSdlNode() {
+    public function getSdlTag() {
         $table = $this;
 
         // Print out the table nodes
-        $sdl = new SdlNode("table",$table->name);
+        $sdl = new SdlTag("table",$table->name);
         $sdl->setComment("Table {$table->name} from database {$table->database->name}");
         // Convert the columns to SDL
         foreach($table->getColumns() as $co) {
-            $col = new SdlNode("column",$co->name, ['type'=>$co->type ]);
+            $col = new SdlTag("column",$co->name, ['type'=>$co->type ]);
             if (!empty($co->default)) $col->setAttribute('default',$co->default);
             if ($co->auto) $col->setAttribute('auto',1);
             $col->setAttribute('null',$co->null);
@@ -68,12 +68,12 @@ class DatabaseTable {
             $sdl->addChild($col);
         }
         // Convert the indexes to SDL
-        $idx = new SdlNode("indexes");
+        $idx = new SdlTag("indexes");
         foreach($table->getIndexes() as $ix) {
             $cols = $ix->columns;
-            $ii = new SdlNode($ix->type,$ix->name);
+            $ii = new SdlTag($ix->type,$ix->name);
             $ii->setComment("Index {$ix->name}");
-            $ii->addChild(new SdlNode(NULL,$cols));
+            $ii->addChild(new SdlTag(NULL,$cols));
             $idx->addChild($ii);
         }
         $sdl->addChild($idx);

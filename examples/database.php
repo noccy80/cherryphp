@@ -4,7 +4,7 @@ require getenv("CHERRY_LIB")."/lib/bootstrap.php";
 
 // Import databaseconnection class for easy access
 use Cherry\Database\DatabaseConnection;
-use Cherry\Data\Ddl\SdlNode;
+use Cherry\Data\Ddl\SdlTag;
 use Cherry\Crypto\KeyStore;
 
 // Register a connection

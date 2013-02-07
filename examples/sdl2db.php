@@ -4,9 +4,9 @@
 require getenv("CHERRY_LIB")."/lib/bootstrap.php";
 
 use Cherry\Database\DatabaseConnection;
-use Cherry\Data\Ddl\SdlNode;
+use Cherry\Data\Ddl\SdlTag;
 
-$node = new SdlNode("root");
+$node = new SdlTag("root");
 $node->decode(file_get_contents("db.sdl"));
 
 $tables = $node->getChildrenByName("table");

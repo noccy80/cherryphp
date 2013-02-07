@@ -2,22 +2,22 @@
 
 require getenv('CHERRY_LIB').'/lib/bootstrap.php';
 
-use Cherry\Data\Ddl\SdlNode;
+use Cherry\Data\Ddl\SdlTag;
 use Cherry\Util\Timer;
 
 // Create a new root node, we need this.
-$root = new SdlNode("cyanogenmod");
+$root = new SdlTag("cyanogenmod");
 $root->setComment("These are the latest three CyanogenMod versions with some info");
 
 // You can create nodes and set attributes manually
-$cm9 = new SdlNode("version", "9");
+$cm9 = new SdlTag("version", "9");
 $cm9->multiuser = false;
 $cm9->android = "4.0.x";
 $cm9->setComment("Based on AOSP 4.0.x");
 $root->addChild($cm9);
 
 // Or provide them to the constructor
-$cm10 = new SdlNode("version", "10", [
+$cm10 = new SdlTag("version", "10", [
     'multiuser'=>false,
     'android'=>"4.1.x"
 ]);
@@ -25,7 +25,7 @@ $cm10->setComment("Based on AOSP 4.1.x");
 $root->addChild($cm10);
 
 // Comments can also go as the 5th argument
-$cm101 = new SdlNode("version", "10.1", [
+$cm101 = new SdlTag("version", "10.1", [
     'multiuser'=>true,
     'android'=>"4.2.x",
     'note'=>"New and hot!"
@@ -37,7 +37,7 @@ $sdl = $root->encode();
 echo $sdl;
 
 // Read it back out again
-$test = new SdlNode("root");
+$test = new SdlTag("root");
 $test->loadString($sdl);
 
 // Print some info about the various versions.

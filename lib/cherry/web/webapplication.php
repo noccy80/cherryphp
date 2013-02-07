@@ -7,7 +7,7 @@ use Cherry\Application;
 use Cherry\Mvc\Request;
 use Cherry\Mvc\Response;
 use Cherry\Base\PathResolver;
-use Cherry\Data\Ddl\SdlNode;
+use Cherry\Data\Ddl\SdlTag;
 
 abstract class WebApplication extends Application {
 
@@ -20,7 +20,7 @@ abstract class WebApplication extends Application {
         $this->debug("WebApplication: Looking for %s", $cfg);
         if (file_exists($cfg)) {
             $this->debug("WebApplication: Reading configuration...");
-            $config = new SdlNode("root");
+            $config = new SdlTag("root");
             $config->decode(file_get_contents($cfg));
             $this->config = $config;
         }

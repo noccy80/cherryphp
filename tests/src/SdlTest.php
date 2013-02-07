@@ -3,9 +3,9 @@
 require_once "PHPUnit/Autoload.php";
 // use Cherry\CherryUnit\TestCase;
 
-//require_once "lib/cherry/data/ddl/sdlnode.php";
+//require_once "lib/cherry/data/ddl/SdlTag.php";
 
-use Cherry\Data\Ddl\SdlNode;
+use Cherry\Data\Ddl\SdlTag;
 
 class SdlTestCase extends \PHPUnit_Framework_TestCase {
 
@@ -15,24 +15,24 @@ class SdlTestCase extends \PHPUnit_Framework_TestCase {
     public function teardown() { }
     
     public function testCreateContent() {
-        $node = new SdlNode();
-        $this->assertTrue($node instanceof SdlNode);
+        $node = new SdlTag();
+        $this->assertTrue($node instanceof SdlTag);
     }
     
     public function testCreateNamed() {
-        $node = new SdlNode("root");
-        $this->assertTrue($node instanceof SdlNode);
+        $node = new SdlTag("root");
+        $this->assertTrue($node instanceof SdlTag);
     }
     
     public function testCreateValue() {
-        $node = new SdlNode(null, "foo");
-        $this->assertTrue($node instanceof SdlNode);
+        $node = new SdlTag(null, "foo");
+        $this->assertTrue($node instanceof SdlTag);
         $this->assertEquals(count($node->getValues()), 1);
     }
 
     public function testCreateValues() {
-        $node = new SdlNode(null,[ "foo", "bar" ]);
-        $this->assertTrue($node instanceof SdlNode);
+        $node = new SdlTag(null,[ "foo", "bar" ]);
+        $this->assertTrue($node instanceof SdlTag);
         $this->assertEquals(count($node->getValues()), 2);
         $this->assertEquals("foo",$node[0]);
         $this->assertEquals("bar",$node[1]);
@@ -41,23 +41,23 @@ class SdlTestCase extends \PHPUnit_Framework_TestCase {
     }
     
     public function testCreateTree() {
-        $node1 = new SdlNode("root");
-        $node2 = new SdlNode("subnode","foo");
+        $node1 = new SdlTag("root");
+        $node2 = new SdlTag("subnode","foo");
         $node1->addChild($node2);
         $this->assertTrue($node1->hasChildren());
-        $this->assertInstanceOf('\Cherry\Data\Ddl\SdlNode',$node1->getChild("subnode"));
+        $this->assertInstanceOf('\Cherry\Data\Ddl\SdlTag',$node1->getChild("subnode"));
         $cl = $node1->getChildren("subnode");
         $this->assertEquals(1,count($cl));
-        $this->assertInstanceOf('\Cherry\Data\Ddl\SdlNode',$cl[0]);
+        $this->assertInstanceOf('\Cherry\Data\Ddl\SdlTag',$cl[0]);
     }
     
     public function testSerialize() {
-        $node1 = new SdlNode("root");
-        $node2 = new SdlNode("subnode","foo");
+        $node1 = new SdlTag("root");
+        $node2 = new SdlTag("subnode","foo");
         $node1->addChild($node2);
         $ser = $node1->encode();
         $this->assertTrue(is_string($ser));
-        $node = new SdlNode("root");
+        $node = new SdlTag("root");
         $node->loadString($ser);
         $this->assertTrue($node->getChild("root") != null);
         $sn = $node->getChild("root")->getChild("subnode");
@@ -79,7 +79,7 @@ sdl:tag {
 }
 EOT;
         file_put_contents($fnam,$sdl);
-        $node = new SdlNode("root");
+        $node = new SdlTag("root");
         $node->loadFile($fnam);
         $enc = $node->getChild(0)->encode();
         $this->assertEquals(trim($sdl),trim($enc),"Encoded data does not match decoded data");
@@ -106,7 +106,7 @@ root {
 EOT;
         
         // Read it back out again
-        $test = new SdlNode("root");
+        $test = new SdlTag("root");
         $test->loadString($sdl);
         $enc = $test->encode();
         $this->assertEquals(trim($sdl3),trim($enc),"Encoded data does not match decoded data");
@@ -135,14 +135,14 @@ root {
 EOT;
 
         // Read it back out again
-        $test = new SdlNode("root");
+        $test = new SdlTag("root");
         $test->loadString($sdl);
         $enc = $test->encode();
         $this->assertEquals(trim($sdl3),trim($enc),"Encoded data does not match decoded data");
 
-        $node = new SdlNode("testnode2");
+        $node = new SdlTag("testnode2");
         $testvalue = "Putting binary data in the SDL node";
-        $node->setValue($testvalue, 0, SdlNode::LT_BINARY);
+        $node->setValue($testvalue, 0, SdlTag::LT_BINARY);
         $test->addChild($node);
         $this->assertEquals($testvalue,$node[0],"Set binary string does not match retrieved binary string");
         
@@ -155,7 +155,7 @@ EOT;
      * @expectedException \Cherry\Data\Ddl\SdlParseException
      */
     public function testBinaryExceptions() {
-        $test = new SdlNode("test");
+        $test = new SdlTag("test");
         $test->loadString("[[");
     }
 
@@ -163,7 +163,7 @@ EOT;
      * @expectedException \Cherry\Data\Ddl\SdlParseException
      */
     public function testBinaryExceptionsTwo() {
-        $test = new SdlNode("test");
+        $test = new SdlTag("test");
         $test->loadString("]]");
     }
 
@@ -172,15 +172,15 @@ EOT;
         $sdl = "root false false\n";
 
         // Read it back out again
-        $test = new SdlNode("root");
+        $test = new SdlTag("root");
 
         $test->setValue(true);
-        $test->setValue("yes",1,SdlNode::LT_BOOLEAN);
+        $test->setValue("yes",1,SdlTag::LT_BOOLEAN);
         $this->assertEquals(true,$test[0],"Boolean value does not match");
         $this->assertEquals(true,$test[1],"Boolean value does not match");
 
         $test->setValue(false);
-        $test->setValue("no",1,SdlNode::LT_BOOLEAN);
+        $test->setValue("no",1,SdlTag::LT_BOOLEAN);
         $this->assertEquals(false,$test[0],"Boolean value does not match");
         $this->assertEquals(false,$test[1],"Boolean value does not match");
         
@@ -194,7 +194,7 @@ EOT;
         $sdl = "root null\n";
 
         // Read it back out again
-        $test = new SdlNode("root");
+        $test = new SdlTag("root");
 
         $test->setValue(null);
         $this->assertEquals(null,$test[0],"Null value does not match?!");
@@ -206,20 +206,20 @@ EOT;
     
     public function testUnknownValueType() {
         $method = new ReflectionMethod(
-          '\Cherry\Data\Ddl\SdlNode', 'getCastValue'
+          '\Cherry\Data\Ddl\SdlTag', 'getCastValue'
         );
         $method->setAccessible(true);
  
-        $this->assertEquals('string', $method->invoke(new SdlNode, [ "string", -1 ]));        
+        $this->assertEquals('string', $method->invoke(new SdlTag, [ "string", -1 ]));        
     }
 
     public function testTypedValue() {
         $method = new ReflectionMethod(
-          '\Cherry\Data\Ddl\SdlNode', 'getTypedValue'
+          '\Cherry\Data\Ddl\SdlTag', 'getTypedValue'
         );
         $method->setAccessible(true);
         $value = null;
-        $ret = $method->invokeArgs(new SdlNode, ["foo", T_STRING, &$value]);
+        $ret = $method->invokeArgs(new SdlTag, ["foo", T_STRING, &$value]);
         $this->assertEquals(["foo",1],$value);
         $this->assertEquals(true, $ret);
         
@@ -227,23 +227,23 @@ EOT;
 
     public function testEscape() {
         $method = new ReflectionMethod(
-          '\Cherry\Data\Ddl\SdlNode', 'escape'
+          '\Cherry\Data\Ddl\SdlTag', 'escape'
         );
         $method->setAccessible(true);
  
-        $this->assertEquals('false', $method->invoke(new SdlNode, false));   
-        $this->assertEquals('true', $method->invoke(new SdlNode, true));   
-        $this->assertEquals('null', $method->invoke(new SdlNode, null));   
-        $this->assertEquals('8192', $method->invoke(new SdlNode, 8192));   
-        $this->assertEquals('3.14', $method->invoke(new SdlNode, 3.14));   
-        $this->assertEquals("\"Hello\"", $method->invoke(new SdlNode, "Hello"));   
+        $this->assertEquals('false', $method->invoke(new SdlTag, false));   
+        $this->assertEquals('true', $method->invoke(new SdlTag, true));   
+        $this->assertEquals('null', $method->invoke(new SdlTag, null));   
+        $this->assertEquals('8192', $method->invoke(new SdlTag, 8192));   
+        $this->assertEquals('3.14', $method->invoke(new SdlTag, 3.14));   
+        $this->assertEquals("\"Hello\"", $method->invoke(new SdlTag, "Hello"));   
     }
 
     public function testNumericValues() {
 
         $sdl = "root 1 2 3.14\n";
 
-        $test = new SdlNode("root");
+        $test = new SdlTag("root");
 
         $test->addValue(1);
         $test->addValue(2);
@@ -259,14 +259,14 @@ EOT;
     
     public function testNumericValueLists() {
         $sdl = "root { 1 2 3 4 5 6 }";
-        $test = new SdlNode("root");
+        $test = new SdlTag("root");
         $test->loadString($sdl);
         $this->assertEquals(1,count($test->getChildren()));
     }
     
     public function testValues() {
         
-        $test = new SdlNode("root");
+        $test = new SdlTag("root");
         $this->assertEquals(0, count($test));
         $test->addValue(0);
         $this->assertEquals(1, count($test));
@@ -278,7 +278,7 @@ EOT;
     
     public function testAttributes() {
         
-        $test = new SdlNode("root");
+        $test = new SdlTag("root");
         $test->setAttribute("name","bob");
         $this->assertEquals("bob",$test->name);
         $test->name = "joe";
@@ -304,7 +304,7 @@ EOT;
     
     public function testComments() {
         
-        $test = new SdlNode("commented");
+        $test = new SdlTag("commented");
         $comment = "This is a comment";
         $test->setComment($comment);
         $this->assertEquals($comment,$test->getComment());
@@ -313,7 +313,7 @@ EOT;
     
     public function testNamespacesWithName()  {
         
-        $test = new SdlNode("foo:test");
+        $test = new SdlTag("foo:test");
         $this->assertEquals("test",$test->getName());
         $this->assertEquals("foo",$test->getNamespace());
         $this->assertEquals("foo:test",$test->getNameNs());
