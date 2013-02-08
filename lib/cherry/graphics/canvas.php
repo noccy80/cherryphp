@@ -2,40 +2,14 @@
 
 namespace Cherry\Graphics;
 
+use \Cherry\Types\Rect;
+use \Cherry\Types\Point;
+
 //use Cherry\Graphics\Drawable;
 interface IDrawable {
     public function draw(Canvas $dest, Rect $destrect = null, Rect $srcrect = null);
     public function measure();
 }
-
-class Rect {
-    public
-        $x, $y, $w, $h; ///< Coordinates of the rect
-    /**
-     * @brief Create a rect
-     */
-    public function __construct($x,$y,$w,$h) {
-        $this->x = $x;
-        $this->y = $y;
-        $this->w = $w;
-        $this->h = $h;
-    }
-    /**
-     * @brief Helper function
-     */
-    public static function rect($x,$y,$w,$h) {
-        return new Rect($x,$y,$w,$h);
-    }
-
-    public function move($x,$y) {
-        $this->x+= $x;
-        $this->y+= $y;
-    }
-
-}
-//function rect($x,$y,$w,$h) {
-//    return new Rect($x,$y,$w,$h);
-//}
 
 class Canvas implements IDrawable {
     use
@@ -273,67 +247,4 @@ class Canvas implements IDrawable {
         return $img;
     }
 
-}
-
-interface ITrueColorDither { }
-interface IOrderedDither { }
-abstract class Dither {
-    protected
-            $r, $g, $b, $a, $x, $y;
-    private function cv2rgba($c) {
-    }
-    private function rgba2cv($c) {
-    }
-    private function cv($x) {
-        return ($x < 0x00)?0:(($x > 0xFF)?0xFF:$x);
-    }
-    public function ditherColor($x,$y,$c) {
-        $this->a = ($c >> 24) & 0xFF;
-        $this->g = ($c >> 16) & 0xFF;
-        $this->b = ($c >> 8) & 0xFF;
-        $this->r = ($c) & 0xFF;
-        $ret = $this->ditherFunc($x,$y);
-        return ($this->cv($this->a) << 24) | ($this->cv($this->g) << 16) | ($this->cv($this->b) << 8) | ($this->cv($this->r));
-    }
-    abstract protected function ditherFunc($x,$y);
-}
-class OrderedDither extends Dither implements ITrueColorDither,IOrderedDither {
-    public static
-        $mthreshold2x2 = [
-            [ 1, 3 ],
-            [ 4, 2 ]
-        ],
-        $mthreshold3x3 = [
-            [ 3, 7, 4 ],
-            [ 6, 1, 9 ],
-            [ 2, 8, 5 ]
-        ],
-        $mthreshold4x4 = [
-            [ 1,  9,  3, 11 ],
-            [ 13, 5, 15,  7 ],
-            [ 4,  12, 2, 10 ],
-            [ 16, 8, 14,  6 ]
-        ];
-    private
-        $matrix = [],
-        $bias = 0,
-        $adjust = 1;
-    const
-        ODT_2X2 = 1,
-        ODT_3X3 = 2,
-        ODT_4x4 = 3;
-    public function __construct(array $matrix) {
-        $max = max(max($matrix));
-        $this->bias = $max / 2;
-        $this->adjust = $this->bias / 2;
-        $this->matrix = $matrix;
-    }
-    protected function ditherFunc($x,$y) {
-        $x = $x % 3;
-        $y = $y % 3;
-        $tm = ($this->matrix[$x][$y] - $this->bias) / $this->adjust;
-        $this->r = $this->r + $tm;
-        $this->g = $this->g + $tm;
-        $this->b = $this->b + $tm;
-    }
 }
