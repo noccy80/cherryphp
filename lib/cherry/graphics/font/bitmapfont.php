@@ -1,16 +1,23 @@
 <?php
 
-namespace Cherry\Graphics;
+namespace Cherry\Graphics\Font;
 
+use \Cherry\Graphics\Canvas;
 
 class BitmapFont extends Font {
 
-    public function __construct($font) {
+    private $font = 0;
 
+    public function __construct($font) {
+        $this->font = $font;
     }
 
     public function measure($text) {
         
+    }
+    
+    public function drawText(Canvas $image, $x, $y, $text, $color) {
+        \imagestring($image->himage,$this->font,$x,$y,$text, $image->map($color));
     }
 
 }

@@ -20,7 +20,9 @@ class Canvas implements IDrawable {
         $width = null,
         $height = null,
         $truecolor = null,
-        $dither = null;
+        $dither = null,
+        $line_last_x = null,
+        $line_last_y = null;
 
     public function __construct($width=null,$height=null,$bgcolor=null) {
         if ($width && $height)
@@ -103,6 +105,8 @@ class Canvas implements IDrawable {
         $this->himage = imagecreatetruecolor($width,$height);
         $this->truecolor = true;
         $this->refresh();
+        if ($bgcolor)
+            $this->drawFilledRect(0,0,$width,$height,$bgcolor);
     }
 
     public function setDitherClass(Dither $class) {
@@ -113,6 +117,23 @@ class Canvas implements IDrawable {
         $c = $this->map($color);
         //echo "Drawing line [{$x1}x{$y1}-{$x2}x{$y2}] c={$c}\n";
         imageline($this->himage,$x1,$y1,$x2,$y2,$c);
+    }
+
+    public function drawLineTo($x,$y,$color) {
+        $c = $this->map($color);
+        if ($this->line_last_x == null) {
+            $this->line_last_x = $x;
+            $this->line_last_y = $y;
+            return;
+        }
+        //echo "Drawing line [{$x1}x{$y1}-{$x2}x{$y2}] c={$c}\n";
+        imageline($this->himage,$this->line_last_x,$this->line_last_y,$x,$y,$c);
+        $this->line_last_x = $x;
+        $this->line_last_y = $y;
+    }
+    public function drawLineEnd() {
+        $this->line_last_x = null;
+        $this->line_last_y = null;
     }
 
     public function drawRect($x1,$y1,$x2,$y2,$color) {
@@ -162,7 +183,7 @@ class Canvas implements IDrawable {
         if ($this->truecolor) {
             if (!$a) $a = 255;
             $a = ((~((int)$a)) & 0xff) >> 1;
-            return ( (($a & 0x7F) << 24) | (($b & 0xFF) << 16) | (($g & 0xFF) << 8) | ($r & 0xFF) );
+            return ( (($a & 0x7F) << 24) | (($r & 0xFF) << 16) | (($g & 0xFF) << 8) | ($b & 0xFF) );
         }
         // Make sure we don't use more than 255 colors. This might not be
         // the optimal solution but it works for now. It does mean we can
