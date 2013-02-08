@@ -80,7 +80,7 @@ namespace Cherry\Cli {
         const CLEAR_TO_END = "\033[K";
 
         public static function init() {
-            self::$colorstack = new \Data\FifoQueue();
+            self::$colorstack = new \Cherry\Types\Queue\FifoQueue();
             self::$attributes = 0x00;
         }
 

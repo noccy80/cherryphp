@@ -11,7 +11,7 @@ abstract class ConsoleAdapter {
     protected $errorfifo = null;
 
     public function __construct() {
-        $this->errorfifo = new \Data\FifoQueue(250);
+        $this->errorfifo = new \Cherry\Types\Queue\FifoQueue(250);
     }
 
     public function __invoke() {

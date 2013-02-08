@@ -14,15 +14,15 @@ trait SingletonAccess {
     }
 
     public function __clone() {
-        user_error("Cloning not allowed: ".__CLASS__);
+        throw new \RuntimeException("Cloning ".__CLASS__." not allowed with SingletonAccess");
     }
 
-    public function __wakeup() {
-        user_error("Unserialization not allowed: ".__CLASS__);
-    }
+    //public function __wakeup() {
+        //throw new \RuntimeException("Unserializing ".__CLASS__." not allowed with SingletonAccess");
+    //}
 
-    public function __sleep() {
-        user_error("Serialization not allowed: ".__CLASS__);
-    }
+    //public function __sleep() {
+        //throw new \RuntimeException("Serializing ".__CLASS__." not allowed with SingletonAccess");
+    //}
 
 }

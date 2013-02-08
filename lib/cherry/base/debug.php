@@ -10,9 +10,9 @@ class DebugLog {
     protected static $hlog = null;
 
     static private function initqueue() {
-        if (empty(self::$fifo) && class_exists('\Data\FifoQueue')) {
+        if (empty(self::$fifo) && class_exists('\Cherry\Types\Queue\FifoQueue')) {
             $loglen = intval((getenv('LOG_LENGTH')!='')?getenv('LOG_LENGTH'):10);
-            self::$fifo = new \Data\FifoQueue($loglen);
+            self::$fifo = new \Cherry\Types\Queue\FifoQueue($loglen);
         }
     }
 

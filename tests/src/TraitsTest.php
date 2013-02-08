@@ -13,14 +13,7 @@ class TraitsTest extends PHPUnit_Framework_TestCase {
         $this->assertInstanceOf('TraitTest', $i);
     }
     /**
-     * @expectedException PHPUnit_Framework_Error
-     */
-    public function testThatInstanceCanNotBeSerialized() {
-        $i = TraitTest::getInstance();
-        $x = serialize($i);
-    }
-    /**
-     * @expectedException PHPUnit_Framework_Error
+     * @expectedException \RuntimeException
      */
     public function testThatInstanceCanNotBeCloned() {
         $i = TraitTest::getInstance();
