@@ -50,7 +50,13 @@ class ConsoleApplication extends \Cherry\Application {
     }
 
     function __construct($apppath=null,$argv=null) {
-        if ($argv == null) $argv = $GLOBALS['argv'];//  global $argv;
+        if ($argv == null) {
+            if (_IS_CLI) {
+                $argv = $GLOBALS['argv'];//  global $argv;
+            } else {
+                $argv = "";
+            }
+        }
         parent::__construct();
 
         debug('Spawning application');
