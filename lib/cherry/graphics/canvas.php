@@ -222,6 +222,31 @@ class Canvas implements IDrawable {
         }
     }
 
+    /**
+     * @brief Output canvas to the browser
+     *
+     */
+    public function output($type) {
+        switch(strtolower($type)) {
+            case 'jpg':
+            case 'jpeg':
+                header("Content-Type: image/jpeg",true);
+                imagejpeg($this->himage);
+                break;
+            case 'png':
+                header("Content-Type: image/png",true);
+                imagepng($this->himage);
+                break;
+            case 'gif':
+                header("Content-Type: image/gif",true);
+                imagegif($this->himage);
+                break;
+            default:
+                user_error("Unsupported image type: ".$ext);
+                break;
+        }
+    }
+
     public function resize($width,$height,$hq=false,$resample=true) {
 
         $nw = $width;
