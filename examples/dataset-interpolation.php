@@ -9,12 +9,12 @@ use Cherry\Graphics\Canvas;
 use Cherry\Graphics\Font\BitmapFont;
 
 class DatasetInterpolationExample extends \Cherry\Cli\ConsoleApplication {
-    private $ds;
+    private $dataset;
     private function populate() {
         // Stuff some random numbers in there
         for($n = 0; $n <= 50; $n++) {
             $val = rand(0,45);
-            $this->ds->addRow([
+            $this->dataset->addRow([
                 'time' => $n*50,
                 'value' => $val
             ]);
@@ -26,7 +26,7 @@ class DatasetInterpolationExample extends \Cherry\Cli\ConsoleApplication {
         $bf = new BitmapFont(1);
         $bfc = new BitmapFont(2);
 
-        $ip1 = $this->ds->getSampleSet("time","value")->getValueInterpolator($interpolation);
+        $ip1 = $this->dataset->getSampleSet("time","value")->getValueInterpolator($interpolation);
         // Now, let's plot 1000 points of data; we do this by using getValueAt() and
         // then call the drawLineTo() function which will either set the starting point
         // to draw from (in its internal state) or draw a line from the last point (or
@@ -50,16 +50,16 @@ class DatasetInterpolationExample extends \Cherry\Cli\ConsoleApplication {
     public function main() {
 
         // Create a new dataset
-        $this->ds = new DataSet();
-        $this->ds->setColumnType("time",DataSet::TYPE_SCALE);
-        $this->ds->setColumnType("value",DataSet::TYPE_INTEGER);
+        $this->dataset = new DataSet();
+        $this->dataset->setColumnType("time",DataSet::TYPE_SCALE);
+        $this->dataset->setColumnType("value",DataSet::TYPE_INTEGER);
 
         // Populate the dataset
         $this->populate();
 
         // We need a canvas, so let's make us one!
         $cv = new Canvas();
-        $cv->create(1000,600,[255,255,255]);
+        $cv->create(1000,800,[255,255,255]);
 
         // Linear interpolation.
         $this->drawchart($cv,"linear","Linear Interpolation", 0, [150,0,0]);
@@ -67,6 +67,7 @@ class DatasetInterpolationExample extends \Cherry\Cli\ConsoleApplication {
         // slightly softer curves. The drawing and fetching is the same.
         $this->drawchart($cv,"cosine","Cosine Interpolation", 200, [0,150,0]);
         $this->drawchart($cv,"cubic","Cubic Interpolation", 400, [0,0,150]);
+        $this->drawchart($cv,"catmullrom","Catmull-Rom Interpolation", 600, [0,150,150]);
 
         // Separate our graphs
         foreach([200,400,600] as $divx)
