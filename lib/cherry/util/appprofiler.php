@@ -18,7 +18,8 @@ class AppProfiler {
             $meminitialfull = null,
             $reportinglevel = null;
     private static
-            $binlog = true;
+            $binlog = true,
+            $tracestart = null;
         const
             LOGEVT_ENTER = '->:',
             LOGEVT_LEAVE = '<-:',
@@ -36,6 +37,7 @@ class AppProfiler {
         }
         self::$binlog = (bool)$binary;
         self::$tracetarget = $file;
+        self::$tracestart = microtime(true);
         if (self::$binlog) {
             self::$tracelog = new \Cherry\BinaryLog(self::$tracetarget,"w");
             self::$tracelog->setCompress(true);
@@ -56,7 +58,15 @@ class AppProfiler {
     }
 
     public static function __appprofiler_ontick() {
-        static $time,$ltrace;
+        static $time,$ltrace,$tick;
+        $tick = (int)$tick + 1;
+        if ($tick == 10) {
+            $tick = 0;
+            $exec = round((microtime(true) - self::$tracestart),2) . "sec";
+            $info = round(memory_get_usage(true) / 1024 / 1024,2) . "MiB";
+            echo "\0337\033[0;60H\033[1;37;41m{$exec}/{$info}\033[0m\0338";
+        }
+
         if (!$time) $time = microtime(true);
         $trace = debug_backtrace(0,2);
         if (count($trace)<2) {
@@ -76,7 +86,7 @@ class AppProfiler {
             unregister_tick_function("Cherry\\Util\\AppProfiler::__appprofiler_ontick");
         }
         $stats = array(
-            "current_time" => microtime(true),
+            "current_time" => microtime(true) - self::$tracestart,
             "memory" => memory_get_usage(false),
             //"file" => $trace[1]["file"].': '.$trace[1]["line"],
             //"function" => (!empty($trace[1]["function"]))?$trace[1]["function"]:"n/a",

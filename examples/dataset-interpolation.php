@@ -45,6 +45,7 @@ class DatasetInterpolationExample extends \Cherry\Cli\ConsoleApplication {
         // When we are done, we end the line sequence so that the next call to
         // drawLineTo will start a new line.
         $cv->drawLineEnd();
+        $cv->drawLine(0,$offset+200,1000,$offset+200,[100,100,100]);
 
     }
     public function main() {
@@ -71,7 +72,6 @@ class DatasetInterpolationExample extends \Cherry\Cli\ConsoleApplication {
 
         // Separate our graphs
         foreach([200,400,600] as $divx)
-            $cv->drawLine(0,(int)$divx,1000,(int)$divx,[100,100,100]);
 
         if (_IS_CLI_SERVER) {
             $cv->output("png");
