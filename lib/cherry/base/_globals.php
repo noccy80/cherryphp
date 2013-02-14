@@ -68,9 +68,10 @@ function preload_class($class) {
 
 function debug($str) {
     $args = func_get_args();
-    if (count($args)>1)
-        $str = call_user_func_array("sprintf",$args);
-    \Cherry\debug($str);
+    call_user_func_array('\Cherry\debug',$args);
+    //if (count($args)>1)
+    //    $str = call_user_func_array("sprintf",$args);
+    //\Cherry\debug($str);
 
 }
 

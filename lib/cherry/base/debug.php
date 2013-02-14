@@ -19,8 +19,12 @@ class DebugLog {
     static function log($type,$fmt,$args=null) {
         self::initqueue();
         $arg = func_get_args();
-        $fmts = array_slice($arg,1);
-        $so = call_user_func_array('sprintf',$fmts);
+        if (count($arg)>1) {
+            $fmts = array_slice($arg,1);
+            $so = call_user_func_array('sprintf',$fmts);
+        } else {
+            $o = $arg[0];
+        }
         if (self::$fifo) self::$fifo->push($so);
         if (self::$hlog) fputs(self::$hlog,$so."\n");
         if (($type == LOG_DEBUG) && (getenv('DEBUG') == 1)) {
