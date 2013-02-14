@@ -34,7 +34,7 @@ class xenon {
     public static function framework($framework,$version="*") {
         if ($framework) {
             if (XENON_DEBUG) echo "xenon: loading {$framework}...\n";
-            require XENON_PATH . "/frameworks/" . $framework . ".php";
+            self::$fwapi = require XENON_PATH . "/frameworks/" . $framework . ".php";
         }
         if (!self::$fwapi) {
             $apiclass = XENON_FWAPI;

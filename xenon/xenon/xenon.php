@@ -18,7 +18,7 @@ if (!defined("XENON_ROOT")) {
     if (($e = getenv("XENON_ROOT")))
         define("XENON_ROOT",$e);
     else
-        define("XENON_ROOT",getcwd());
+        define("XENON_ROOT",realpath(__DIR__));
 }
 
 if (defined("XENON")) {
@@ -33,3 +33,12 @@ if (defined("XENON")) {
     define("XENON_FW_VERSION", $_xenonfwver);
     xenon\xenon::framework($_xenonfw,$_xenonfwver);
 }
+
+spl_autoload_register(function($class) {
+    $match = 'xenon\frameworks';
+    $class = strtolower($class);
+    if (substr($class,0,strlen($match)) == $match) {
+        require_once XENON_ROOT.str_replace("\\","/",substr($class,5)).'.php';
+        return true;
+    }
+});
