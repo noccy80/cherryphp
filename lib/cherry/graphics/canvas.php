@@ -21,6 +21,7 @@ class Canvas implements IDrawable {
         $height = null,
         $truecolor = null,
         $dither = null,
+        $mimetype = null,
         $line_last_x = null,
         $line_last_y = null;
 
@@ -44,6 +45,8 @@ class Canvas implements IDrawable {
                 return $this->truecolor;
             case 'himage':
                 return $this->himage;
+            case 'mimetype':
+                return $this->mimetype;
             default:
                 throw new \BadFunctionCallException("Can not access missing property {$key}");
         }
@@ -84,6 +87,17 @@ class Canvas implements IDrawable {
         $this->refresh();
     }
 
+    public function loadString($string) {
+        if (function_exists('finfo_buffer')) {
+            $fb = finfo_open();
+            $this->mimetype = \finfo_buffer($fb,$string,\FILEINFO_MIME_TYPE | \FILEINFO_SYMLINK);
+        } else {
+            $this->mimetype = "[PECL fileinfo missing]";
+        }
+        $this->himage = imagecreatefromstring($string);
+        $this->refresh();
+    }
+    
     public static function createFromFile($filename) {
         $c = new Canvas();
         $c->load($filename);
@@ -248,7 +262,6 @@ class Canvas implements IDrawable {
     }
 
     public function resize($width,$height,$hq=false,$resample=true) {
-
         $nw = $width;
         $nh = $height;
 
