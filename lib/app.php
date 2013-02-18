@@ -103,17 +103,20 @@ class AppConfig {
      * @param string $default Default value
      * @return Mixed The unmodified value of the key
      */
-    function get($key,$default=null) {
+    function get($keypath,$default=null) {
         // new \Cherry\ScopeTimer("Key fetch {$key}");
         // \Cherry\debug("Config::get {$key}");
         $base = $this->cfg;
-        $keyseg = explode('.',$key);
+        $keyseg = explode('.',$keypath);
         while (($key = array_shift($keyseg))) {
             $hit = false;
             if (is_array($base)) {
                 if (!array_key_exists($key,$base))
                     return $default;
-                $base = $base[$key];
+                if (is_array($base[$key]))
+                    $base = array_unique($base[$key]);
+                else
+                    return $default;
             } elseif (is_object($base)) {
                 if (!isset($base->{$key}))
                     return $default;
@@ -202,4 +205,7 @@ class AppContext {
         unset($this->context[$key]);
     }
 
+}
+
+class ConfigurationException extends \Exception {
 }
