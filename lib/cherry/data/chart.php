@@ -28,21 +28,22 @@ class Chart implements IDrawable {
 
     }
 
-    protected function _background_set($color) {
+    protected function _background_setter($color) {
         $this->background = $color;
     }
-    protected function _background_get() {
+    protected function _background_getter() {
         return $this->background;
     }
+    protected f
 
-    public function addData(SampleSet $s, $charttype) {
+    public function addData(SampleSet $s, $charttype, array $colors) {
 
     }
 
     public function addLegend() {
     }
 
-
     public function getCanvas() {
     }
+
 }

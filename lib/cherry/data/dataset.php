@@ -7,12 +7,8 @@ class DataSet implements \Countable {
     const TYPE_STRING = 0x01;
     const TYPE_INTEGER = 0x10;
     const TYPE_FLOAT = 0x11;
-
     const TYPE_DATE = 0x20;
-    /**
-     * @var Scale is an arbitrary index value that denotes the sample time.
-     */
-    const TYPE_SCALE = 0x21;
+    const TYPE_SCALE = 0x21; ///< @Scale is an arbitrary index value that denotes the sample time.
 
     const IPF_LINEAR = "linear";
     const IPF_COSINE = "cosine";
@@ -25,15 +21,21 @@ class DataSet implements \Countable {
     private $columns = [];
     public $data = [];
 
+    private $_def_column_options = [
+        'unit' => null,
+        'xlabel' => false,
+        'ylabel' => false
+    ];
+
     public function count() {
         return count($this->data);
     }
 
-    public function setColumnType($column,$type,$ipf=null) {
+    public function setColumnType($column,$type,array $options=null) {
         $this->columns[$column] = (object)[
             'name' => $column,
             'type' => $type,
-            'interpolator' => $ipf
+            'options' => array_merge($this->_def_column_options,(array)$options)
         ];
         if ($type & 0x20) $this->timecolumn = $column;
     }
