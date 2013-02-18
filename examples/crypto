@@ -18,8 +18,6 @@ use cherry\base\Event;
 use cherry\base\EventEmitter;
 use Cherry\Extension\ExtensionManager;
 
-App::bundles()->load('cherry.crypto');
-
 // Example: Crypto
 $str = 'Hello World';
 $key = 'FooBar';

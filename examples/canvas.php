@@ -14,10 +14,14 @@ if (!( @include_once "lib/bootstrap.php" )) {
 use Cherry\Graphics\Canvas;
 use Cherry\Graphics\Font\TrueTypeFont;
 use Cherry\Graphics\OrderedDither;
+use Cherry\Cli\Glyph as g;
+
+define('WIDTH',160);
+define('HEIGHT',120);
 
 // Create a canvas of 640x480
 $c = new Canvas();
-$c->create(640,480);
+$c->create(WIDTH,HEIGHT);
 
 // Use ordered dither with a 4x4 matrix
 $c->setDitherClass(
@@ -25,12 +29,15 @@ $c->setDitherClass(
 );
 
 // Draw a colorful pattern
-for($x = 0; $x < 640; $x++) {
-    for($y = 0; $y < 480; $y++) {
+for($x = 0; $x < WIDTH; $x++) {
+    //echo "\x08. ";
+    echo "\rDrawing row {$x}  ";
+    for($y = 0; $y < HEIGHT; $y++) {
+        echo g::work("clock");
         // Calculate the color for the pixel
-        $r = ($x / 640) * 255;
-        $g = 255 - ($x / 640) * 255;
-        $b = ($y / 480) * 255;
+        $r = ($x / WIDTH) * 255;
+        $g = 255 - ($x / WIDTH) * 255;
+        $b = ($y / HEIGHT) * 255;
         // Set the pixel with the red, green and blue values we calculated
         $c->setPixel($x, $y, [$r,$g,$b]);
     }
