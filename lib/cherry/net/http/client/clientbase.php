@@ -2,61 +2,78 @@
 
 namespace Cherry\Net\Http\Client;
 
-use Cherry\Base\EventEmitter;
+use Cherry\Core\TEventEmitter;
 
-abstract class ClientBase extends EventEmitter {
+abstract class ClientBase {
+
+    use TEventEmitter;
+
     protected
         $url                = null;
-        
+
     private
         $cookies            = [],
         $cookiejar          = null,
         $auth_type          = null,
         $auth_params        = null;
-        
+
     const
         HTTP_PROXY          = 'HTTP_PROXY',         ///< (string) Use HTTP proxy for requests
         HTTP_ALL_COOKIES    = 'HTTP_ALL_COOKIES',   ///< (bool) Send all cookies, not just the ones for the domain.
         HTTPS_VERIFY_CERT   = 'HTTPS_VERIFY_CERT',  ///< (bool) Verify the remote certificate
         HTTPS_VERIFY_FP     = 'HTTPS_VERIFY_FP';    ///< (string) Match fingerprint against value
-        
+
     /**
      * @brief Set the request method.
      * @abstract
-     * @param 
+     * @param
      */
     abstract public function setMethod($method);
+
+    abstract public function getMethod();
+
     /**
      * @brief Set a header field
      * @abstract
-     * @param 
-     * @param 
+     * @param
+     * @param
      */
-    abstract public function setHeader($header,$value);
+    abstract public function setRequestHeader($header,$value);
+    public function setHeader($header,$value) {
+        \deprecated("Warning: call to setHeader deprecated, use setRequestHeader instead.");
+        return $this->setRequestHeader($header,$value);
+    }
+    abstract public function getRequestHeader($header);
+    abstract public function getRequestHeaders();
+
     /**
      * @brief
      * @abstract
-     * @param 
-     * @param 
+     * @param
+     * @param
      */
     abstract public function setPostData($contenttype, $postdata);
+
     /**
      * @brief
      * @abstract
      * @return
      */
     abstract public function execute();
+
     /**
      * @brief
      * @abstract
      * @return
      */
     abstract public function getLastError();
+
     /**
      * @brief
      * @abstract
      */
     abstract public function setOption($koa,$v=null);
+
     /**
      * @brief
      * @abstract
@@ -64,7 +81,7 @@ abstract class ClientBase extends EventEmitter {
      * @return
      */
     abstract public function getOption($k);
-    
+
     /**
      * @brief Set the URL for the request.
      *
@@ -84,7 +101,7 @@ abstract class ClientBase extends EventEmitter {
     public function getUrl() {
         return $this->url;
     }
-    
+
     /**
      * @brief Assign a cookie jar
      *
@@ -97,7 +114,7 @@ abstract class ClientBase extends EventEmitter {
             foreach($cs as $c) $this->setCookieRaw($c);
         }
     }
-    
+
     /**
      *
      */
@@ -159,7 +176,7 @@ abstract class ClientBase extends EventEmitter {
             return $this->cookies[$k];
         }
     }
-    
+
     /**
      * @brief Return valid cookies for the request
      *
@@ -167,7 +184,7 @@ abstract class ClientBase extends EventEmitter {
     public function getCookiesForRequest() {
         return array_values($this->cookies);
     }
-    
+
     /**
      * @brief Set up HTTP authentication.
      *
@@ -178,7 +195,7 @@ abstract class ClientBase extends EventEmitter {
         $this->auth_type = $type;
         $this->auth_params = $params;
     }
-    
+
     /**
      * @brief Get the authentication type.
      *
@@ -187,7 +204,7 @@ abstract class ClientBase extends EventEmitter {
     public function getAuthenticationType() {
         return $this->auth_type;
     }
-    
+
     /**
      * @brief Retrieve the authentication params.
      *

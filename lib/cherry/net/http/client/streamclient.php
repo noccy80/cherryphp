@@ -26,6 +26,7 @@ class StreamClient extends ClientBase {
         $response_headers   = [],
         $response_protocol  = null,
         $response_message   = null,
+        $response_type      = null,
         $useragent          = null,
         $timings            = [],
         $verify_cert        = true,
@@ -34,7 +35,7 @@ class StreamClient extends ClientBase {
     public function setMethod($method) {
         $this->request_method = strtoupper($method);
     }
-    
+
     public function getMethod() {
         return $this->request_method;
     }
@@ -44,7 +45,7 @@ class StreamClient extends ClientBase {
         $this->postdata = $postdata;
     }
 
-    public function setHeader($header,$value) {
+    public function setRequestHeader($header,$value) {
         switch(strtolower($header)) {
             case 'user-agent':
                 $this->useragent = $value;
@@ -56,7 +57,18 @@ class StreamClient extends ClientBase {
             $this->request_headers[$header] = $value;
         }
     }
-    
+
+    public function getRequestHeader($header) {
+        $hl = explode("\r\n",$this->request_headers_u);
+        if (array_key_exists($header,$hl))
+            return $hl[$header];
+        return null;
+    }
+
+    public function getRequestHeaders() {
+        return explode("\r\n",$this->request_headers_u);
+    }
+
     private function buildHeaders() {
         $hdrl = $this->request_headers;
         $hdr = ['Connection: Close']; foreach($hdrl as $k=>$v) $hdr[] = str_replace(' ','-',ucwords(str_replace('-',' ',$k))).': '.$v;
@@ -90,10 +102,6 @@ class StreamClient extends ClientBase {
         $ctx = stream_context_create($ctxopts, $ctxparams);
         return $ctx;
     }
-    
-    public function getRequestHeaders() {
-        return explode("\r\n",$this->request_headers_u);
-    }
 
     public function getResponse() {
         return $this->response_data;
@@ -113,7 +121,7 @@ class StreamClient extends ClientBase {
     public function getStatus() {
         return (int)$this->response_status;
     }
-    
+
     public function getLastError() {
         return "Unknown error.";
     }
@@ -133,13 +141,14 @@ class StreamClient extends ClientBase {
         $this->response_data = stream_get_contents($stream);
         $this->response_headers = [];
         // \Cherry\Debug('StreamClient: Parsing response headers');
-        $wd = $this->response_meta['wrapper_data'];
-        $headers = array_slice($wd,1);
-        list($this->response_protocol, $this->response_status, $this->response_message) = explode(' ', $wd[0], 3);
+        $headers = $this->response_meta['wrapper_data'];
         foreach($headers as $header) {
+            var_dump(trim($header));
             if (strpos($header,': ')!==false) {
                 list($k, $v) = explode(': ', $header, 2);
-                if ($k == 'Set-Cookie') $this->setCookieRaw($v);
+                $k = strtolower($k);
+                if ($k == 'set-cookie') $this->setCookieRaw($v);
+                if ($k == 'content-type') $this->response_type = $v;
                 if (array_key_exists($k,$this->response_headers)) {
                     if (!is_array($this->response_headers[$k]))
                         $this->response_headers[$k] = [$this->response_headers[$k]];
@@ -148,6 +157,7 @@ class StreamClient extends ClientBase {
                     $this->response_headers[$k] = $v;
                 }
             } else {
+                list($this->response_protocol, $this->response_status, $this->response_message) = explode(' ', $header, 3);
                 // We probably got redirected somewhere
             }
         }
@@ -158,7 +168,7 @@ class StreamClient extends ClientBase {
         //var_dump($data);
         //var_dump($meta);
     }
-    
+
     public function getTimings() {
         $start = $this->timings['started'];
         $out = [ 'started' => 0 ];
@@ -189,7 +199,7 @@ class StreamClient extends ClientBase {
                 break;
 
             case STREAM_NOTIFY_CONNECT:
-                $this->timings['connected'] = microtime(true); 
+                $this->timings['connected'] = microtime(true);
                 //echo "Connected...";
                 break;
 
@@ -199,7 +209,7 @@ class StreamClient extends ClientBase {
                 break;
 
             case STREAM_NOTIFY_MIME_TYPE_IS:
-                $this->timings['headers'] = microtime(true); 
+                $this->timings['headers'] = microtime(true);
                 //echo "Found the mime-type: ", $message;
                 break;
 
@@ -209,7 +219,7 @@ class StreamClient extends ClientBase {
                 if ($bytes_transferred >= $bytes_max)
                     $this->timings['content_ends'] = microtime(true);
                 $this->bytes_transferred = $bytes_transferred;
-                
+
                 //$this->emit('streamclient.progress', $bytes_transferred, $bytes_max);
                 //echo "Made some progress, downloaded ", $bytes_transferred, " so far";
                 break;
@@ -242,6 +252,10 @@ class StreamClient extends ClientBase {
             default:
                 return null;
         }
+    }
+
+    public function getContentType() {
+        return $this->response_type;
     }
 
 }

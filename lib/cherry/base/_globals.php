@@ -91,6 +91,10 @@ function readpass($prompt) {
     return $password;
 }
 
+function bind($context,callable $closure) {
+    return Closure::bind($closure,$context,$context);
+}
+
 if (_IS_WINDOWS) {
     // Define functions that are not available in windoze
 }

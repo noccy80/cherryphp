@@ -67,7 +67,8 @@ class CacheObject {
             $flags          = 0x00, /// Flags, bitwise combination of CO_* above.
             $objecturi      = null, /// Uri of the object in cache (cache:<type>:<id>)
             $objectid       = null, /// Id of the object (sha1+4 bytes size as hex)
-            $state          = self::CS_EMPTY; /// State, one of CS_* above.
+            $state          = self::CS_EMPTY, /// State, one of CS_* above.
+            $cachepath      = null; /// Path to cache dir
 
     /**
      * @brief Create a new CacheObject.
@@ -91,7 +92,15 @@ class CacheObject {
         $this->assetid = $assetid;
         $this->params = (array)$params;
         ksort($this->variant);
+        $path = ((array)App::config()->get('paths.cache'));
+        $path = $path[0];
+        if (!$path)
+            $path = "/tmp/cherrycache";
+        $this->cachepath = $path;
+        if (!\file_exists($path))
+            \mkdir($path,0700,true);
         if (!($flags & self::CO_DELAY)) $this->query();
+
     }
 
     /**
@@ -139,12 +148,15 @@ class CacheObject {
         } else {
             user_error("Flags don't define caching: ".$this->flags);
         }
+        \debug("CacheObject: Querying object; uri={$this->objecturi}");
         $this->getCacheRecord();
 
         // If we got no hit in cache, and we got a generator assigned we go
         // ahead and generate the content and update the cache.
         if (($this->cache_hit == false) && ($this->generator)) {
-            list($this->content,$this->contenttype,$this->expires) = $this->generate();
+            $gen = $this->generate();
+            if (!is_array($gen)) return;
+            list($this->content,$this->contenttype,$this->expires) = $gen;
             $this->state = self::CS_UPDATED;
         } elseif ($this->cache_hit == false) {
             $this->content = '';
@@ -232,7 +244,20 @@ class CacheObject {
         // explicitly set to be a file
         if (is_callable($this->generator) && !($this->flags & (self::CO_GEN_FILE | self::CO_GEN_PHPFILE))) {
             $ret = call_user_func_array($this->generator,array_merge([ $this->assetid, (object)$this->variant ], $this->params));
-            @list($content,$contenttype,$expires) = $ret;
+            if (count($ret) > 2) {
+                list($content,$contenttype,$expires) = $ret;
+            } elseif (count($ret) > 1) {
+                list($content,$contenttype) = $ret;
+                $expires = null;
+            } elseif (count($ret) > 0) {
+                $content = $ret;
+                $expires = null;
+                $contenttype = null;
+            } elseif ($ret === null) {
+                return null;
+            } else {
+                throw new \UnexpectedValueException("cache generator return value invalid.");
+            }
             if (empty($contenttype)) $contenttype = 'application/octet-stream';
             if (empty($expires)) $expires = $def_expiry;
             return [$content,$contenttype,$expires];
@@ -282,7 +307,7 @@ class CacheObject {
         if ($type == 'cache') {
             if ($cache == 'disk') {
                 // Check cache dir for object
-                $path = App::config()->get('paths.cache');
+                $path = $this->cachepath;
                 $blobpath = $path._DS_.$id;
                 if (file_exists($blobpath)) {
                     $blob = file_get_contents($blobpath);
@@ -313,10 +338,14 @@ class CacheObject {
                     $this->state = self::CS_MISS;
                     \Cherry\debug("Cache miss: %s (%s)", $id, $blobpath);
                 }
-            } elseif ($cache == 'ram') {
+            } elseif ($cache == 'mem') {
                 // check memcached
+                \Cherry\debug("Memcached not implemented: %s (%s)", $id, $blobpath);
+                throw new \LogicException("Memcached not implemented");
             } elseif ($cache == 'auto') {
                 // check memcached for metadata, then read entry from disk.
+                \Cherry\debug("Hybrid cache not implemented: %s (%s)", $id, $blobpath);
+                throw new \LogicException("Hybrid cache not implemented");
             }
             if ((!empty($blobpath)) && ($this->expiresecs > 0) && (time() > $this->expiresecs)) {
                 \Cherry\debug("Entry expired %d seconds ago: %s (%s)", (time()-$this->expiresecs), $id, $blobpath);
@@ -348,7 +377,7 @@ class CacheObject {
         if ($type == 'cache') {
             if ($cache == 'disk') {
                 // Check cache dir for object
-                $path = App::config()->get('paths.cache');
+                $path = $this->cachepath;
                 if ((!is_dir($path)) && (!mkdir($path)))
                     user_error("Cache directory {$path} does not exist and mkdir failed!");
                 $header = [
