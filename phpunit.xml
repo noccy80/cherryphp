@@ -1,4 +1,9 @@
 <phpunit bootstrap="tests/_bootstrap.php">
+    <filter>
+        <whitelist>
+            <directory suffix=".php">lib/cherry</directory>
+        </whitelist>
+    </filter>
     <testsuites>
         <testsuite name="Cherry">
             <directory>./tests/src/</directory>
