@@ -36,9 +36,13 @@ class Rect {
         $this->y = $y;
     }
 
-    public function isIn($x,$y) {
+    public function isXYWithin($x,$y) {
         return (($x >= $this->x) && ($x <= $this->x + $this->w) &&
             ($y >= $this->y) && ($y <= $this->y + $this->h));
+    }
+    
+    public function isPointWithin(Point $p) {
+        return isXYWithin($p->x,$p->y);
     }
 
 }

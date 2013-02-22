@@ -50,6 +50,7 @@ class SdlTag implements \ArrayAccess, \Countable {
     private $comment    = null;
     private $doccomment = null;
     private $ns         = null;
+    private $parent     = null;
 
     /**
      * @brief Create a new SDL node
@@ -73,6 +74,14 @@ class SdlTag implements \ArrayAccess, \Countable {
         }
         $this->children = (array)$children;
         $this->comment = $comment;
+    }
+
+    public function getParent() {
+        return $this->parent;
+    }
+
+    public function setParent($parent) {
+        $this->parent = $parent;
     }
 
     /**
@@ -111,7 +120,7 @@ class SdlTag implements \ArrayAccess, \Countable {
         } else {
             $toks = $string;
         }
-        
+
 
         // Local state for parser
         $_attrn = null;
@@ -178,6 +187,7 @@ class SdlTag implements \ArrayAccess, \Countable {
                             }
                         } elseif ($state == self::SP_ATTRIBUTE) {
                             $value = null;
+                            $_attrn = $this->toAttributeName($_attrn);
                             if ($this->getTypedValue($str,$tok[0],$value)) {
                                 $_attr[$_attrn] = $value;
                             } else {
@@ -326,6 +336,13 @@ class SdlTag implements \ArrayAccess, \Countable {
         if (is_array($string)) {
             return $toks;
         }
+    }
+
+    private function toAttributeName($value) {
+        if ($value === null) return "null";
+        if ($value === false) return "false";
+        if ($value === true) return "true";
+        return $value;
     }
 
     /**
@@ -551,6 +568,7 @@ class SdlTag implements \ArrayAccess, \Countable {
      * @param SdlTag $node The node to append
      */
     public function addChild(SdlTag $node) {
+        $node->setParent($this);
         $this->children[] = $node;
     }
 
@@ -763,6 +781,10 @@ class SdlTag implements \ArrayAccess, \Countable {
         return null;
     }
 
+    public function hasAttribute($name) {
+        return array_key_exists($name,$this->attr);
+    }
+
     /**
      *
      *
@@ -770,10 +792,10 @@ class SdlTag implements \ArrayAccess, \Countable {
     public function setAttribute($name,$value) {
         $this->attr[$name] = $value;
     }
-    
+
     public function removeAttribute($name) {
         $this->attr[$name] = null;
-        unset($this->attr[$name]); 
+        unset($this->attr[$name]);
     }
 
     // From countable
@@ -814,6 +836,69 @@ class SdlTag implements \ArrayAccess, \Countable {
     }
     public function __unset($key) {
         $this->removeAttribute($key);
+    }
+
+    public function spath($expr) {
+        \debug("Evaluating spath: {$expr}");
+        if ($expr == "") {
+            return $this;
+        } elseif ($expr[0] == "/") {
+            // Find the root of the document and pass the query on
+            $root = $this;
+            while(($newroot = $root->getParent)) $root = $newroot;
+            return $root->spath(substr($expr,1));
+        } else {
+            // Grab the first part of the expression
+            // TODO: Make this a regex, until then any / will break the expression
+            list($parse,$expr) = explode("/",$expr.'/',2);
+            $expr = rtrim($expr,"/");
+            if (strpos($parse,"[")!==false) {
+                $match = explode("[",$parse);
+                $tagname = array_shift($match);
+                foreach($match as $k=>$v) $match[$k] = rtrim($v,"]");
+            } else {
+                $tagname = $parse;
+                $match = [];
+            }
+            // Enumerate the children for matching tagnames
+            $ret = [];
+            foreach($this->children as $node) {
+                $matched = true;
+                if (fnmatch($tagname,$node->getName())) {
+                    if (count($match)>0) {
+                        foreach($match as $m) {
+                            if ($m[0] == '@') {
+                                $m = substr($m,1);
+                                if (strpos($m,"=")===false) {
+                                    $attr = $m;
+                                    if (!$node->hasAttribute($attr)) $matched = false;
+                                } else {
+                                    list($attr,$val) = explode("=",$m,2);
+                                    if ($val == "true") $val = true;
+                                    elseif ($val == "false") $val = false;
+                                    elseif ($val == "null") $val = null;
+                                    if ($node->{$attr} !== $val) $matched = false;
+                                }
+                                // Test attribute
+                            } else {
+                                if (!in_array($m,$node->getValues())) {
+                                    $matched = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if ($matched) {
+                        $cn = $node->spath($expr);
+                        if (is_array($cn))
+                            $ret = array_merge($ret,$cn);
+                        elseif ($cn)
+                            $ret[] = $cn;
+                    }
+                }
+            }
+            return $ret;
+        }
     }
 
 }
