@@ -43,12 +43,18 @@ class SocketServer {
     public function select() {
         // No clients no work
         // Select sockets to read
+        foreach($this->clients as $k=>$client) {
+            if ($client->discard) {
+                \debug("Discarding client {$client->uuid}");
+                unset($this->clients[$k]);
+            }
+        }
         $read = array_map(function($sock){ return $sock->stream; }, $this->clients); $write = []; $except = [];
         array_unshift($read,$this->stream);
         if (count($read) == 0) return [];
         // Add the readable sockets to a list as Socket instances
         $sock = [];
-        if (false !== \stream_select($read,$write,$except,0,200000)) {
+        if (false !== \stream_select($read,$write,$except,0,50000)) {
             foreach($read as $stream) {
                 if ($stream === $this->stream) {
                     // Create a new Socket

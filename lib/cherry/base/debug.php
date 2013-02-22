@@ -129,6 +129,8 @@ class Debug {
                     } elseif (is_array($arg)) {
                         $argout[] = 'array';
                     } elseif (is_string($arg)) {
+                        $arg = str_replace("\n","\\n",str_replace("\r","\\r",$arg));
+                        if (strlen($arg)>25) $arg = substr($arg,0,25)."...";
                         $argout[] = "'".$arg."'";
                     } else {
                         $argout[] = $arg;

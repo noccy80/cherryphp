@@ -24,35 +24,33 @@ class DatabaseConnection {
             // Connectionstring is in PDO format
         } else {
             $type=      $ci['scheme'];
-            $username = !empty($ci['user'])?$ci['user']:get_current_user();
-            $password = !empty($ci['pass'])?$ci['pass']:null;
-            $host =     !empty($ci['host'])?$ci['host']:'localhost';
-            $database = !empty($ci['path'])?trim($ci['path'],"/"):null;
-            $dsn = "mysql:host={$host};";
-            if ((!empty($ci['port'])) && ($ci['port'] != 3306)) {
-                $port = $ci['port'];
-                $dsn.= "port={$port}";
+            if ($type == 'mysql') {
+                $username = !empty($ci['user'])?$ci['user']:get_current_user();
+                $password = !empty($ci['pass'])?$ci['pass']:null;
+                $host =     !empty($ci['host'])?$ci['host']:'localhost';
+                $database = !empty($ci['path'])?trim($ci['path'],"/"):null;
+                $dsn = "mysql:host={$host};";
+                if ((!empty($ci['port'])) && ($ci['port'] != 3306)) {
+                    $port = $ci['port'];
+                    $dsn.= "port={$port}";
+                }
+                $dsn.= "dbname={$database}";
+                if (!$password)
+                    $password = $this->getKeystorePassword($type,$username,$host,$database);
+            } elseif ($type == 'sqlite') {
+                $database = !empty($ci['host'])?$ci['host']:null;
+                $database.= !empty($ci['path'])?$ci['path']:null;
+                \debug("SQLite3: Using database {$database}");
+                $dsn = "sqlite:{$database}";
+                $username = null;
+                $password = null;
             }
-            $dsn.= "dbname={$database}";
             $options = [];
             $this->database = $database;
             // Connectionstring is in URL format
         }
         // Scrolling cursor not supported with MySQL nor SQLite so warn on these
-        if (!$password) {
-            // Try to get from keystore
-            $ks = \Cherry\Crypto\KeyStore::getInstance();
-            if ($database) {
-                try {
-                    $curi = "{$type}://{$username}@{$host}/{$database}";
-                    $password = $ks->queryCredentials($curi);
-                } catch (Exception $e) { \debug("Unable to access credentials for connection {$curi}"); }
-            }
-            if (!$password) try {
-                $curi = "{$type}://{$username}@{$host}";
-                $password = $ks->queryCredentials($curi);
-            } catch (Exception $e) { \debug("Unable to access credentials for connection {$curi}"); }
-        }
+
 
         // Temporarily change the PHP exception handler while we . . .
         set_exception_handler(array(__CLASS__, 'exception_handler'));
@@ -62,6 +60,22 @@ class DatabaseConnection {
 
         // Change the exception handler back to whatever it was before
         restore_exception_handler();
+    }
+    
+    public static function getKeystorePassword($type,$username,$host,$database) {
+        // Try to get from keystore
+        $ks = \Cherry\Crypto\KeyStore::getInstance();
+        if ($curi) {
+            try {
+                $curi = "{$type}://{$username}@{$host}/{$database}";
+                $password = $ks->queryCredentials($curi);
+            } catch (Exception $e) { \debug("Unable to access credentials for connection {$curi}"); }
+        }
+        if (!$password) try {
+            $curi = "{$type}://{$username}@{$host}";
+            $password = $ks->queryCredentials($curi);
+        } catch (Exception $e) { \debug("Unable to access credentials for connection {$curi}"); }
+        return $password;
     }
 
     public static function register($pool,$conn) {
@@ -114,7 +128,7 @@ class DatabaseConnection {
             }
         }
         $esql = call_user_func_array('sprintf',$argo);
-        \App::app()->debug("DB:Query: %s", $esql);
+        \debug("DB:Query: %s", $esql);
         return $this->conn->query($esql); // fetchmode?
     }
 
@@ -122,9 +136,19 @@ class DatabaseConnection {
         return $this->conn;
     }
 
-    public function execute($sql,$varargs=null) {
+    public function execute($sql) {
         $args = func_get_args();
-        $stmt = \shift($args);
+        $argo = $args;
+        $argcount = func_num_args();
+        for($n = 1; $n < $argcount; $n++) {
+            $value = $args[$n];
+            if (!is_numeric($value)) {
+                $argo[$n] = "'".str_replace("'","\'",$value)."'";
+            }
+        }
+        $esql = call_user_func_array('sprintf',$argo);
+        \debug("DB:Exec: %s", $esql);
+        return $this->conn->exec($esql); // fetchmode?
     }
 
     public static function exception_handler($exception) {
