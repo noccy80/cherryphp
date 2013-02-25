@@ -14,6 +14,7 @@ class DatabaseConnection {
     private static $config = [];
     private static $connections = null;
     private $conn = null;
+    private $type = null;
     private $database = null;
     private $hlog = null;
     
@@ -50,6 +51,7 @@ class DatabaseConnection {
                 $password = null;
             }
         }
+        $this->type = $type;
 
         // Temporarily change the PHP exception handler while we . . .
         set_exception_handler(array(__CLASS__, 'exception_handler'));
@@ -77,7 +79,12 @@ class DatabaseConnection {
     }
 
     public function getSqlAdapter() {
-        return new SqlAdapters\MySqlAdapter($this);
+        if ($this->type == "mysql")
+            return new SqlAdapters\MySqlAdapter($this);
+        elseif ($this->type == "sqlite")
+            return new SqlAdapters\SqliteAdapter($this);
+        else
+            return null;
     }
 
     public function getSchemaManager() {
