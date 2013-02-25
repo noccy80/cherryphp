@@ -68,7 +68,6 @@ class MySqlAdapter extends SqlAdapter {
         }
         $sql.= join(",\n    ",$cols);
         $sql.= "\n)\n";
-        echo $sql;
         return $sql;
     }
 
@@ -142,7 +141,7 @@ class MySqlAdapter extends SqlAdapter {
 
     private function getTableMeta($table) {
         try {
-            $rows = $this->db->query("SHOW FULL COLUMNS FROM ".$table);
+            $rows = $this->db->query("SHOW FULL COLUMNS FROM `".$table."`");
             $stat = $this->db->query("SHOW TABLE STATUS LIKE '".$table."'");
             $this->tablemeta = $stat->fetch();
         } catch (Exception $e) {

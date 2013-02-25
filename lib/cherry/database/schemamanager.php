@@ -31,7 +31,7 @@ class SchemaManager implements ArrayAccess {
     public function getTableList() {
         return $this->tables;
     }
-
+    
     public function applyTableSdl(SdlTag $tag) {
         $tm = $this[$tag[0]];
         if ($tm) {
@@ -46,7 +46,11 @@ class SchemaManager implements ArrayAccess {
     }
 
     public function offsetGet($key) {
-        return $this->adapter->getTable($key);
+        try {
+            return $this->adapter->getTable($key);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     public function offsetSet($key,$value) {

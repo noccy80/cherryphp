@@ -15,7 +15,8 @@ class DatabaseConnection {
     private static $connections = null;
     private $conn = null;
     private $database = null;
-
+    private $hlog = null;
+    
     public function __construct($uri, $opts=array()) {
 
         if (!$uri) throw new \UnexpectedValueException("DatabaseConnection::__construct() expects an URI");
@@ -81,6 +82,15 @@ class DatabaseConnection {
 
     public function getSchemaManager() {
         return new SchemaManager($this);
+    }
+    
+    public function setSqlLog($logfile) {
+        if ($this->hlog) fclose($this->hlog);
+        if ($logfile) {
+            $this->hlog = fopen($logfile,"w+");
+        } else {
+            $this->hlog = null;
+        }
     }
 
     public static function register($pool,$conn) {
@@ -154,6 +164,7 @@ class DatabaseConnection {
         }
         $esql = call_user_func_array('sprintf',$argo);
         \App::app()->debug("DB:Query: %s", $esql);
+        if ($this->hlog) fputs($this->hlog,$esql."\n");
         return $this->conn->query($esql); // fetchmode?
     }
 
@@ -173,6 +184,7 @@ class DatabaseConnection {
         }
         $esql = call_user_func_array('sprintf',$argo);
         \App::app()->debug("DB:Exec: %s", $esql);
+        if ($this->hlog) fputs($this->hlog,$esql."\n");
         return $this->conn->exec($esql); // fetchmode?
     }
 
