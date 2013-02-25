@@ -33,6 +33,7 @@ class Request implements \ArrayAccess {
             case 'sapi':        return $this->sapi;
             case 'protocol':    return $this->protocol;
             case 'uri':         return $this->uri;
+            case 'segments':    return $this->segments;
             case 'method':      return $this->method;
             default:            throw new \UnexpectedValueException("No such property: {$key}");
         }

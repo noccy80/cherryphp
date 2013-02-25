@@ -30,11 +30,16 @@ class KeyStoreFile {
     const ERR_KEYSTORE_ERROR = 0x01;
 
     public function __construct($store, $key=null, $crypto='tripledes') {
+        if ($key == true) {
+            $ca = \Cherry\Cli\Console::getAdapter();
+            $key = $ca->readpass("Password for keystore ".basename($store).": ");
+        }
         if (!$key) $key = 0xDEADBEEF;
+        $this->key = $this->deriveKey($key);
         if (file_exists($store)) {
             debug("KeyStore: Opening %s", $store);
             $buf = file_get_contents($store);
-            $buf = Crypto::tripledes($key)->decrypt($buf);
+            $buf = Crypto::tripledes($this->key)->decrypt($buf);
             $buf = gzuncompress($buf);
             if (!$buf) {
                 $this->lasterror = self::ERR_KEYSTORE_ERROR;
@@ -44,7 +49,10 @@ class KeyStoreFile {
         }
 
         $this->store = $store;
-        $this->key = $key;
+    }
+
+    public function derivekey($key) {
+        return substr(sha1($key),0,20);
     }
 
     public function getError() {

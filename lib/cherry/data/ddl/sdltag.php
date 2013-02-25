@@ -104,6 +104,12 @@ class SdlTag implements \ArrayAccess, \Countable {
         $this->decode($str);
     }
 
+    public static function createFromFile($file) {
+        $tag = new SdlTag();
+        $tag->loadFile($file);
+        return $tag;
+    }
+
     /**
      * @brief DEPRECATED: Decode a string into the node.
      * @see loadString()
@@ -142,6 +148,7 @@ class SdlTag implements \ArrayAccess, \Countable {
             $tok = array_shift($toks);
             if (is_array($tok)) {
                 $str = $tok[1];
+                $line = $tok[2];
                 switch($tok[0]) {
                     // Ignore open tag
                     case T_OPEN_TAG:
@@ -197,7 +204,7 @@ class SdlTag implements \ArrayAccess, \Countable {
                         } elseif ($state == self::SP_NODEB64C) {
                             $_b64data.=$str;
                         } else {
-                            throw new SdlParseException("Value token without state.");
+                            throw new SdlParseException("Value token without state on line {$line}.");
                         }
                         break;
 
@@ -205,6 +212,7 @@ class SdlTag implements \ArrayAccess, \Countable {
                     case T_CONSTANT_ENCAPSED_STRING:
                         $str = trim($str,"\"");
                         $str = str_replace("\\\"",'"',$str);
+                        $str = \stripcslashes($str);
                     case T_LNUMBER:
                         if ($state == self::SP_NODENAME) {
                             if ($_ns)
@@ -249,9 +257,17 @@ class SdlTag implements \ArrayAccess, \Countable {
                         break;
 
                     case T_DOC_COMMENT:
+                        /*
+                         * Disabled this function so doc comments can be used
+                         * to document the actual structure of the document
+                         * without causing comments to have an impact on the
+                         * parsed datas comments.
+                         *
                         $str = trim(substr($str,3));
                         if ($_doccomment) $_doccomment.="\n".$str;
                         else $_doccomment = $str;
+                        */
+                        $str = null;
                         break;
                     default:
                         $type = token_name($tok[0]);
@@ -276,7 +292,7 @@ class SdlTag implements \ArrayAccess, \Countable {
                             $state = self::SP_NODEB64C;
                             $_b64data = null;
                         } else {
-                            throw new SdlParseException("Unexpected '[' in data.");
+                            throw new SdlParseException("Unexpected '[' in data on line {$line}");
                         }
                         break;
                     case "]";
@@ -290,7 +306,7 @@ class SdlTag implements \ArrayAccess, \Countable {
                                 $idx++;
                             }
                         } else {
-                            throw new SdlParseException("Unexpected ']' in data.");
+                            throw new SdlParseException("Unexpected ']' in data on line {$line}");
                         }
                         break;
                     case ";";
@@ -314,7 +330,7 @@ class SdlTag implements \ArrayAccess, \Countable {
                         $state = self::SP_NODENAME;
                         break;
                     default:
-                        throw new SdlParseException("Unhandled string in sdl: {$tok}");
+                        throw new SdlParseException("Unhandled string in sdl: {$tok} on line {$line}");
                 }
             }
             // The final flag creates the node.
@@ -839,7 +855,7 @@ class SdlTag implements \ArrayAccess, \Countable {
     }
 
     public function spath($expr) {
-        \debug("Evaluating spath: {$expr}");
+        // \debug("Evaluating spath: {$expr}");
         if ($expr == "") {
             return $this;
         } elseif ($expr[0] == "/") {

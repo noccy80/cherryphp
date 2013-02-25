@@ -23,7 +23,9 @@ class Glyph {
         'diagcross' => '&#x2573;',
         'check0' => '&#x2B1C;',
         'check1' => '&#x2B1B;',
-        'cross' => '&#x274C;'
+        'cross' => '&#x274C;',
+        'arrowright' => '&#x25B6;',
+        'diamond' => '&#x25C6;'
     ];
     private static $work = [
         'snake' => [

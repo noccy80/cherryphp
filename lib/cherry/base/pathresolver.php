@@ -27,4 +27,8 @@ class PathResolver {
         $this->apppath = realpath($path);
     }
 
+    public static function path($path) {
+        return PathResolver::getInstance()->getPath($path);
+    }
+
 }

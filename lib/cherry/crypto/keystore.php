@@ -37,6 +37,8 @@ class KeyStore {
         if (file_exists($store)) {
             debug("KeyStore: Opening %s", $store);
             $buf = file_get_contents($store);
+            if (!$key) $key = 0xDEADBEEF;
+            $key = $this->derivekey($key);
             $buf = Crypto::tripledes($key)->decrypt($buf);
             if ($buf) {
                 $buf = gzuncompress($buf);
@@ -46,6 +48,10 @@ class KeyStore {
             }
         }
         return false;
+    }
+
+    public function derivekey($key) {
+        return substr(sha1($key),0,20);
     }
 
     /**
@@ -59,7 +65,7 @@ class KeyStore {
         foreach($bc as $func) {
             debug("KeyStore: Checking {$func}");
             foreach($rules as $rule) {
-                //debug(" - {$rule}");
+                debug("KeyStore: Matching {$rule}");
                 if (\fnmatch($rule,$func,\FNM_NOESCAPE)) return true;
             }
         }

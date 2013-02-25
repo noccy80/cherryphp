@@ -131,14 +131,14 @@ class ConsoleApplication extends \Cherry\Application {
         }
         $this->parameters = $cparam;
     }
-    protected function hasArgument($arg) {
+    public function hasArgument($arg) {
         if (array_key_exists($arg,$this->arguments)) {
             $opt = $this->arguments[$arg];
             if ($opt->value) return true;
         }
         return false;
     }
-    protected function getArgument($arg) {
+    public function getArgument($arg) {
         if (array_key_exists($arg,$this->arguments))
             return $this->arguments[$arg]->value;
         return null;

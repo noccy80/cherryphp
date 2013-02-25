@@ -1,0 +1,56 @@
+#!/usr/bin/php
+<?php
+
+require_once "xenon/xenon.php";
+xenon\frameworks\cherryphp::bootstrap(__DIR__);
+
+use Cherry\Data\Ddl\SdlTag;
+
+class SdlintApplication extends Cherry\Cli\ConsoleApplication {
+
+    public function setup() {
+        $this->addArgument("t","tidy","Print tidy SDL from input");
+    }
+
+    public function main() {
+        if (count($this->parameters) > 0) {
+            foreach($this->parameters as $file) {
+                $this->lintfile($file);
+            }
+        }
+
+    }
+
+    private function lintfile($file) {
+        $root = new SdlTag("root");
+        $root->loadFile($file);
+        if ($this->hasArgument('t')) {
+            foreach($root->getChildren() as $node) {
+                echo $node->encode()."\n";
+            }
+        } else {
+            foreach($root->getChildren() as $tag) {
+                $this->printTag($tag,0);
+            }
+            echo "\n";
+        }
+    }
+    
+    private function printTag($root,$d=0) {
+        if (($cmt = $root->getComment())) {
+            echo str_repeat("  ",$d)."(comment={$cmt})\n";
+        }
+        echo str_repeat("  ",$d).$root->getNameNs();
+        if (count($root)>0) echo " [".join(",",array_map('\var_inspect',$root->getValues()))."]";
+        foreach($root->getAttributes() as $k=>$v) {
+            echo " {$k}=".\var_inspect($v);
+        }
+        echo "\n";
+        foreach($root->getChildren() as $tag) {
+            $this->printTag($tag,$d+1);
+        }
+    
+    }
+}
+
+App::run(new SdlintApplication());

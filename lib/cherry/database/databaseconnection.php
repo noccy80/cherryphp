@@ -3,6 +3,8 @@
 namespace Cherry\Database;
 
 use PDO;
+use Cherry\Base\PathResolver;
+use Cherry\Data\Ddl\SdlTag;
 
 class DatabaseConnection {
 
@@ -10,7 +12,7 @@ class DatabaseConnection {
 
     private static $dbpool = [];
     private static $config = [];
-    private $sm = null;
+    private static $connections = null;
     private $conn = null;
     private $database = null;
 
@@ -18,7 +20,6 @@ class DatabaseConnection {
 
         if (!$uri) throw new \UnexpectedValueException("DatabaseConnection::__construct() expects an URI");
 
-        $this->sm = new SchemaManager($this);
         $ci = parse_url($uri);
         if (strpos($uri,"://")===false) {
             // Connectionstring is in PDO format
@@ -59,20 +60,44 @@ class DatabaseConnection {
 
         // . . . create a PDO object
         $this->conn = new PDO($dsn, $username, $password, $options);
+        $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Change the exception handler back to whatever it was before
         restore_exception_handler();
     }
 
+    public function getSqlAdapter() {
+        return new SqlAdapters\MySqlAdapter($this);
+    }
+
+    public function getSchemaManager() {
+        return new SchemaManager($this);
+    }
+
     public static function register($pool,$conn) {
-        self::$config[$pool] = $conn;
+        \debug("Database: Registered connection '{$conn}' to pool {$pool}");
+        self::$connections[$pool] = new SdlTag("connection",[ $pool,$conn ]);
     }
 
     static function getInstance($pool=null) {
         if (!$pool) $pool = self::POOL_DEFAULT;
+        if (!self::$connections) {
+            $cp = PathResolver::path("{APP}/config/database.sdl");
+            if (file_exists($cp)) {
+                $cfg = SdlTag::createFromFile($cp);
+                foreach($cfg->spath("database/connection") as $connection) {
+                    $cpool = $connection[0];
+                    $curi = $connection[1];
+                    if (empty(self::$connections[$cpool]))
+                        self::$connections[$cpool] = [];
+                    \debug("Database: Registered connection '{$curi}' to pool {$cpool}");
+                    self::$connections[$cpool][] = $connection;
+                }
+            }
+        }
         if (!array_key_exists($pool,self::$dbpool)) {
-            if (array_key_exists($pool,self::$config)) {
-                self::$dbpool[$pool] = new self(self::$config[$pool]);
+            if (array_key_exists($pool,self::$connections)) {
+                self::$dbpool[$pool] = new self(self::$connections[$pool]);
             } else {
                 if (strpos($pool,"://")!==false) {
                     self::$dbpool[$pool] = new self($pool);
@@ -92,13 +117,18 @@ class DatabaseConnection {
         $args = func_get_args();
         $argo = $args;
         $argcount = func_num_args();
-        for($n = 1; $n < $argcount; $n++) {
+        for($n = ($argcount>1)?1:0; $n < $argcount; $n++) {
             $value = $args[$n];
+            if ($value === null) $argo[$n] = "NULL";
+            if ($value === true) $argo[$n] = 1;
+            if ($value === false) $argo[$n] = 0;
             if (!is_numeric($value)) {
                 $argo[$n] = "'".str_replace("'","\'",$value)."'";
             }
         }
-        $esql = call_user_func_array('sprintf',$argo);
+        if ($argcount>1) {
+            $esql = call_user_func_array('sprintf',$argo);
+        } else { $esql = $argo[0]; }
         \App::app()->debug("DB:Escape: %s", $esql);
         return $esql;
     }
@@ -124,7 +154,17 @@ class DatabaseConnection {
 
     public function execute($sql,$varargs=null) {
         $args = func_get_args();
-        $stmt = \shift($args);
+        $argo = $args;
+        $argcount = func_num_args();
+        for($n = 1; $n < $argcount; $n++) {
+            $value = $args[$n];
+            if (!is_numeric($value)) {
+                $argo[$n] = "'".str_replace("'","\'",$value)."'";
+            }
+        }
+        $esql = call_user_func_array('sprintf',$argo);
+        \App::app()->debug("DB:Exec: %s", $esql);
+        return $this->conn->exec($esql); // fetchmode?
     }
 
     public static function exception_handler($exception) {
@@ -136,7 +176,7 @@ class DatabaseConnection {
     public function __get($key) {
         switch($key) {
             case 'tables':
-                return $this->sm;
+                return $this->getSchemaManager()->getTableManager();
             case 'name':
                 return $this->database;
             default:
