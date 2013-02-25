@@ -16,11 +16,11 @@ class MySqlAdapter extends SqlAdapter {
         $cols = [];
         foreach($tag->spath("column") as $column) {
             if (array_key_exists($column[0],$meta)) {
-                $ctype = $this->getMySqlVartype($column);
+                $ctype = $this->getSqlVartype($column);
                 $atype = strtoupper($meta[$column[0]]->type);
                 if (($ctype != $atype)) {
                     $cid = $column[0];
-                    $ctype = $this->getMySqlVartype($column);
+                    $ctype = $this->getSqlVartype($column);
                     $col = "CHANGE COLUMN `{$cid}` `{$cid}` $ctype";
                     $col.= ($column->null?' NULL':' NOT NULL');
                     if ($column->default) $col.= " DEFAULT '".$column->default."'";
@@ -28,7 +28,7 @@ class MySqlAdapter extends SqlAdapter {
                 }
             } else {
                 $cid = $column[0];
-                $ctype = $this->getMySqlVartype($column);
+                $ctype = $this->getSqlVartype($column);
                 $col = "ADD COLUMN `{$cid}` $ctype";
                 $col.= ($column->null?' NULL':' NOT NULL');
                 if ($column->default) $col.= " DEFAULT '".$column->default."'";
@@ -55,7 +55,7 @@ class MySqlAdapter extends SqlAdapter {
         $cols = [];
         foreach($tag->spath("column") as $column) {
             $cid = $column[0];
-            $ctype = $this->getMySqlVartype($column);
+            $ctype = $this->getSqlVartype($column);
             $col = "`{$cid}` $ctype";
             $col.= ($column->null?' NULL':' NOT NULL');
             if ($column->default) $col.= " DEFAULT '".$column->default."'";
@@ -71,7 +71,7 @@ class MySqlAdapter extends SqlAdapter {
         return $sql;
     }
 
-    private function getMySqlVartype($tag) {
+    protected function getSqlVartype(SdlTag $tag) {
         $type = $tag->type;
         if (strpos($type,":")!==false) {
             list($type,$len) = explode(":",$type);
