@@ -74,11 +74,12 @@ class Socket {
         if ($this->stream) {
             @fclose($this->stream);
             $this->stream = null;
+            $this->discard = true;
         }
     }
 
     public function write($data, $length = null) {
-        if ($this->stream)
+        if (!$this->stream)
             throw new SocketException("Write operation on closed socket.", self::ERR_NOT_OPEN);
         if ($length == null) $length = strlen($data);
         $ret = fwrite($this->stream, $data, $length);
@@ -86,7 +87,7 @@ class Socket {
     }
 
     public function read($length, $nonblock = false) {
-        if ($this->stream)
+        if (!$this->stream)
             throw new SocketException("Write operation on closed socket.", self::ERR_NOT_OPEN);
         if ($nonblock) $oldstate = $this->setBlocking(false);
         $data = fread($this->stream, $length);
