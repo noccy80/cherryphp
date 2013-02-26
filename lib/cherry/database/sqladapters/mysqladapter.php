@@ -10,6 +10,7 @@ class MySqlAdapter extends SqlAdapter {
 
     function __construct($db) {
         $this->db = $db;
+
     }
 
     public function getAlterFromSdl(SdlTag $tag, $meta) {
@@ -132,7 +133,12 @@ class MySqlAdapter extends SqlAdapter {
     }
 
     public function getTableList() {
-        return $this->db->query("SHOW TABLES")->fetchAll();
+        $ret = $this->db->query("SHOW TABLES")->fetchAll();
+        $out = array_map(
+            function ($in) { return $in[0]; },
+            $ret
+        );
+        return $out;
     }
 
     public function getTable($table) {

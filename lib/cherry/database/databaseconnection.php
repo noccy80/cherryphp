@@ -17,7 +17,7 @@ class DatabaseConnection {
     private $type = null;
     private $database = null;
     private $hlog = null;
-    
+
     public function __construct($uri, $opts=array()) {
 
         if (!$uri) throw new \UnexpectedValueException("DatabaseConnection::__construct() expects an URI");
@@ -43,12 +43,14 @@ class DatabaseConnection {
                 if (!$password)
                     $password = $this->getKeystorePassword($type,$username,$host,$database);
             } elseif ($type == "sqlite") {
-                $database = !empty($ci['host'])?$ci['host']:null;
-                $database.= !empty($ci['path'])?$ci['path']:null;
+                $database = "{APP}/{$ci['host']}";
+                if (!empty($ci['path'])) $database.= '/'.$ci['path'];
+                $database = \Cherry\Base\PathResolver::path($database);
                 \debug("SQLite3: Using database {$database}");
                 $dsn = "sqlite:{$database}";
                 $username = null;
                 $password = null;
+                $options = [];
             }
         }
         $this->type = $type;
@@ -90,7 +92,7 @@ class DatabaseConnection {
     public function getSchemaManager() {
         return new SchemaManager($this);
     }
-    
+
     public function setSqlLog($logfile) {
         if ($this->hlog) fclose($this->hlog);
         if ($logfile) {
@@ -123,7 +125,11 @@ class DatabaseConnection {
         }
         if (!array_key_exists($pool,self::$dbpool)) {
             if (array_key_exists($pool,self::$connections)) {
-                self::$dbpool[$pool] = new self(self::$connections[$pool]);
+                $dp = self::$connections[$pool][0][1];
+                //var_dump($pool);
+                //die();
+                //self::$dbpool[$pool] = new self(self::$connections[$pool]);
+                self::$dbpool[$pool] = new self($dp);
             } else {
                 if (strpos($pool,"://")!==false) {
                     self::$dbpool[$pool] = new self($pool);
@@ -155,7 +161,7 @@ class DatabaseConnection {
         if ($argcount>1) {
             $esql = call_user_func_array('sprintf',$argo);
         } else { $esql = $argo[0]; }
-        \App::app()->debug("DB:Escape: %s", $esql);
+        \debug("DB:Escape: %s", $esql);
         return $esql;
     }
 
@@ -170,7 +176,7 @@ class DatabaseConnection {
             }
         }
         $esql = call_user_func_array('sprintf',$argo);
-        \App::app()->debug("DB:Query: %s", $esql);
+        \debug("DB:Query: %s", $esql);
         if ($this->hlog) fputs($this->hlog,$esql."\n");
         return $this->conn->query($esql); // fetchmode?
     }
@@ -190,7 +196,7 @@ class DatabaseConnection {
             }
         }
         $esql = call_user_func_array('sprintf',$argo);
-        \App::app()->debug("DB:Exec: %s", $esql);
+        \debug("DB:Exec: %s", $esql);
         if ($this->hlog) fputs($this->hlog,$esql."\n");
         return $this->conn->exec($esql); // fetchmode?
     }
