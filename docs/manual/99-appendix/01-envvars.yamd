@@ -1,0 +1,8 @@
+Title: Environment variables
+---
+# Environment variables
+
+* <code>CHERRY_LIB=<i>path</i></code> - the path to the lib folder
+* <code>DEBUG=[0|1]</code> - disable/enable debug output
+* <code>DEBUG_LOGFILE=<i>file</i></code> - save debug output to file. Does not require `DEBUG`.
+* <code>DEBUG_VERBOSE=[0|1]<</code> - disable/enable verbose debugging

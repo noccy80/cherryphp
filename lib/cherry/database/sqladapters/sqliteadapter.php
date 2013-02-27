@@ -17,36 +17,62 @@ class SqliteAdapter extends SqlAdapter {
         $ret = [];
         foreach($tag->spath("column") as $column) {
             if (array_key_exists($column[0],$meta)) {
+
+                // TODO: Rewrite this part with a function to cast to appropriate
+                // null and string values for match.
+                //var_dump($meta[$column[0]]);
+                //echo $column->encode()."\n";
                 $ctype = $this->getSqlVartype($column);
                 $atype = strtoupper($meta[$column[0]]->type);
-                if (($ctype != $atype)) {
-                    return [
-                        "DROP TABLE `{$tag[0]}`",
-                        $this->getCreateFromSdl($tag)
-                    ];
+                $_adef = $meta[$column[0]]->default;
+                $_cdef = $column->default;
+                if (!is_numeric($_cdef) && is_string($_cdef)) $_cdef = "'{$_cdef}'";
+                $cdef = ($_cdef===null)?'NULL':$_cdef;
+                $adef = ($_adef===null)?'NULL':$_adef;
+                $cnull = (($column->null===true))?'NULL':'NOT NULL';
+                $anull = (($meta[$column[0]]->null===true) || ($meta[$column[0]]->null===null))?'NULL':'NOT NULL';
+                //echo "{$column[0]} [$ctype,$atype],[$cdef,$adef],[$cnull,$anull]\n";
+
+                if (($ctype != $atype) || ($cdef != $adef) || ($cnull != $anull)) {
+                    if (SQLITE_RECREATE)
+                        return [
+                            "DROP TABLE `{$tag[0]}`",
+                            $this->getCreateFromSdl($tag)
+                        ];
+                    else
+                        throw new \Exception("Columns can not be altered or renamed in SQLite, can not apply column {$column[0]} to schema without SQLITE_RECREATE defined");
                 }
             } else {
                 $cid = $column[0];
                 $ctype = $this->getSqlVartype($column);
                 $col = "ALTER TABLE `{$tag[0]}` ADD COLUMN `{$cid}` $ctype";
                 $col.= ($column->null?' NULL':' NOT NULL');
-                if ($column->hasAttribute('default')) $col.= " DEFAULT '".$column->default."'";
+                if ($column->hasAttribute('default')) {
+                    $str = $this->getSqlString($column->default);
+                    $col.= " DEFAULT {$str}";
+                }
                 $cols[$cid] = $col;
                 $ret[] = $col;
             }
         }
         if (($tag->auto) && (!array_key_exists($tag->auto,$meta))) {
-            return [
-                "DROP TABLE `{$tag[0]}`",
-                $this->getCreateFromSdl($tag)
-            ];
-        }
-        foreach($meta as $col=>$cmeta) {
-            if ((!$tag->getChild("column",$col)) && ($tag->auto != $col)) {
+            if (SQLITE_RECREATE)
                 return [
                     "DROP TABLE `{$tag[0]}`",
                     $this->getCreateFromSdl($tag)
                 ];
+            else
+                throw new \Exception("Columns can not be altered or renamed in SQLite, can not apply new index to schema without SQLITE_RECREATE defined");
+        }
+        foreach($meta as $col=>$cmeta) {
+            if ((!$tag->getChild("column",$col)) && ($tag->auto != $col)) {
+            if (SQLITE_RECREATE)
+                return [
+                    "DROP TABLE `{$tag[0]}`",
+                    $this->getCreateFromSdl($tag)
+                ];
+            else
+                throw new \Exception("Columns can not be altered or renamed in SQLite, can not apply schema without SQLITE_RECREATE defined");
             }
         }
         return $ret;
@@ -60,7 +86,10 @@ class SqliteAdapter extends SqlAdapter {
             $ctype = $this->getSqlVartype($column);
             $col = "`{$cid}` $ctype";
             $col.= ($column->null?' NULL':' NOT NULL');
-            if ($column->default) $col.= " DEFAULT '".$column->default."'";
+            if ($column->hasAttribute('default')) {
+                $str = $this->getSqlString($column->default);
+                $col.= " DEFAULT {$str}";
+            }
             $cols[$cid] = $col;
         }
         if ($tag->auto) {
@@ -71,6 +100,18 @@ class SqliteAdapter extends SqlAdapter {
         $sql.= join(",\n    ",$cols);
         $sql.= "\n)\n";
         return $sql;
+    }
+
+    protected function getSqlString($def) {
+        if (is_null($def))
+            $str = "NULL";
+        elseif ($def===true)
+            $str = 1;
+        elseif ($def===false)
+            $str = 0;
+        else
+            $str = $this->db->escape($def);
+        return $str;
     }
 
     protected function getSqlVartype(SdlTag $tag) {
