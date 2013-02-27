@@ -1,7 +1,7 @@
 <?php
 
-define("XENON","cherryphp/trunk");
 require_once("xenon/xenon.php");
+xenon\frameworks\cherryphp::bootstrap(__DIR__);
 
 use Cherry\Expm\Process\CoRoutine;
 
