@@ -25,8 +25,10 @@ class DatabaseConnection {
         $ci = parse_url($uri);
         if (strpos($uri,"://")===false) {
             // Connectionstring is in PDO format
+            throw new \Exception("Invalid URI: {$uri}");
         } else {
             $type=      $ci['scheme'];
+            if (!$type) throw new \UnexpectedArgumentException("'{$type}' is not a supported database type");
             if ($type == "mysql") {
                 $username = !empty($ci['user'])?$ci['user']:get_current_user();
                 $password = !empty($ci['pass'])?$ci['pass']:null;
@@ -51,6 +53,8 @@ class DatabaseConnection {
                 $username = null;
                 $password = null;
                 $options = [];
+            } else {
+                throw new \Exception("Invalid connection uri '{$uri}'");
             }
         }
         $this->type = $type;
@@ -125,7 +129,11 @@ class DatabaseConnection {
         }
         if (!array_key_exists($pool,self::$dbpool)) {
             if (array_key_exists($pool,self::$connections)) {
-                $dp = self::$connections[$pool][0][1];
+                $pc = self::$connections[$pool];
+                if (is_array($pc))
+                    $dp = $pc[0][1];
+                else
+                    $dp = $pc[1];
                 //var_dump($pool);
                 //die();
                 //self::$dbpool[$pool] = new self(self::$connections[$pool]);

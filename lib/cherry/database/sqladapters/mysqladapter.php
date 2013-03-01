@@ -12,6 +12,20 @@ class MySqlAdapter extends SqlAdapter {
         $this->db = $db;
 
     }
+    
+    public function getSdlFromTable($table) {
+        $meta = $this->getTableMeta($table);
+        $root = new SdlTag("table", [ $table ]);
+        foreach($meta as $row=>$md) {
+            $col = new SdlTag("column", [ $row ]);
+            $col->type = $md->type;
+            if (!$md->null) $col->null = false;
+            $col->default = $md->default;
+            $col->setComment($md->comment);
+            $root->addChild($col);
+        }
+        return $root->encode();
+    }
 
     public function getAlterFromSdl(SdlTag $tag, $meta) {
         $cols = [];
@@ -195,5 +209,11 @@ class MySqlAdapter extends SqlAdapter {
         }
         return $idx;
     }
+    
+    public function getCreateTableSql($table) {
+        $ret = $this->db->query("SHOW CREATE TABLE `{$table}`'")->fetch();
+        return $ret[1];
+
+    }    
 
 }
