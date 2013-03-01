@@ -51,4 +51,8 @@ class Uuid extends UuidAbstraction {
         return self::$instance;
     }
 
+    static function getBackend() {
+        return self::getInstance()->getImplementationName();
+    }
+
 }
