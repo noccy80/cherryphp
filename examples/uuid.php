@@ -1,25 +1,28 @@
 <?php
 
 //LOADER:BEGIN
-if (!( @include_once "lib/bootstrap.php" )) {
-    $libpath = getenv('CHERRY_LIB');
-    if (!$libpath) {
-        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
-        exit(1);
-    }
-    require_once($libpath.'/lib/bootstrap.php');
-}
+require_once "xenon/xenon.php";
+Xenon\Frameworks\CherryPhp::bootstrap(__DIR__);
 //LOADER:END
 
 use Cherry\Crypto\Uuid;
 use Cherry\Crypto\UuidGenerator;
 
-$uuid = Uuid::getInstance();
-echo "V1 UUID: ".$uuid->generate(Uuid::UUID_V1)."\n";
-echo "V3 UUID: ".$uuid->generate(Uuid::UUID_V3,"http://google.com")."\n";
-echo "V4 UUID: ".$uuid->generate(Uuid::UUID_V4)."\n";
-echo "V5 UUID: ".$uuid->generate(Uuid::UUID_V5)."\n";
-echo "Implementation: ".$uuid->getImplementationName()."\n";
+// What implementation are we using?
+$impl = Uuid::getBackend();
+echo "Implementation: {$impl}\n";
 
-echo "Shorthand generation V4: ".UuidGenerator::v4()."\n";
-echo "Shorthand validation: ".((UuidGenerator::valid(UuidGenerator::uuid()))?'True':'False')."\n";
+// Generating via UuidGenerator facade.
+$uuid = UuidGenerator::uuid();
+echo "Generated UUID: {$uuid}\n";
+// Check if the UUID is valid
+$valid = UuidGenerator::valid($uuid);
+$validstr = ($valid)?'Yes':'No';
+echo "UUID is valid: {$validstr}\n";
+
+// Generate a V3 domain-based url
+$v3uuid = UuidGenerator::v3("http:///google.com");
+if ($v3uuid) {
+    // Not all implementations support V3 uuids.
+    echo "V3 UUID for http://google.com: {$v3uuid}\n";
+}
