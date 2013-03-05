@@ -1,0 +1,9 @@
+// These are the latest three CyanogenMod versions with some info
+cyanogenmod {
+    // Based on AOSP 4.0.x
+    version "9" multiuser=false android="4.0.x"
+    // Based on AOSP 4.1.x
+    version "10" multiuser=false android="4.1.x"
+    // Based on AOSP 4.2.x
+    version "10.1" multiuser=true android="4.2.x" note="New and hot!"
+}

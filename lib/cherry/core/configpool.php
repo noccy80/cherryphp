@@ -25,7 +25,7 @@ abstract class ConfigPool {
             'id' => $identifier,
             'cfgpath' => $cfgpath,
             'cfghash' => $cfghash,
-            'writeable' => $false
+            'writeable' => $writeable
         ];
         self::$pools[$identifier] = $poolinfo;
 
@@ -33,17 +33,30 @@ abstract class ConfigPool {
     public static function getPool($identifier) {
         if (array_key_exists($identifier,self::$pools)) {
             $pool = self::$pools[$identifier];
-            if (!array_key_exists($cfghash,self::$configfiles)) {
+            if (!array_key_exists($pool->cfghash,self::$configfiles)) {
+                $path = $pool->cfgpath;
+                $cpath = dirname($path).'/.'.basename($path).'.cache';
                 if (file_exists($path)) {
-                    self::$configfiles[$cfghash] = SdlTag::createFromFile($cfgpath);
+                    // Check for a serialized cache of the config
+                    if (file_exists($cpath) && (filemtime($cpath)>filemtime($path))) {
+                        // Load from cache
+                        \debug("ConfigPool: Reading config '{$identifier}' from cache...");
+                        $tag = unserialize(file_get_contents($cpath));
+                    } else {
+                        // Update cache
+                        \debug("ConfigPool: Updating cache for config '{$identifier}'...");
+                        $tag = SdlTag::createFromFile($path);
+                        file_put_contents($cpath,serialize($tag));
+                    }
+                    self::$configfiles[$pool->cfghash] = $tag;
                 } else {
-                    self::$configfiles[$cfghash] = null;
+                    \debug("ConfigPool: File not found: {$path}");
+                    self::$configfiles[$pool->cfghash] = null;
                 }
-                return self::$configfiles[$pool->cfghash];
-            } else {
-                return null;
             }
+            return self::$configfiles[$pool->cfghash];
         } else {
+            \debug("ConfigPool: Pool has not been bound: {$identifier}");
             return null;
         }
     }
