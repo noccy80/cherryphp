@@ -62,6 +62,7 @@ class SdlTag implements \ArrayAccess, \Countable {
      * @param string $comment A textual description of the node. The comment will be serialized.
      */
     public function __construct($name = null, $values = null, array $attr = null, array $children = null, $comment = null) {
+        if (!$name) $name = "content";
         if (strpos($name,':')!==false) {
             list($this->ns,$this->name) = explode(':',$name,2);
         } else {
@@ -105,7 +106,7 @@ class SdlTag implements \ArrayAccess, \Countable {
     }
 
     public static function createFromFile($file) {
-        $tag = new SdlTag();
+        $tag = new SdlTag("root");
         $tag->loadFile($file);
         return $tag;
     }
@@ -337,6 +338,7 @@ class SdlTag implements \ArrayAccess, \Countable {
             if ($_final) {
                 if ($_name || count($_vals)>0) {
                     if ($_ns) $_name = $_ns.':'.$_name; // Add namespace
+                    if (!$_name) $_name = "content";
                     $cnod = new SdlTag($_name,$_vals,$_attr,null,$_comment);
                     if ($_recurse) $toks = $cnod->decode($toks);
                     $this->children[] = $cnod;
@@ -713,6 +715,27 @@ class SdlTag implements \ArrayAccess, \Countable {
      */
     public function getValue($index=0) {
         return $this->getCastValue($this->values[$index]);
+    }
+
+    /**
+     * Get value as from a matrix [row][col]
+     *
+     */
+    public function getValueMatrix($row,$column) {
+
+    }
+
+    /**
+     * Return direct child values as a value map, discarding attributes.
+     *
+     * $map = [
+     *     'foo' => 'Bar',
+     *     'bar' => 'Baz'
+     * ];
+     *
+     */
+    public function getValueMap() {
+
     }
 
     /**

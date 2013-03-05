@@ -27,8 +27,6 @@ class Dialog extends Widget {
         if ($this->window) {
             ncurses_wborder($this->window,0,0, 0,0, 0,0, 0,0);
             ncurses_mvwaddstr($this->window, 0, 3, "[ x ]");
-            $str = php_uname()."\n\nFfoo";
-            ncurses_mvwaddstr($this->window, 1,1,$str);
             ncurses_wrefresh($this->window);
         }
         parent::onDraw();

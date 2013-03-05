@@ -32,7 +32,8 @@ class CwtApplication extends \Cherry\Cli\ConsoleApplication {
         while($running) {
             $this->cwtDesktop->onTick();
             $this->cwtDesktop->onDraw();
-            \Cherry\Expm\Cwt\Context::getInstance()->textAt(2,2,"Hello World");
+            $time = date(\DateTime::RFC822);
+            \Cherry\Expm\Cwt\Context::getInstance()->textAt(2,2,"Hello World! {$time}");
             ncurses_refresh();
             \usleep(10000);
         }
