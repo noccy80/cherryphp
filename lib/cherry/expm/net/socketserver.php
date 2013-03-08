@@ -69,6 +69,7 @@ class SocketServer {
                     }
                 } else {
                     $streamid = $this->getStreamId($stream);
+                    \debug("{$streamid}: socket read");
                     assert(array_key_exists($streamid,$this->clients));
                     $sock[$streamid] = $this->clients[$streamid];
                     $sock[$streamid]->onDataWaiting();

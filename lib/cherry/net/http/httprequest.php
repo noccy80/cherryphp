@@ -79,7 +79,7 @@ class HttpRequest {
     }
 
     public function send($postdata=null,$contenttype=null) {
-        \debug("HttpRequest: Sending request");
+        \debug("HttpRequest: Sending request (for %s)");
         if (($postdata) && ($contenttype)) {
             $this->client->setPostData($contenttype, $postdata);
         }

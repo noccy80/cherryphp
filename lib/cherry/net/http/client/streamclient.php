@@ -143,7 +143,6 @@ class StreamClient extends ClientBase {
         // \Cherry\Debug('StreamClient: Parsing response headers');
         $headers = $this->response_meta['wrapper_data'];
         foreach($headers as $header) {
-            var_dump(trim($header));
             if (strpos($header,': ')!==false) {
                 list($k, $v) = explode(': ', $header, 2);
                 $k = strtolower($k);
@@ -187,9 +186,11 @@ class StreamClient extends ClientBase {
                 $this->timings['resolve'] = microtime(true); break;
             case STREAM_NOTIFY_COMPLETED:
                 $this->timings['completednf'] = microtime(true); break;
-            case STREAM_NOTIFY_AUTH_REQUIRED:
             case STREAM_NOTIFY_FAILURE:
+                throw new \Cherry\Net\Http\HttpException("Authentication required");
+            case STREAM_NOTIFY_AUTH_REQUIRED:
             case STREAM_NOTIFY_AUTH_RESULT:
+                $this->setError("{$message}");
                 //var_dump($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
                 /* Ignore */
                 break;

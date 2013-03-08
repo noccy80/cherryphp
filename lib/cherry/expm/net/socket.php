@@ -88,10 +88,10 @@ class Socket {
 
     public function read($length, $nonblock = false) {
         if (!$this->stream)
-            throw new SocketException("Write operation on closed socket.", self::ERR_NOT_OPEN);
+            throw new SocketException("Read operation on closed socket.", self::ERR_NOT_OPEN);
         if ($nonblock) $oldstate = $this->setBlocking(false);
         $data = fread($this->stream, $length);
-        $this->datawaiting = (!feof($this->stream));
+        $this->datawaiting = (strlen($data)>0);
         if ($nonblock) $this->setBlocking($oldstate);
         return $data;
     }
