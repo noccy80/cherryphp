@@ -258,16 +258,8 @@ class SdlTag implements \ArrayAccess, \Countable {
                         break;
 
                     case T_DOC_COMMENT:
-                        /*
-                         * Disabled this function so doc comments can be used
-                         * to document the actual structure of the document
-                         * without causing comments to have an impact on the
-                         * parsed datas comments.
-                         *
-                        $str = trim(substr($str,3));
                         if ($_doccomment) $_doccomment.="\n".$str;
                         else $_doccomment = $str;
-                        */
                         $str = null;
                         break;
                     default:
@@ -330,6 +322,8 @@ class SdlTag implements \ArrayAccess, \Countable {
                         $_name = null;
                         $state = self::SP_NODENAME;
                         break;
+                    //case "-":
+                        // if ($state == self::SP_NODENAME)
                     default:
                         throw new SdlParseException("Unhandled string in sdl: {$tok} on line {$line}");
                 }
@@ -340,10 +334,11 @@ class SdlTag implements \ArrayAccess, \Countable {
                     if ($_ns) $_name = $_ns.':'.$_name; // Add namespace
                     if (!$_name) $_name = "content";
                     $cnod = new SdlTag($_name,$_vals,$_attr,null,$_comment);
-                    if ($_recurse) $toks = $cnod->decode($toks);
-                    $this->children[] = $cnod;
+                    if ($_doccomment) $cnod->setDocComment($_doccomment);
                     $_comment = null;
                     $_doccomment = null;
+                    if ($_recurse) $toks = $cnod->decode($toks);
+                    $this->children[] = $cnod;
                 }
                 $_name = null; $_vals = []; $_attr = [];
                 $_final = false; $_recurse = false; $_ns = null;
@@ -670,6 +665,33 @@ class SdlTag implements \ArrayAccess, \Countable {
      */
     public function getComment() {
         return $this->comment;
+    }
+
+    /**
+     * @brief Set the node doc comment.
+     *
+     * You can set the comment to null to remove it.
+     *
+     * @param string $str The doc comment
+     */
+    public function setDocComment($str) {
+        if (substr(ltrim($str),0,3) == "/**") {
+            $cout = [];
+            $cmt = trim($str,"/*\n");
+            $cmtl = explode("\n",$cmt);
+            foreach($cmtl as $cmtr) $cout[] = ltrim($cmtr,"* ");
+            $str = trim(join("\n",$cout));
+        }
+        $this->doccomment = $str;
+    }
+
+    /**
+     * @brief Get the node doccomment
+     *
+     * @return string The doccomment (or null)
+     */
+    public function getDocComment() {
+        return $this->doccomment;
     }
 
     /**
