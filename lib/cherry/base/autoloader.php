@@ -67,7 +67,7 @@ class AutoLoader {
      *
      */
     public function autoload($class) {
-        // \cherry\log(\cherry\LOG_DEBUG,"Autoload requested: {$class}");
+        \cherry\log(\cherry\LOG_DEBUG,"Autoload requested: {$class}");
         if ($this->ns) {
             $cm = strtolower($class);
             $nm = strtolower($this->ns);
@@ -84,9 +84,11 @@ class AutoLoader {
         }
         $loc = $this->path._DS_;
         $extn = (array)explode("|",$this->options['extensions']);
+        $tested = [];
         if ($this->options['casepreserve']==self::CP_LOWERCASE) {
             foreach($extn as $ext) {
                 $fl = $loc.strtolower($cfn).$ext;
+                $tested[] = $fl;
                 if (file_exists($fl) && is_readable($fl)) {
                     \cherry\debug("Autoloading: %s", $fl);
                     require_once $fl;
@@ -96,6 +98,7 @@ class AutoLoader {
         } elseif ($this->options['casepreserve']==self::CP_PRESEVE) {
             foreach($extn as $ext) {
                 $fl = $loc.$cfn.$ext;
+                $tested[] = $fl;
                 if (file_exists($fl) && is_readable($fl)) {
                     \cherry\debug("Autoloading: %s", $fl);
                     require_once $fl;
@@ -106,6 +109,7 @@ class AutoLoader {
             for($case = 0; $case < 2; $case++) {
                 foreach($extn as $ext) {
                     $fl = $loc.(($case==1)?strtolower($cfn):$cfn).$ext;
+                    $tested[] = $fl;
                     if (file_exists($fl) && is_readable($fl)) {
                         \cherry\debug("Autoloading: %s", $fl);
                         require_once $fl;
@@ -114,6 +118,7 @@ class AutoLoader {
                 }
             }
         }
+        \debug("Autoloader: Failed to match class for autoload, tried: %s", join(", ",$tested));
         return false;
 
     }
