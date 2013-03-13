@@ -93,9 +93,9 @@ class CacheObject {
         $this->params = (array)$params;
         ksort($this->variant);
         $path = ((array)App::config()->get('paths.cache'));
-        $path = $path[0];
+        if (count($path)>0) $path = $path[0];
         if (!$path)
-            $path = "/tmp/cherrycache";
+            $path = "/tmp";
         $this->cachepath = $path;
         if (!\file_exists($path))
             \mkdir($path,0700,true);

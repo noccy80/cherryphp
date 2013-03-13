@@ -18,9 +18,11 @@ abstract class ConfigPool {
             if (self::$pools[$identifier]->cfgpath == $cfgpath) {
                 // Already set up, so update flags and return.
                 self::$pools[$identifier]->writeable = $writeable;
+                \debug("ConfigPool: Pool already bound. Updating flags for '{$identifier}");
                 return true;
             }
         }
+        \debug("ConfigPool: Binding pool '{$identifier}' to '{$cfgpath}'");
         $poolinfo = (object)[
             'id' => $identifier,
             'cfgpath' => $cfgpath,
