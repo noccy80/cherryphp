@@ -3,6 +3,7 @@
 namespace Cherry\Expm\Net;
 
 use debug;
+use Cherry\Crypto\OpenSSL\Certificate;
 
 /**
  *
@@ -22,15 +23,21 @@ class SocketServer {
      * Endpoint can be one of:
      *  - tcp://ip:port
      *  - udp://ip:port
+     *  - ssl://ip:port
      *  - unix:///path/to/socket
      *  - udg:///path/to/socket
      *
      * @param string $endpoint The endpoint URI
      */
-    public function __construct($endpoint, $socketclass='\Cherry\Expm\Net\Socket') {
+    public function __construct($endpoint, $socketclass='\Cherry\Expm\Net\Socket', Certificate $c = null) {
         $errno = null; $errstr = null;
         // Create the stream
-        $this->stream = \stream_socket_server($endpoint, $errno, $errstr);
+        if ($c) {
+            $ctx = $c->getStreamContext();
+        } else {
+            $ctx = null;
+        }
+        $this->stream = \stream_socket_server($endpoint, $errno, $errstr, STREAM_SERVER_BIND|STREAM_SERVER_LISTEN, $ctx);
         $this->sockclass = $socketclass;
         // Check for errors
     }
