@@ -141,6 +141,7 @@ class SdlTag implements \ArrayAccess, \Countable {
         $_recurse = false;
         $_ret = false;
         $_ns = null;
+        $_wspace = null;
         $idx = 0;
         $state = self::SP_NODENAME;
 
@@ -249,6 +250,8 @@ class SdlTag implements \ArrayAccess, \Countable {
                             $_final = true;
                             $state = self::SP_NODENAME;
                             $idx = 0;
+                        } else {
+                            $_wspace = $str;
                         }
                         break;
                     case T_COMMENT:
@@ -322,8 +325,11 @@ class SdlTag implements \ArrayAccess, \Countable {
                         $_name = null;
                         $state = self::SP_NODENAME;
                         break;
-                    //case "-":
-                        // if ($state == self::SP_NODENAME)
+                    case "-":
+                    case ".":
+                    case "_":
+                        $_wspace = $tok;
+                        break;
                     default:
                         throw new SdlParseException("Unhandled string in sdl: {$tok} on line {$line}");
                 }
@@ -400,6 +406,13 @@ class SdlTag implements \ArrayAccess, \Countable {
         }
         if ($indent==0) $node.="\n";
         return $node;
+    }
+    
+    public function encodeChildren() {
+        $nodes = null;
+        foreach($this->children as $child)
+            $nodes .= $child->encode();
+        return $nodes;
     }
 
     /**
