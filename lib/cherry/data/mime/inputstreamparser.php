@@ -55,6 +55,9 @@ class InputStreamParser {
             return $this->itemcdisp["filename"];
         return null;
     }
+    public function getAttachmentSize() {
+        return $this->itemlength;
+    }
     
     /**
      * Scan for the next attachment and return its temp filename
@@ -62,14 +65,16 @@ class InputStreamParser {
     public function getAttachment() {
         \debug("InputStreamParser: getAttachment()");
         if ($this->itemstart) {
-            $spos = $this->itemstart + $this->itemlength;
+            $spos = $this->itemstart;
             \debug("InputStreamParser: Starting at %d (0x%0x)", $spos, $spos);
             fseek($this->istream,$spos,\SEEK_SET);
             // Read past the headers
                 
         }
-        static $bs = 8192;
-        $br = 0;
+        static $bs;
+        // Read in 4MB chunks
+        if (!$bs) $bs = 1024*1024*4;
+        $br = $this->itemstart;
         $fdata = null;
         $nbwrite = 0;
         while(true) {
@@ -94,12 +99,12 @@ class InputStreamParser {
                     \debug("InputStreamParser: End delimiter found.");
                     return false;
                 } else {
-                    // We got a header, so save the position for the next run...
-                    $this->itemstart = $br + strlen($bstr);
+                    $fdata = substr($fdata,$bpos);
                     // ...and go on to extracting the stream of data from it
                     // starting with the headers which should be followed by
                     // a newline.
                     list($hdr,$fdata) = explode("\r\n\r\n",$fdata,2);
+                    $br += strlen($hdr)+4;
                     $hdr = explode("\r\n",$hdr);
                     array_shift($hdr);
                     foreach($hdr as $row) {
@@ -136,16 +141,17 @@ class InputStreamParser {
                     // Now make sure we didn't get another delimiter
                     // the same datablock
                     while(true) {
-                        $pend = strpos($fdata,"{$bstr}");
+                        $pend = strpos($fdata,$bstr);
                         if ($pend !== false) {
                             // Trim data, write to file
-                            $nbwrite += strlen($fdata);
+                            $nbwrite += $pend;
                             $wdata = substr($fdata,0,$pend-1);
                             $this->itemlength = $nbwrite;
                             fputs($this->ostream,$wdata);
-                            $fdata = substr($fdata,$pend);
+                            $this->itemstart += $this->itemlength;
+                            //$this->itemstart += $nbwrite;
                             \debug("InputStreamParser: Found next delimiter.");
-                            break;
+                            break(1);
                         } else {
                             $nbwrite += strlen($fdata);
                             $wdata = $fdata;
@@ -153,10 +159,11 @@ class InputStreamParser {
                             $this->itemlength = $nbwrite;
                             fputs($this->ostream,$wdata);
                             \debug("InputStreamParser: Reading %d bytes",$bs);
-                            $fdata = fgets($this->istream,$bs);
+                            $fdata = fread($this->istream,$bs);
                         }
                         if (!$fdata) break;
                     }
+                    \debug("InputStreamParser: Returning temporary name {$writeto}");
                     // Close the stream, we are done.
                     fclose($this->ostream);
                     $this->ostream = null;
@@ -171,7 +178,7 @@ class InputStreamParser {
                     throw new \Exception("Data buffered but no output stream");
                 }
             }
-            $br = $br + strlen($fdata);
+            $br = $br + $bs;
         }
     }
     
