@@ -25,7 +25,8 @@ class Request implements \ArrayAccess, \IteratorAggregate {
                 'remotehost' => (!empty($_SERVER['REMOTE_HOST']))?
                     $_SERVER['REMOTE_HOST']:
                     null,
-                'remoteport' => $_SERVER['REMOTE_PORT']
+                'remoteport' => $_SERVER['REMOTE_PORT'],
+                'timestamp' => $_SERVER['REQUEST_TIME']
             ];
 
         } elseif (function_exists('getallheaders')) {
@@ -37,16 +38,31 @@ class Request implements \ArrayAccess, \IteratorAggregate {
                 'url' => null,
                 'remoteip' => null,
                 'remotehost' => null,
-                'remoteport' => null
+                'remoteport' => null,
+                'timestamp' => time()
             ];
         }
     }
-
+    
+    public function getTimestamp() {
+        return $this->requester["timestamp"];
+    }
+    
+    public function getRequestMethod() {
+        return $this->requester["method"];
+    }
+    
+    public function getRequestUrl() {
+        return $this->requester["url"];
+    }
+    
     public function setRemoteIp($ip) {
         if (strpos($ip,":")!==false) {
             list($ip,$port) = explode(":",$ip,2);
             $this->requester['remoteport'] = $port;
-        } 
+        }  else {
+            $this->requester['remoteport'] = null;
+        }
         $this->requester['remoteip'] = $ip;
         $this->requester['remotehost'] = null;
     }

@@ -187,7 +187,7 @@ class Response {
         header('Content-Type: '.$ctype);
         header('Content-Length: '.filesize($file));
         header('Last-Modified: '.gmdate('D, d M Y H:i:s \G\M\T', $lastmod));
-        $this->contentlength = filesize($file);
+        $this->contentLength = filesize($file);
         readfile($file);
         return 200;
     }
