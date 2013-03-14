@@ -1,0 +1,462 @@
+#!/usr/bin/php
+<?php
+
+// bootstrap
+require_once "xenon/xenon.php";
+xenon\frameworks\cherryphp::bootstrap(__DIR__.'/..');
+// end bootstrap
+
+use Cherry\Expm\Cli\ArgumentParser;
+use Cherry\Expm\Cli\BooleanOption;
+use Cherry\Expm\Cli\ValueOption;
+
+class TokenSet {
+    private $tokens = [];
+    private $depth = [];
+    private $saved = null;
+    private $index = 0;
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param array $tokens=null ...
+     */
+    public function __construct(array $tokens=null) {
+        $this->tokens = (array)$tokens;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function atEnd() {
+        return $this->index < count($this->tokens);
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function getDepth() {
+        if (count($this->depth)!=count($this->tokens)) {
+            $dl = 0;
+            $dd = [];
+            $tl = array_values($this->tokens);
+            foreach($tl as $v) {
+                if (is_array($v)) $v = $v[1];
+                if ($v == "{") $dl++;
+                elseif ($v == "}") $dl--;
+                if ($dl<0) $dl = 0;
+                $dd[] = $dl;
+            }
+            $this->depth = $dd;
+        }
+        return $this->depth[$this->index];
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function getToken() {
+        return $this->tokens[$this->index];
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function getTokenString() {
+        $token = $this->tokens[$this->index];
+        if (is_array($token)) 
+            return $token[1];
+        return $token;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function getTokenType() {
+        $type = $this->tokens[$this->index];
+        if (is_array($type)) 
+            return $type[0];
+        return null;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function pop() {
+        if (count($this->tokens)<=$this->index)
+            return null;
+        return $this->tokens[$this->index++];
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     */
+    public function reset() {
+        $this->index = 0;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param Mixed $offset ...
+     * @return ...
+     */
+    public function seek($offset) {
+        $to = $this->index + $offset;
+        if (($to >= 0) && ($to<count($this->tokens))) {
+            $this->index = $to;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param Mixed $newtoken ...
+     */
+    public function replaceToken($newtoken) {
+        $this->tokens[$this->index] = $newtoken;
+        $this->depth = [];
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function rewind() {
+        if ($this->index > 0) {
+            --$this->index;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function peek() {
+        if ($this->index > count($this->tokens) - 2)
+            return null;
+        return $this->tokens[$this->index+1];
+    }
+    
+    public function getBlock() {
+        $spos = $this->index; // Save the position for later
+        $this->scanString("{"); // Start at the block
+        $block = [];
+        $rl = 0;
+        while(!$this->atEnd()) {
+            $tok = $this->peekTokenString();
+            $block[] = $this->pop();
+            if ($tok == "{")
+                $rl++;
+            elseif ($tok == "}")
+                $rl--;
+            if ($rl <= 0) break;
+        }
+        var_dump($block);
+        return $block;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function peekString() {
+        $t = $this->peek();
+        if (is_array($t)) return $t[1];
+        return $t;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function peekToken() {
+        $t = $this->peek();
+        if (is_array($t)) return $t[0];
+        return null;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param Mixed $tokentype ...
+     * @return ...
+     */
+    public function scan($tokentype) {
+        while ($this->peekToken() != $tokentype) {
+            if (!$this->pop()) return false;
+        }
+        return true;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param Mixed $string ...
+     * @return ...
+     */
+    public function scanString($string) {
+        while (strpos($this->peekString(),$string) === false) {
+            if (!$this->pop()) return false;
+        }
+        return true;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param Mixed $string ...
+     * @return ...
+     */
+    public function scanStringRev($string) {
+        while (strpos($this->peekString(),$string) === false) {
+            if (!$this->rewind()) return false;
+        }
+        return true;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param Mixed $token ...
+     */
+    public function insertToken($token) {
+        array_splice($this->tokens,$this->index,0, func_get_args());
+        $this->depth = [];
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function __toString() {
+        $out = "";
+        foreach($this->tokens as $token) {
+            if (is_array($token))
+                $out.= $token[1];
+            else
+                $out.= $token;
+        }
+        return $out;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @return ...
+     */
+    public function debugString() {
+        $out = null;
+        foreach($this->tokens as $token) {
+            if (is_array($token)) {
+                $out.= "\033[7m<".token_name($token[0]).">\033[27m";
+                $out.= $token[1];
+            } else {
+                $out.= "\033[1m".$token."\033[21m";
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     */
+    public function saveIndex() {
+        $this->saved = $this->index;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     */
+    public function restoreIndex() {
+        if ($this->saved !== null) $this->index = $this->saved;
+    }
+}
+
+
+class AutoDoc {
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     */
+    function process() {
+        $tok = new TokenSet(token_get_all(file_get_contents("php://stdin")));
+
+        $cl = $this->find_classes($tok);
+        $fl = $this->find_functions($tok);
+
+        $tok = $this->annotate_functions($tok,$fl);
+
+        file_put_contents("php://stdout",(string)$tok);
+        //file_put_contents("php://stderr",$tok->debugString());
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param TokenSet $ts ...
+     * @return ...
+     */
+    function find_classes(TokenSet $ts) {
+        $ts->reset();
+        $classes = [];
+        while($t = $ts->pop()) {
+            if (is_array($t)) {
+                if ($t[0] == T_CLASS) {
+                    $classes[] = $ts->peekString();
+                }
+            }
+        }
+        return $classes;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param TokenSet $ts ...
+     * @return ...
+     */
+    function find_functions(TokenSet $ts) {
+        $ts->reset();
+        $functions = [];
+        while($t = $ts->pop()) {
+            if (is_array($t)) {
+                if ($t[0] == T_FUNCTION) {
+                    $fn = $ts->peekString();
+                    $args = [];
+                    $pb = null;
+                    while($ts->pop() != ")") {
+                        $ps = $ts->peekString();
+                        if (($ps == ")") || ($ps == ",")) {
+                            if (trim($pb)) $args[] = trim($pb);
+                            $pb = null;
+                        } elseif ($ps == "(") {
+                        } else {
+                            $pb.=$ps;
+                        }
+                    }
+                    $lastfunc = $fn;
+                    $functions[$fn] = $args;
+                }
+                if ($t[0] == T_RETURN) {
+                    $functions[$fn][] = "**";
+                }
+            }
+        }
+        return $functions;
+    }
+
+    /**
+     * @brief ...
+     * ...
+     * 
+     * @param TokenSet $ts ...
+     * @param Mixed $fl ...
+     * @return ...
+     */
+    function annotate_functions(TokenSet $ts, $fl) {
+        $ts->reset();
+        while ($ts->scan(T_FUNCTION)) {
+            $ts->seek(2); // After the keyword and whitespace comes the function name
+            $fn = $ts->peekString();
+            $ts->scanStringRev("\n"); // Find the line containing the prefixing newline
+            if ($ts->getTokenType() != T_DOC_COMMENT) {
+                $ts->seek(2); // ...and seek forward two lines
+                $depth = $ts->getDepth();
+                $block = $ts->getBlock();
+                // ...and the function arguments.
+                $args = $fl[$fn];
+                // We need some indentation guides...
+                $indent = str_repeat(" ",4*$depth);
+                $cmt =  "/**\n".
+                        "{$indent} * @brief ...\n".
+                        "{$indent} * ...\n".
+                        "{$indent} * \n";
+                $hasreturn = false;
+                foreach($args as $arg) {
+                    if ($arg == "**") {
+                        $hasreturn = true;
+                    } else {
+                        if ($arg[0] == "$") 
+                            $cmt.="{$indent} * @param Mixed {$arg} ...\n";
+                        else
+                            $cmt.="{$indent} * @param {$arg} ...\n";
+                    }
+                }
+                if ($hasreturn) $cmt.="{$indent} * @return ...\n";
+                $cmt.="{$indent} */";
+                // Insert our tokens
+                $ts->insertToken([T_DOC_COMMENT,$cmt],[T_WHITESPACE,"\n".$indent]);
+                $ts->seek(-1);
+                $ts->replaceToken([T_WHITESPACE,"\n\n".$indent]);
+            }
+            $ts->scanString(")");
+        }
+        return $ts;
+    }
+}
+
+$ap = new ArgumentParser();
+$ap->addOption('help', new BooleanOption([ 'h', 'help' ]), "Show the help");
+$ap->addOption('compact', new BooleanOption([ 'c', 'compact' ]), "Compact comments");
+$ap->addOption('brief', new BooleanOption([ 'b', 'brief', 'brief-comments' ]), "Add @brief comments");
+$ap->addOption('vars', new BooleanOption([ 'v', 'vars', 'document-vars' ]), "Document class variables");
+$ap->addOption('merge', new BooleanOption([ 'm', 'merge' ]), "Merge @params and @returns that aren't in comment");
+
+list($args,$parms) = $ap->parse();
+if ($args->help) {
+    $ap->usage();
+    exit(1);
+}
+$ad = new AutoDoc();
+$ad->process();
