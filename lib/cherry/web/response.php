@@ -7,7 +7,8 @@ class Response {
     private $httpcode = 200;
     private $protocol = null;
     public $content = null;
-    public function __construct($protocol=null) {
+    
+    public function __construct($protocol=null,$location=null) {
         if (!_IS_CLI_SERVER) {
             $this->headers = [];
         }
@@ -15,6 +16,8 @@ class Response {
             $this->protocol = $protocol;
         else
             $this->protocol = (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0');
+        if ($location)
+            $this->location = $location;
     }
     public function getStatus() {
         return $this->httpcode;
@@ -73,7 +76,14 @@ class Response {
             }
         }
     }
-    public function asHttpResponse() {
+    public function setContent($content) {
+        $this->contentLength = strlen($content);
+        $this->content = $content;
+    }
+    public function getContent() {
+        return $this->content;
+    }
+    public function asHttpResponse($withcontent=false) {
         $httptext = $this->getHttpStatusText($this->httpcode);
         // Check for some of the required headers
         if (empty($this->headers['content-type'])) {
@@ -89,11 +99,14 @@ class Response {
             $str.= "{$hn}: {$v}\r\n";
         }
         $str.= "\r\n";
+        if ($withcontent) $str.= $this->getContent();
         return $str;
     }
 
     public function asText() {
         $out = [];
+        $httptext = $this->getHttpStatusText($this->httpcode);
+        $out[] = "{$this->protocol} {$this->httpcode} {$httptext}";
         foreach($this->getHeaders() as $header=>$value) {
             $hstr = str_replace(' ', '-', ucwords(str_replace('-', ' ', $header)));
             $out[] = "{$hstr}: {$value}";

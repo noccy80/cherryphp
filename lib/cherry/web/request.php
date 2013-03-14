@@ -8,7 +8,13 @@ namespace Cherry\Web;
  */
 class Request implements \ArrayAccess, \IteratorAggregate {
     private $headers = [];
+    private $complete = false;
     private $requester = null;
+    
+    /**
+     *
+     *
+     */
     public function __construct() {
         if (_IS_CLI_SERVER) {
             foreach($_SERVER as $k=>$v) {
@@ -28,7 +34,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
                 'remoteport' => $_SERVER['REMOTE_PORT'],
                 'timestamp' => $_SERVER['REQUEST_TIME']
             ];
-
+            $this->complete = true;
         } elseif (function_exists('getallheaders')) {
             // Apache etc
         } else {
@@ -43,19 +49,100 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             ];
         }
     }
+
+    /**
+     *
+     * @param string $string The HTTP stream
+     * @param bool $append If true, the data will be appended if data already 
+     *    exist in the buffer.
+     */
+    public function createFromString($string, $append=false) {
+        if ((!$append) || (empty($this->parser))) {
+            $this->complete = false;
+            $this->parser = (object)[
+                "buffer" => $string,
+                "headers" => false,
+                "rawheader" => null,
+                "rawdata" => null,
+                "datapos" => null
+            ];
+        } else {
+            if ($this->parser->headers)
+                $this->parser->rawdata.= $string;
+            $this->parser->buffer.= $string;
+        }
+        if ((!$this->parser->headers) && (strpos($this->parser->buffer,"\r\n\r\n")!==false)) {
+            $this->parser->datapos = strpos($this->parser->buffer,"\r\n\r\n");
+            $this->parser->rawheader = substr($this->parser->buffer,0,$this->parser->datapos);
+            $this->parser->rawdata = substr($this->parser->buffer,$this->parser->datapos);
+            $hbuf = explode("\r\n",trim($this->parser->rawheader));
+            foreach($hbuf as $hstr) {
+                if (strpos($hstr,":")!==false) {
+                    list($k,$v) = explode(":",str_replace(": ",":",$hstr),2);
+                    $this->headers[strtolower($k)] = $v;
+                } elseif (strpos(strtoupper($hstr),"HTTP")!==false) {
+                    list($method,$url,$proto) = explode(" ",$hstr,3);
+                    $this->setRequestMethodInfo($proto,$method,$url);
+                }
+            }
+            $this->complete = true;
+        }
+        if (($append) && empty($string)) $this->complete = true;
+    }
+
+    /**
+     *
+     * @return bool True if the request has been fully received
+     */
+    public function isRequestComplete() {
+        return $this->complete;
+    }
+
+    /**
+     *
+     * @param string $proto The protocol of the HTTP request
+     * @param string $method The method of the HTTP request
+     * @param string $url The requested URL
+     */
+    public function setRequestMethodInfo($proto,$method,$url) {
+        $this->requester["protocol"] = $proto;
+        $this->requester["method"] = $method;
+        $this->requester["url"] = $url;
+    }
     
+    /**
+     * @brief Get the timestamp of the request.
+     * Also available as $request["timestamp"]
+     *
+     * @return int The timestamp
+     */
     public function getTimestamp() {
         return $this->requester["timestamp"];
     }
     
+    /**
+     * @brief Get the HTTP method used for the request
+     * Also available as $request["method"]
+     *
+     * @return string The request method
+     */
     public function getRequestMethod() {
         return $this->requester["method"];
     }
     
+    /**
+     * @brief Get the URL of the request
+     * Also available as $request["url"]
+     *
+     * @return string The URL
+     */
     public function getRequestUrl() {
         return $this->requester["url"];
     }
     
+    /**
+     *
+     */
     public function setRemoteIp($ip) {
         if (strpos($ip,":")!==false) {
             list($ip,$port) = explode(":",$ip,2);
@@ -67,10 +154,16 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         $this->requester['remotehost'] = null;
     }
     
+    /**
+     *
+     */
     public function getRemoteIp() {
         return $this->requester['remoteip'];
     }
 
+    /**
+     *
+     */
     public function getRemoteHost() {
         if (!$this->requester['remotehost']) {
             if (!empty($this->requester['remoteip']))
@@ -81,10 +174,16 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         return $this->requester['remotehost'];
     }
 
+    /**
+     *
+     */
     public function getRemotePort() {
         return $this->requester['remoteport'];
     }
 
+    /**
+     *
+     */
     public function getHeader($header) {
         $header = strtolower($header);
         if (!empty($this->headers[$header]))
@@ -92,55 +191,29 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         return null;
     }
     
+    /**
+     *
+     */
     public function getHeaders() {
         return $this->headers;
     }
-    public function offsetGet($index) {
-        return $this->getHeader($index);
-    }
-    public function offsetSet($index,$value) {
 
-    }
-    public function offsetUnset($index) { }
-    public function offsetExists($index) { }
-    public function getIterator() {
-        return new \ArrayIterator($this->headers);
-    }
-
-    public function __get($key) {
-        if (array_key_exists($key,$this->requester))
-            return $this->requester[$key];
-        return null;
-    }
-
-    public function __toString() {
-        return $this->asText();
-    }
-
+    /**
+     * Return the formatted request as text
+     */
     public function asText() {
         $out = [];
+        $out[] = $this->requester["method"]." ".$this->requester["url"]." ".$this->requester["protocol"];
         foreach($this->headers as $header=>$value) {
             $hstr = str_replace(' ', '-', ucwords(str_replace('-', ' ', $header)));
             $out[] = "{$hstr}: {$value}";
         }
         return join("\r\n",$out);
     }
-    public function setFromText($text) {
-        $headers = split("\r\n",$text);
-        if (strpos($headers[0],":") === false) {
-            $request = array_shift($headers);
-            list($this->requester['method'],$this->requester['url'],$this->requester['protocol']) = explode(" ",$request,3);
-        }
-        foreach($headers as $header) {
-            if ($header) {
-                list($k,$v) = explode(":",$header,2);
-                $v = trim($v);
-                // \debug("Request: setFromText: Got header %s: %s ", $k, $v);
-                $this->headers[strtolower($k)] = trim($v);
-            }
-        }
-        
-    }
+
+    /**
+     * Return the formatted request as HTML
+     */
     public function asHtml() {
         $protocol = $this->requester['protocol'];
         $method = $this->requester['method'];
@@ -163,12 +236,58 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         return "<pre>".join("\r\n",$out)."</pre>";
     }
 
+    /**
+     *
+     */
     private function formatHeader($header) {
         return str_replace(' ', '-', ucwords(str_replace('-', ' ', $header)));
     }
 
+    /**
+     *
+     */
     public function getRawPostData() {
+        if (!empty($this->parser))
+            return $this->parser->rawdata;
         return file_get_contents("php://input");
     }
+    
+   /**
+    * Create a Response object prepared with information from the request such
+    * as the request protocol, the request URL (for the Location header), and
+    * a default content-type of text/html.
+    */
+   public function createResponse() {
+        $rsp = new Response($this->requester["protocol"], $this->requester["url"]);
+        $rsp->host = $this["host"];
+        $rsp->contentType = "text/html";
+        return $rsp;
+    }
+
+
+
+    /**
+     *
+     */
+    public function offsetGet($index) {
+        return $this->getHeader($index);
+    }
+    public function offsetSet($index,$value) { }
+    public function offsetUnset($index) { }
+    public function offsetExists($index) { }
+    public function getIterator() {
+        return new \ArrayIterator($this->headers);
+    }
+
+    public function __get($key) {
+        if (array_key_exists($key,$this->requester))
+            return $this->requester[$key];
+        return null;
+    }
+
+    public function __toString() {
+        return $this->asText();
+    }
+
 
 }
