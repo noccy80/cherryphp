@@ -41,6 +41,20 @@ class ArgumentParser {
         $this->options[$id] = (object)compact('id','option','description','options');
     }
     
+    function usage() {
+        echo "Valid arguments:\n";
+        foreach($this->options as $option) {
+            if ($option->option instanceof BooleanOption)
+                echo "    ".$option->option->getString()."  - ".$option->description."\n";        
+            elseif ($option->option instanceof ValueOption)
+                echo "    ".$option->option->getString()." ..  - ".$option->description."\n";
+            else
+                echo "    ".$option->option->getString()." .. [ .. ] - ".$option->description."\n";
+            
+        
+        }
+    }
+    
     function parse() {
         $argl = $this->args;
         $params = [];
@@ -95,6 +109,12 @@ abstract class Option {
             $this->shortopt = array_shift($opts);
         }
         $this->longopt = $opts;
+    }
+    public function getString() {
+        $out = [];
+        if ($this->shortopt) $out[] = "-{$this->shortopt}";
+        foreach ($this->longopt as $opt) $out[] = "--{$opt}";
+        return join(", ",(array)$out);
     }
     abstract public function check($long,$option);
 }
