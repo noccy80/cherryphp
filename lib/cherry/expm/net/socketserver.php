@@ -14,9 +14,13 @@ use Cherry\Crypto\OpenSSL\Certificate;
  */
 class SocketServer {
 
+    use \Cherry\Traits\TDebug;
+
+    private $streams = [];
     private $stream;
     private $clients = [];
     private $sockclass = null;
+    private $©ertificate = null;
     /**
      * Create a socket server
      *
@@ -29,16 +33,22 @@ class SocketServer {
      *
      * @param string $endpoint The endpoint URI
      */
-    public function __construct($endpoint, $socketclass='\Cherry\Expm\Net\Socket', Certificate $c = null) {
+    public function __construct($endpoint=null, $socketclass='\Cherry\Expm\Net\Socket', Certificate $c = null) {
+        $this->sockclass = $socketclass;
+        $this->certificate = $c;
+        if ($endpoint)
+            $this->addListenPort($endpoint);
+    }
+    
+    public function addListenPort($endpoint) {
         $errno = null; $errstr = null;
         // Create the stream
-        if ($c) {
-            $ctx = $c->getStreamContext();
+        if ($this->certificate) {
+            $ctx = $this->certificate->getStreamContext();
         } else {
             $ctx = null;
         }
-        $this->stream = \stream_socket_server($endpoint, $errno, $errstr, STREAM_SERVER_BIND|STREAM_SERVER_LISTEN, $ctx);
-        $this->sockclass = $socketclass;
+        $this->streams[] = \stream_socket_server($endpoint, $errno, $errstr, STREAM_SERVER_BIND|STREAM_SERVER_LISTEN, $ctx);
         // Check for errors
     }
 
@@ -52,21 +62,21 @@ class SocketServer {
         // Select sockets to read
         foreach($this->clients as $k=>$client) {
             if ($client->discard) {
-                \debug("Discarding client {$client->uuid}");
+                $this->debug("Discarding client {$client->uuid}");
                 unset($this->clients[$k]);
             }
         }
         $read = array_map(function($sock){ return $sock->stream; }, $this->clients); $write = []; $except = [];
-        array_unshift($read,$this->stream);
+        $read = array_merge($this->streams, $read);
         if (count($read) == 0) return [];
         // Add the readable sockets to a list as Socket instances
         $sock = [];
         if (false !== \stream_select($read,$write,$except,0,50000)) {
             foreach($read as $stream) {
-                if ($stream === $this->stream) {
+                if (in_array($stream, $this->streams)) {
                     // Create a new Socket
                     $peer = null;
-                    $asock = \stream_socket_accept($this->stream,0,$peer);
+                    $asock = \stream_socket_accept($stream,0,$peer);
                     if ($asock) {
                         $socket = new $this->sockclass($asock);
                         $socket->socketserver = $this;
@@ -76,7 +86,7 @@ class SocketServer {
                     }
                 } else {
                     $streamid = $this->getStreamId($stream);
-                    \debug("{$streamid}: socket read");
+                    $this->debug("{$streamid}: socket read");
                     assert(array_key_exists($streamid,$this->clients));
                     $sock[$streamid] = $this->clients[$streamid];
                     $sock[$streamid]->onDataWaiting();

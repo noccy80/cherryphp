@@ -2,6 +2,9 @@
 
 namespace Cherry\Data\Mime;
 
+//define("ISP_PARSER_BLOCK_SIZE",8388608); // Default: 8MB
+define("ISP_PARSER_BLOCK_SIZE",4096); // 4KB
+
 /**
  * This is an input stream parser capable of parsing and extracting content from
  * a mime multipart message. It has been designed with the goal of being able to
@@ -15,9 +18,14 @@ namespace Cherry\Data\Mime;
  * // Bind the input stream
  * $isp->setInputStream(fopen("file.mime","rb"),$boundary);
  * // Go over all the attachments found in the stream
- * while (($file = $isp->getAttachment())) {
- *     // Save the file to /tmp/upload
- *     $isp->saveAttachment($file,"/tmp/upload/".$file->name);
+ * $isp->scan();
+ * foreach($isp as $att) {
+ *     printf("Attachment: '%s' (%s) %d bytes\n",
+ *         $att->filename, $att->filetype, $att->datalen);
+ *     // Do note that this is NOT WISE! You don't want to use the filename
+ *     // out of the box! Sanitize it first.
+ *     $fn = $chunk->filename;
+ *     $isp->saveAttachment($att,"/tmp/{$fn}");
  * }
  * @endcode
  *
@@ -31,158 +39,173 @@ namespace Cherry\Data\Mime;
  *     ------WebKitFormBoundary7szNe6wIJe9iitgg--
  *     
  */
-class InputStreamParser {
+class InputStreamParser implements \IteratorAggregate {
+    use \Cherry\Traits\TDebug;
+    
     private $istream = null;
-    private $ostream = null;
     private $boundary = null;
-    private $itemstart = null;
-    private $itemlength = null;
-    private $itemctype = null;
-    private $itemcdisp = null;
+    private $chunks = [];
+    
+    public function __destruct() {
+        if ($this->istream)
+            @fclose($this->istream);
+    }
+    
     public function setInputStream($stream,$boundary) {
          $this->istream = $stream;
          $this->boundary = $boundary;
     }
     
-    public function getAttachmentContentDisposition() {
-        return $this->itemcdisp;
+    /**
+     * Locate the next boundary in the file.
+     */
+    private function findNextBoundary($start=null) {
+        assert(!empty($this->istream));
+        assert(!empty($this->boundary));
+        if ($start !==null) {
+            $start += 1;
+        } else {
+            $start = 0;
+        }
+        $offset = $start;
+        $this->debug("findNextBoundary() invoked. Starting at {$start}");
+        fseek($this->istream,$start,\SEEK_SET);
+        // Go over the data, ISP_PARSER_BLOCK_SIZE bytes at a time and look for
+        // a valid boundary. When found, return the byte position on which the
+        // boundary was found in the stream.
+        while(($block = fread($this->istream, ISP_PARSER_BLOCK_SIZE))) {
+            // Look for the boundary
+            $match = strpos($block,"--".$this->boundary);
+            if ($match === false) {
+                // No match, add the length of the block to the offset and get
+                // on to the next block
+                $offset += strlen($block);
+            } else {
+                // Match found, calculate the actual byte offset...
+                $bpos = $offset + $match;
+                // ...and return it
+                $this->debug("Found match at position {$bpos}");
+                return $bpos;
+            }
+        }
+        $this->debug("Boundary {$this->boundary} could not be found!");
+        return false;
     }
-    public function getAttachmentContentType() {
-        return $this->itemctype;
+
+    /**
+     * Scan a header into an info chunk
+     */
+    private function scanHeader(InputStreamChunkInfo &$chunk) {
+        $start = $chunk->chunkstart;
+        $len = $chunk->chunklen;
+        $this->debug("Scanning header at [{$start}-{$len}]");
+        $skip = strlen($this->boundary) + 2; // Skip these bytes!
+        fseek($this->istream,$start+$skip,\SEEK_SET);
+        $header = fread($this->istream,2048);
+        if (substr($header,0,2) == "--") {
+            // This must be an end delimiter, so let's freak out!
+            throw new \Exception("Trying to parse ending delimiter in InputStreamParser");
+        }
+        list($hdr,$void) = explode("\r\n\r\n",$header,2);
+        $chunk->datastart = $chunk->chunkstart + strlen($hdr)+4 + $skip;
+        $chunk->datalen = $chunk->chunkstart + $chunk->chunklen - $chunk->datastart;
+        $hdr = explode("\r\n",$hdr);
+        array_shift($hdr);
+        foreach($hdr as $row) {
+            if (!empty($row)) {
+                list($k,$v) = explode(":",$row,2);
+                $v = trim($v);
+                switch(strtolower($k)) {
+                    case 'content-disposition':
+                        $this->debug("Content-Disposition is '{$v}'");
+                        $cdisp = explode(";",$v);
+                        $cdtype = array_shift($cdisp);
+                        $itemcdisp = [$cdtype];
+                        foreach($cdisp as $cdispattr) {
+                            list ($ak,$av) = explode ("=",$cdispattr);
+                            $itemcdisp[trim($ak)] = trim($av,"\"' ");
+                        }
+                        $chunk->filename = $itemcdisp["filename"];
+                        $this->itemcdisp = $itemcdisp;
+                        break;
+                    case 'content-type':
+                        $this->debug("Content-Type is '{$v}'");
+                        $chunk->filetype = trim($v);
+                        break;
+                    case 'content-length':
+                        $this->debug("Content-Length is '{$v}'");
+                        // Got length
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }        
+        
     }
-    public function getAttachmentFilename() {
-        if (array_key_exists("filename",$this->itemcdisp))
-            return $this->itemcdisp["filename"];
-        return null;
-    }
-    public function getAttachmentSize() {
-        return $this->itemlength;
+
+    /**
+     * Scan the mime blob
+     */
+    public function scan() {
+        $start = null;
+        $blocks = [];
+        $index = 0;
+        // We break this in the loop, so go while true
+        $this->debug("Scanning for attachments...");
+        while(true) {
+            $pos = $this->findNextBoundary($start);
+            if ($pos === false) break;
+            $blocks[$index] = new InputStreamChunkInfo($pos);
+            if ($index>0) $blocks[$index-1]->chunklen = $pos - $start - 2;
+            $start = $pos;
+            $index += 1;
+        }
+        array_pop($blocks);
+        $num = count($blocks);
+        $this->debug("Parsing headers for {$num} chunks");
+        for ($n = 0; $n < $num; $n++) {
+            $this->scanHeader($blocks[$n]);
+        }
+        $this->chunks = $blocks;
+        return (count($blocks)>0);
     }
     
     /**
-     * Scan for the next attachment and return its temp filename
+     * Save attachment defined in the chunk to target
      */
-    public function getAttachment() {
-        \debug("InputStreamParser: getAttachment()");
-        if ($this->itemstart) {
-            $spos = $this->itemstart;
-            \debug("InputStreamParser: Starting at %d (0x%0x)", $spos, $spos);
-            fseek($this->istream,$spos,\SEEK_SET);
-            // Read past the headers
-                
-        }
-        static $bs;
-        // Read in 4MB chunks
-        if (!$bs) $bs = 1024*1024*4;
-        $br = $this->itemstart;
-        $fdata = null;
-        $nbwrite = 0;
-        while(true) {
-            // Only read data if we had none left the last iter
-            if (!$fdata) {
-                \debug("InputStreamParser: Reading %d bytes",$bs);
-                $fdata = fread($this->istream,$bs);
+    public function saveAttachment(InputStreamChunkInfo $chunk, $target) {
+        $this->debug("Writing '{$target}' from {$chunk->datastart} with length {$chunk->datalen}");
+        fseek($this->istream, $chunk->datastart, \SEEK_SET);
+        $bytes = $chunk->datalen;
+        $fout = fopen($target,"wb+");
+        while($bytes>0) {
+            if ($bytes > ISP_PARSER_BLOCK_SIZE) {
+                $read = ISP_PARSER_BLOCK_SIZE;
             } else {
-                \debug("InputStreamParser: Recycling %d bytes",$bs);
+                $read = $bytes;
             }
-            // And if we get none, we're out of luck
-            if (!$fdata)
-                return null;
-            // Check for the boundary
-            $bstr = "--{$this->boundary}";
-            $bpos = strpos($fdata,$bstr);
-            if ($bpos !== false) {
-                \debug("InputStreamParser: Found boundary, inspecting...");
-                // is this the end delimiter?
-                if (substr($fdata,$bpos+strlen($bstr),2) == "--") {
-                    // End of the line
-                    \debug("InputStreamParser: End delimiter found.");
-                    return false;
-                } else {
-                    $fdata = substr($fdata,$bpos);
-                    // ...and go on to extracting the stream of data from it
-                    // starting with the headers which should be followed by
-                    // a newline.
-                    list($hdr,$fdata) = explode("\r\n\r\n",$fdata,2);
-                    $br += strlen($hdr)+4;
-                    $hdr = explode("\r\n",$hdr);
-                    array_shift($hdr);
-                    foreach($hdr as $row) {
-                        if (!empty($row)) {
-                            list($k,$v) = explode(":",$row,2);
-                            switch(strtolower($k)) {
-                                case 'content-disposition':
-                                    \debug("InputStreamParser: Content-Disposition = {$v}");
-                                    $cdisp = explode(";",$v);
-                                    $cdtype = array_shift($cdisp);
-                                    $itemcdisp = [$cdtype];
-                                    foreach($cdisp as $cdispattr) {
-                                        list ($ak,$av) = explode ("=",$cdispattr);
-                                        $itemcdisp[trim($ak)] = trim($av,"\"' ");
-                                    }
-                                    $this->itemcdisp = $itemcdisp;
-                                    break;
-                                case 'content-type':
-                                    \debug("InputStreamParser: Content-Type = {$v}");
-                                    $this->itemctype = trim($v);
-                                    break;
-                                case 'content-length':
-                                    \debug("InputStreamParser: Content-Length = {$v}");
-                                    // Got length
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                    // TODO: Check if the content-length is in the header and use that.
-                    $writeto = tempnam(null,"mimesect");
-                    $this->ostream = fopen($writeto,"wb");
-                    // Now make sure we didn't get another delimiter
-                    // the same datablock
-                    while(true) {
-                        $pend = strpos($fdata,$bstr);
-                        if ($pend !== false) {
-                            // Trim data, write to file
-                            $nbwrite += $pend;
-                            $wdata = substr($fdata,0,$pend-1);
-                            $this->itemlength = $nbwrite;
-                            fputs($this->ostream,$wdata);
-                            $this->itemstart += $this->itemlength;
-                            //$this->itemstart += $nbwrite;
-                            \debug("InputStreamParser: Found next delimiter.");
-                            break(1);
-                        } else {
-                            $nbwrite += strlen($fdata);
-                            $wdata = $fdata;
-                            $fdata = null;
-                            $this->itemlength = $nbwrite;
-                            fputs($this->ostream,$wdata);
-                            \debug("InputStreamParser: Reading %d bytes",$bs);
-                            $fdata = fread($this->istream,$bs);
-                        }
-                        if (!$fdata) break;
-                    }
-                    \debug("InputStreamParser: Returning temporary name {$writeto}");
-                    // Close the stream, we are done.
-                    fclose($this->ostream);
-                    $this->ostream = null;
-                    return $writeto;
-                }
-            } else {
-                if ($this->ostream) {
-                    fputs($this->ostream,$fdata);
-                    $fdata = null;
-                } else {
-                    var_dump($fdata);
-                    throw new \Exception("Data buffered but no output stream");
-                }
-            }
-            $br = $br + $bs;
+            $bytes -= $read;
+            $data = fread($this->istream, $read);
+            fwrite($fout,$data,$read);
         }
+        fclose($fout);
     }
     
-    public function saveAs($object,$target) {
-        rename($object,$target);
+    public function getIterator() {
+        return new \ArrayIterator($this->chunks);
+    }
+}
+
+class InputStreamChunkInfo {
+    public $chunkstart; // Start of chunk in file including header
+    public $chunklen;   // Length of the chunk
+    public $datastart;  // Start of the actual data in the chunk
+    public $datalen;    // Length of data in the chunk
+    public $filename;   // Name of file in the chunk
+    public $filetype;   // MIME type of the file in the chunk
+    public function __construct($chunkstart,$chunklen=-1) {
+        $this->chunkstart = $chunkstart;
+        $this->chunklen = $chunklen;
     }
 }
