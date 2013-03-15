@@ -32,7 +32,8 @@ class Request implements \ArrayAccess, \IteratorAggregate {
                     $_SERVER['REMOTE_HOST']:
                     null,
                 'remoteport' => $_SERVER['REMOTE_PORT'],
-                'timestamp' => $_SERVER['REQUEST_TIME']
+                'timestamp' => $_SERVER['REQUEST_TIME'],
+                'server' => $_SERVER['SERVER_ADDR'].':'.$_SERVER['SERVER_PORT']
             ];
             $this->complete = true;
         } elseif (function_exists('getallheaders')) {
@@ -45,9 +46,16 @@ class Request implements \ArrayAccess, \IteratorAggregate {
                 'remoteip' => null,
                 'remotehost' => null,
                 'remoteport' => null,
-                'timestamp' => time()
+                'timestamp' => time(),
+                'server' => null
             ];
         }
+    }
+    
+    public function setServer($server,$port=80) {
+        if (strpos($server,':')!==false)
+            list($server,$port) = explode(":",$server,2);
+        $this->requester["server"] = $server.':'.(int)$port;
     }
 
     /**
@@ -79,7 +87,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             foreach($hbuf as $hstr) {
                 if (strpos($hstr,":")!==false) {
                     list($k,$v) = explode(":",str_replace(": ",":",$hstr),2);
-                    $this->headers[strtolower($k)] = $v;
+                    $this->setHeader(strtolower($k),$v);
                 } elseif (strpos(strtoupper($hstr),"HTTP")!==false) {
                     list($method,$url,$proto) = explode(" ",$hstr,3);
                     $this->setRequestMethodInfo($proto,$method,$url);
@@ -137,6 +145,8 @@ class Request implements \ArrayAccess, \IteratorAggregate {
      * @return string The URL
      */
     public function getRequestUrl() {
+        /* $url = new \Cherry\Net\Url("http://".$this->request["server"]);
+        echo "URL: {$url}\n"; */
         return $this->requester["url"];
     }
     
@@ -189,6 +199,16 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         if (!empty($this->headers[$header]))
             return $this->headers[$header];
         return null;
+    }
+    
+    public function setHeader($header,$value) {
+        $header = strtolower($header);
+        $this->headers[$header] = $value;
+        if ($header == "host") {
+            $this->setServer($value);
+        }
+        return null;
+        
     }
     
     /**
@@ -250,6 +270,12 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         if (!empty($this->parser))
             return $this->parser->rawdata;
         return file_get_contents("php://input");
+    }
+    
+    public function getRequestDataFile() {
+        $fn = tempnam(null,"upload");
+        file_put_contents($fn,$this->parser->rawdata);
+        return $fn;
     }
     
    /**
