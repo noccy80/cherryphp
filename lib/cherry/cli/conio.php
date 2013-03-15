@@ -2,6 +2,53 @@
 
 namespace Cherry\Cli;
 
+class ConIo {
+
+    private static $history_file = null;
+
+    public static function readLine($prompt, ReadlineCompleter $compl = null, callable $filter = null) {
+        if ($compl) {
+            \readline_completion_function($compl);
+        }
+        $ret = \readline($prompt);
+        if (self::$history_file)
+            readline_write_history(self::$history_file);
+        if ($filter) $ret = $filter($ret);
+        return $ret;
+    }
+    
+    public static function getAsyncReader($prompt) {
+        $ar = new AsyncReader($prompt);
+    }
+    
+    public static function setHistoryFile($file) {
+        if (file_exists($file)) {
+            readline_read_history($file);
+        }
+        self::$history_file = $file;
+    }
+    
+    public static function write($str=null) {
+        if (func_num_args()>1) {
+            $args = func_get_args();
+            unshift($args,STDOUT);
+            call_user_func_array("fprintf",$args);
+        } else
+            fprintf(STDOUT,$str);
+    }
+    
+}
+
+class ReadlineCompleter {
+    public function __invoke($input,$index) {
+        return [ "hello:{$input},{$index}" ];
+    }
+}
+
+class AsyncReader { 
+
+}
+
 class Console {
 
     private static $instance = null;
