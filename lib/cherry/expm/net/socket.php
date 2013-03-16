@@ -15,6 +15,8 @@ use Cherry\Expm\Stream\Context\StreamContext;
  */
 class Socket {
 
+    use \Cherry\Traits\TDebug;
+
     public $userdata = null;
     public $stream = null;
     public $datawaiting = false;
@@ -57,7 +59,7 @@ class Socket {
     }
 
     public function connect($endpoint) {
-        debug("Socket: Connecting to %s", $endpoint);
+        $this->debug("Socket: Connecting to %s", $endpoint);
         $errno = null; $errstr = null;
         // Create the stream
         $this->stream = \stream_socket_client($endpoint, $errno, $errstr);
@@ -79,16 +81,23 @@ class Socket {
     }
 
     public function write($data, $length = null) {
-        if (!$this->stream)
-            throw new SocketException("Write operation on closed socket.", self::ERR_NOT_OPEN);
+        if (!$this->stream) {
+            $this->discard = true;
+            $this->debug("Warning: {$this->uuid} - write operation on closed socket.");
+            return null;
+        }
+            // throw new SocketException("Write operation on closed socket.", self::ERR_NOT_OPEN);
         if ($length == null) $length = strlen($data);
         $ret = fwrite($this->stream, $data, $length);
         return $ret;
     }
 
     public function read($length, $nonblock = false) {
-        if (!$this->stream)
-            throw new SocketException("Read operation on closed socket.", self::ERR_NOT_OPEN);
+        if (!$this->stream) {
+            $this->discard = true;
+            $this->debug("Warning: {$this->uuid} - read operation on closed socket.");
+            return null;
+        }
         if ($nonblock) $oldstate = $this->setBlocking(false);
         $data = fread($this->stream, $length);
         $this->datawaiting = (strlen($data)>0);
@@ -99,13 +108,13 @@ class Socket {
     public function setBlocking($blocking) {
         if (!$this->stream)
             throw new SocketException("setBlocking() on closed socket.", self::ERR_NOT_OPEN);
-        
+
         $cs = stream_get_meta_data($this->stream);
         $old = $cs['blocked'];
         \stream_set_blocking($this->stream,$blocking);
         return $old;
     }
-    
+
     public function setCrypto($enable, $crypto=null, StreamContext $ctx=null) {
         if (!$this->stream)
             throw new SocketException("setCrypto() on closed socket.", self::ERR_NOT_OPEN);
@@ -117,7 +126,7 @@ class Socket {
         }
         $this->setBlocking($bs);
     }
-    
+
     /**
      * Check if the last operation timed out
      */
@@ -127,7 +136,7 @@ class Socket {
         $md = stream_get_meta_data($this->stream);
         return $md['timed_out'];
     }
-    
+
     /**
      * Set stream timeout in seconds and µs.
      */
@@ -135,10 +144,6 @@ class Socket {
         if (!$this->stream)
             throw new SocketException("setTimeout() on closed socket.", self::ERR_NOT_OPEN);
         stream_set_timeout($this->stream,$sec,$us);
-    }
-
-    public function onDataWaiting() {
-        $this->datawaiting = true;
     }
 
     public function onConnect($peer) {

@@ -13,7 +13,7 @@ define('_IS_CLI',(php_sapi_name() == 'cli'));
 define('_IS_CLI_SERVER',(php_sapi_name() == 'cli-server'));
 define('CHERRY_VERSION','1.0.0-alpha');
 
-if ($_app = getenv("CHERRY_APP")) define('CHERRY_APP',$_app);
+if ($_app = getenv("CHERRY_APP")) if (!defined("CHERRY_APP")) define('CHERRY_APP',$_app);
 if ($_lib = getenv("CHERRY_LIB")) if (!defined("CHERRY_LIB")) define('CHERRY_LIB',$_lib);
 
 define('DEBUG_VERBOSE',(getenv('DEBUG_VERBOSE')==1));
@@ -32,7 +32,12 @@ require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
 $al = new \Cherry\Base\Autoloader(CHERRY_LIB.'/lib');
 $al->register();
 
-require_once CHERRY_LIB.'/lib/cherry/base/_globals.php';
+require_once CHERRY_LIB.'/lib/_globals.php';
+
+\debug("Application path: %s", CHERRY_APP);
+\debug("Library path: %s", CHERRY_LIB);
+
+
 
 if (getenv("PROFILE")) {
     $pc = explode(":",getenv("PROFILE"));

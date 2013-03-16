@@ -1,6 +1,6 @@
 <?php
 
-require_once "../../share/include/cherryphp";
+require_once __DIR__."/../../share/include/cherryphp";
 
 use Cherry\Core\ServiceManager as SvcMan;
 use Cherry\Core\ServiceInstance;

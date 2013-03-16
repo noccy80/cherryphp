@@ -13,7 +13,7 @@ class PathResolver {
 
     public function getPath($path) {
         $ret = $path;
-        $ret = str_replace('{APP}',$this->apppath,$ret);
+        $ret = str_replace('{APP}', CHERRY_APP,$ret);
         $ret = str_replace('{DATA}',$this->apppath.'/data',$ret);
         $ret = str_replace('{CACHE}',$this->apppath.'/cache',$ret);
         $ret = str_replace('{PUBLIC}',$this->apppath.'/public',$ret);

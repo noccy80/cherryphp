@@ -10,13 +10,13 @@ $findlib = function() {
         if (file_exists($_env."/".$bootfile))
             return $_env;
     $_init = $_SERVER["SCRIPT_NAME"];
-    while(dirname($_init)) {
+    while($_init != "/") {
         if (file_exists($_init."/".$bootfile))
             return $_init;
         $_init = dirname($_init);
     }
     $_dir = __DIR__;
-    while(dirname($_dir)) {
+    while($_dir != "/") {
         if (file_exists($_dir."/".$bootfile))
             return $_init;
         $_dir = dirname($_dir);
@@ -24,6 +24,37 @@ $findlib = function() {
     throw new \Exception("Unable to find CherryPHP bootstrap file");
 };
 
+$findapp = function() {
+    $appfiles = [ "application.json", "config/_setup.php", "config/application.sdl", "src" ];
+    foreach($appfiles as $appfile) {
+        if (defined("CHERRY_APP"))
+            if (file_exists(CHERRY_APP."/".$appfile))
+                return CHERRY_APP;
+        $_env = getenv("CHERRY_APP");
+        if ($_env)
+            if (file_exists($_env."/".$appfile))
+                return $_env;
+        $_init = realpath($_SERVER["SCRIPT_NAME"]);
+        while($_init != "/") {
+            if (file_exists($_init."/".$appfile))
+                return $_init;
+            $_init = dirname($_init);
+        }
+        $_dir = __DIR__;
+        while($_dir != "/") {
+            if (file_exists($_dir."/".$appfile))
+                return $_init;
+            $_dir = dirname($_dir);
+        }
+    }
+    throw new \Exception("Unable to find CherryPHP application root");
+};
+
 if (!defined("CHERRY_LIB"))
     define("CHERRY_LIB", $findlib());
+if (!defined("CHERRY_APP"))
+    define("CHERRY_APP", $findapp());
+if (file_exists(CHERRY_APP . "/config/_setup.php"))
+    require_once CHERRY_APP . "/config/_setup.php";
+
 require_once CHERRY_LIB . "/lib/_bootstrap.php";

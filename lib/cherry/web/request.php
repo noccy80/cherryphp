@@ -10,7 +10,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     private $headers = [];
     private $complete = false;
     private $requester = null;
-    
+
     /**
      *
      *
@@ -51,7 +51,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             ];
         }
     }
-    
+
     public function setServer($server,$port=80) {
         if (strpos($server,':')!==false)
             list($server,$port) = explode(":",$server,2);
@@ -61,7 +61,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     /**
      *
      * @param string $string The HTTP stream
-     * @param bool $append If true, the data will be appended if data already 
+     * @param bool $append If true, the data will be appended if data already
      *    exist in the buffer.
      */
     public function createFromString($string, $append=false) {
@@ -117,7 +117,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         $this->requester["method"] = $method;
         $this->requester["url"] = $url;
     }
-    
+
     /**
      * @brief Get the timestamp of the request.
      * Also available as $request["timestamp"]
@@ -127,7 +127,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     public function getTimestamp() {
         return $this->requester["timestamp"];
     }
-    
+
     /**
      * @brief Get the HTTP method used for the request
      * Also available as $request["method"]
@@ -137,7 +137,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     public function getRequestMethod() {
         return $this->requester["method"];
     }
-    
+
     /**
      * @brief Get the URL of the request
      * Also available as $request["url"]
@@ -149,7 +149,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         echo "URL: {$url}\n"; */
         return $this->requester["url"];
     }
-    
+
     /**
      *
      */
@@ -163,7 +163,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         $this->requester['remoteip'] = $ip;
         $this->requester['remotehost'] = null;
     }
-    
+
     /**
      *
      */
@@ -200,7 +200,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             return $this->headers[$header];
         return null;
     }
-    
+
     public function setHeader($header,$value) {
         $header = strtolower($header);
         $this->headers[$header] = $value;
@@ -208,9 +208,9 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             $this->setServer($value);
         }
         return null;
-        
+
     }
-    
+
     /**
      *
      */
@@ -245,14 +245,15 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             $qs = "";
         }
         $out = [
-            "<span style=\"color:#b99\">Request from ".$this->getRemoteIp().':'.$this->getRemotePort()."[".$this->getRemoteHost()."]</span>",
-            "<span style=\"font-weight:bold;\">{$protocol} {$method}</span> <span style=\"color:#c00\">{$url}</span><span style=\"color:#c40; font-style:italic\">{$qs}</span>"
+            "<div style=\"padding:5px; background-color:#ffffff;\"><span style=\"color:#b99\">Request from ".$this->getRemoteIp().':'.$this->getRemotePort()."[".$this->getRemoteHost()."]</span></div>",
+            "<div style=\"padding:5px; background-color:#f8f8ff;\"><span style=\"font-weight:bold;\">{$protocol} {$method}</span> <span style=\"color:#c00\">{$url}</span><span style=\"color:#c40; font-style:italic\">{$qs}</span>"
         ];
         foreach($this->headers as $header=>$value) {
             $hstr = $this->formatHeader($header);
             $len = strlen($value);
             $out[] = "<span style=\"font-weight:bold;\">{$hstr}</span>: '<span style=\"color: #c00;\">{$value}</span>' <span style=\"font-style:italic;\">(length={$len})</span>";
         }
+        $out[] = "</div>";
         return "<pre>".join("\r\n",$out)."</pre>";
     }
 
@@ -271,13 +272,13 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             return $this->parser->rawdata;
         return file_get_contents("php://input");
     }
-    
+
     public function getRequestDataFile() {
         $fn = tempnam(null,"upload");
         file_put_contents($fn,$this->parser->rawdata);
         return $fn;
     }
-    
+
    /**
     * Create a Response object prepared with information from the request such
     * as the request protocol, the request URL (for the Location header), and

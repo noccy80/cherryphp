@@ -1,10 +1,7 @@
 #!/usr/bin/php
 <?php
 
-// bootstrap
-require_once "xenon/xenon.php";
-xenon\frameworks\cherryphp::bootstrap(__DIR__.'/..');
-// end bootstrap
+require_once "cherryphp";
 
 use Cherry\Expm\Cli\ArgumentParser;
 use Cherry\Expm\Cli\BooleanOption;

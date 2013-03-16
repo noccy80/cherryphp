@@ -1,8 +1,7 @@
 #!/usr/bin/php
 <?php
 
-require_once("xenon/xenon.php");
-xenon\frameworks\cherryphp::bootstrap(__DIR__);
+require_once "cherryphp";
 
 use Cherry\Cli\Glyph as g;
 

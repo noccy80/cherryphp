@@ -3,6 +3,7 @@
 namespace Cherry\Core;
 
 class Event {
+    use \Cherry\Traits\TDebug;
     public $sender = null;
     public $target = null;
     public $type = null;
@@ -15,7 +16,7 @@ class Event {
         $this->data = $data;
         $fromstr = ($this->sender)?get_class($this->sender):'*';
         $tostr = ($this->target)?get_class($this->target):'*';
-        \debug("Event: Spawned [%s]->[%s] type=%s", $fromstr,$tostr,$type);
+        $this->debug("Spawned event [%s]->[%s] type=%s", $fromstr,$tostr,$type);
     }
     public function stop() {
         $this->propagate = false;

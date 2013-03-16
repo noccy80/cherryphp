@@ -7,7 +7,7 @@ namespace Cherry\Web;
 define("RESPONSE_MAX_MEMORY", 500000);
 
 class Response {
-    
+
     private $headers = null;
     private $httpcode = 200;
     private $protocol = null;
@@ -59,7 +59,7 @@ class Response {
 	const HTTP_SERVICE_UNAVAILABLE = 503;
 	const HTTP_GATEWAY_TIMEOUT = 504;
 	const HTTP_VERSION_NOT_SUPPORTED = 505;
-    
+
     public function __construct($protocol=null,$location=null) {
         if (!_IS_CLI_SERVER) {
             $this->headers = [];
@@ -71,29 +71,29 @@ class Response {
         if ($location)
             $this->location = $location;
     }
-    
+
     public function getStatus() {
         return $this->httpcode;
     }
-    
+
     public function setStatus($status) {
         if (($status >= 100) && ($status <= 599))
             $this->httpcode = $status;
         else
             throw new \UnexpectedValueException("Invalid HTTP response code: {$status}");
     }
-    
+
     public function setProtocol($protocol) {
         $this->protocol = $protocol;
     }
-    
+
     public function getHeaders() {
         if ($this->headers === null)
             return headers_list();
         else
             return $this->headers;
     }
-    
+
     public function getHeader($header) {
         $header = strtolower($header);
         if ($this->headers === null) {
@@ -111,7 +111,7 @@ class Response {
             return null;
         }
     }
-    
+
     public function setHeader($header,$value,$replace=true,$httpcode=null) {
         if ($this->headers === null) {
             header("{$header}: {$value}", $replace, $httpcode);
@@ -121,7 +121,7 @@ class Response {
             $this->headers[strtolower($header)] = $value;
         }
     }
-    
+
     public function clearHeader($header) {
         if ($this->headers === null) {
             header("{$header}: ", true);
@@ -135,20 +135,24 @@ class Response {
             }
         }
     }
-    
+
     public function setContent($content) {
         $this->contentLength = strlen($content);
         $this->content = $content;
     }
-    
+
     public function getContent() {
         return $this->content;
     }
-    
-    protected function formatHeaderString($str) {
-        return str_replace(" ","-",ucwords(str_replace("-"," ",$str)));    
+
+    public function hasContent() {
+        return (!empty($this->content));
     }
-    
+
+    protected function formatHeaderString($str) {
+        return str_replace(" ","-",ucwords(str_replace("-"," ",$str)));
+    }
+
     public function asHttpResponse($withcontent=false) {
         $httptext = $this->getHttpStatusText($this->httpcode);
         // Check for some of the required headers
@@ -161,7 +165,7 @@ class Response {
         }
         $str = "{$this->protocol} {$this->httpcode} {$httptext}\r\n";
         foreach($this->getHeaders() as $k=>$v) {
-            $hn = $this->formatHeaderName($k);
+            $hn = $this->formatHeaderString($k);
             $str.= "{$hn}: {$v}\r\n";
         }
         $str.= "\r\n";
@@ -192,8 +196,8 @@ class Response {
         }
         return "<pre>".join("\r\n",$out)."</pre>";
     }
-    
-    
+
+
     public function getHttpStatusText($httpcode) {
         switch ($httpcode) {
             case 100: $text = 'Continue'; break;

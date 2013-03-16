@@ -31,6 +31,12 @@ class SchemaManager implements ArrayAccess {
         return $this->tables;
     }
 
+    public function applyTableSdlString($string) {
+        $root = new SdlTag("root");
+        $root->loadString($string);
+        return $this->applyTableSdl($root->getChild(0));
+    }
+
     public function applyTableSdl(SdlTag $tag) {
         $tm = $this->adapter->getTable($tag[0]);
         if ($tm) {

@@ -24,13 +24,12 @@ class ArgumentParser {
             }
         }
         $matches = [];
-        var_dump($args);
         if (preg_match_all('/"(?:\\\\.|[^\\\\"])*"|\S+/', $args, $matches)) {
             $this->args = $matches[0];
         } else {
             $this->args = [];
         }
-        
+
     }
     /**
      *
@@ -40,21 +39,21 @@ class ArgumentParser {
     function addOption($id, Option $option, $description, array $options = null) {
         $this->options[$id] = (object)compact('id','option','description','options');
     }
-    
+
     function usage() {
         echo "Valid arguments:\n";
         foreach($this->options as $option) {
             if ($option->option instanceof BooleanOption)
-                echo "    ".$option->option->getString()."  - ".$option->description."\n";        
+                echo "    ".$option->option->getString()."  - ".$option->description."\n";
             elseif ($option->option instanceof ValueOption)
                 echo "    ".$option->option->getString()." ..  - ".$option->description."\n";
             else
                 echo "    ".$option->option->getString()." .. [ .. ] - ".$option->description."\n";
-            
-        
+
+
         }
     }
-    
+
     function parse() {
         $argl = $this->args;
         $params = [];
@@ -67,7 +66,6 @@ class ArgumentParser {
                 $str = substr($arg,1);
                 $long = false;
             } else {
-                var_dump($arg);
                 $long = null;
                 $params[] = trim($arg,"\"'");
                 // Handle value
@@ -81,7 +79,7 @@ class ArgumentParser {
                             $val = array_shift($argl);
                             $option->setValue($val);
                         }
-                        
+
                     }
                 }
             }
@@ -101,7 +99,7 @@ abstract class Option {
     const RET_PARSED = 1;
     const RET_WANT_VALUE = 2;
     public $matched = false;
-    protected $longopt = []; 
+    protected $longopt = [];
     protected $shortopt = null;
     function __construct($options) {
         $opts = (array)$options;
@@ -151,7 +149,7 @@ class BooleanOption extends Option {
                 }
             }
         }
-            
+
     }
     public function getValue() {
         return $this->value;
@@ -195,7 +193,7 @@ class ValueOption extends Option {
                     return Option::RET_PARSED;
                 }
             }
-        }        
+        }
     }
     public function getValue() {
         return $this->value;
@@ -211,6 +209,3 @@ class ListOption extends Option {
         return $this->value;
     }
 }
-
-
-

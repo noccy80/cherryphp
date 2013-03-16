@@ -107,4 +107,16 @@ Smallest CLI application ever! And it does just what you would expect:
     Stopping ... Done
     $
 
+An example of this in action can be found in the `higgs` application in the
+`bin` directory.
 
+    $ bin/higgs info
+    Service Information:
+
+        Running . . . . : Yes
+        Process ID. . . : 29080
+        Class . . . . . : Higgs\HiggsService
+        Service ID. . . : com.noccy.higgs.daemon
+        UUID. . . . . . : 0edff9ac-eb6a-4964-9f6f-91b8b616e621
+
+    $

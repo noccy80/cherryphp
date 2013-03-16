@@ -9,10 +9,7 @@
  *
  */
 
-// bootstrap
-require_once "xenon/xenon.php";
-xenon\frameworks\cherryphp::bootstrap(__DIR__.'/..');
-// end bootstrap
+require_once "cherryphp";
 
 use Cherry\Cli\CliUtils;
 

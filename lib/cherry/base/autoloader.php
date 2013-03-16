@@ -50,7 +50,7 @@ class AutoLoader {
      */
     public function register() {
         spl_autoload_register([&$this,'autoload'],true);
-        \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader for %s', $this->path);
+        $this->debug('Registered loader for %s', $this->path);
     }
 
     /**
@@ -59,7 +59,7 @@ class AutoLoader {
      */
     public function unregister() {
         spl_autoload_unregister([&$this,'autoload'],true);
-        \cherry\log(\cherry\LOG_DEBUG,'Autoloader: Registered loader for %s', $this->path);
+        $this->debug('Registered loader for %s', $this->path);
     }
 
     /**
@@ -67,7 +67,7 @@ class AutoLoader {
      *
      */
     public function autoload($class) {
-        \cherry\log(\cherry\LOG_DEBUG,"Autoload requested: {$class}");
+        $this->debug("Autoload requested: {$class}");
         if ($this->ns) {
             $cm = strtolower($class);
             $nm = strtolower($this->ns);
@@ -90,7 +90,7 @@ class AutoLoader {
                 $fl = $loc.strtolower($cfn).$ext;
                 $tested[] = $fl;
                 if (file_exists($fl) && is_readable($fl)) {
-                    \cherry\debug("Autoloading: %s", $fl);
+                    $this->debug("Autoloading: %s", $fl);
                     require_once $fl;
                     return true;
                 }
@@ -100,7 +100,7 @@ class AutoLoader {
                 $fl = $loc.$cfn.$ext;
                 $tested[] = $fl;
                 if (file_exists($fl) && is_readable($fl)) {
-                    \cherry\debug("Autoloading: %s", $fl);
+                    $this->debug("Autoloading %s", $fl);
                     require_once $fl;
                     return true;
                 }
@@ -111,16 +111,24 @@ class AutoLoader {
                     $fl = $loc.(($case==1)?strtolower($cfn):$cfn).$ext;
                     $tested[] = $fl;
                     if (file_exists($fl) && is_readable($fl)) {
-                        \cherry\debug("Autoloading: %s", $fl);
+                        $this->debug("Autoloading %s", $fl);
                         require_once $fl;
                         return true;
                     }
                 }
             }
         }
-        \debug("Autoloader: Failed to match class for autoload, tried: %s", join(", ",$tested));
+        $this->debug("Autoloader: Failed to match class for autoload, tried: %s", join(", ",$tested));
         return false;
 
+    }
+
+    protected function debug($str) {
+        $args = func_get_args();
+        $fmt = array_shift($args);
+        $fmt = "\033[1m".get_called_class()."\033[21m: ".$fmt;
+        array_unshift($args,$fmt);
+        call_user_func_array("\Cherry\debug",$args);
     }
 
 }

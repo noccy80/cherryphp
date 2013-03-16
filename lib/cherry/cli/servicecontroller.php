@@ -25,6 +25,11 @@ class ServiceController extends ConsoleApplication {
         $this->addCommand("restart", "Restart the service, or start if not running");
         $this->addCommand("reload", "Reload the service by sending it a SIGHUP");
         $this->addCommand("status", "Show the status of the service");
+        $this->addCommand("info","Show information on the state of the service");
+    }
+    function usageinfo() {
+        $this->write("Upgrading the service:\n    The service can be upgraded with the -u or --upgrade option\n");
+
     }
     function main() {
         $svc = ObjectManager::getObject($this->serviceuri);
@@ -56,11 +61,30 @@ class ServiceController extends ConsoleApplication {
                     $svc->start();
                     $this->write("Done\n");
                     break;
+                case "reload":
+                    if ($svc->isRunning()) {
+                        $this->write("Reloading service ... ");
+                        $svc->reload();
+                        $this->write("Done\n");
+                    } else {
+                        $this->write("Service not running.\n");
+                    }
+                    break;
                 case "status":
                     if ($svc->isRunning())
                         $this->write("Running.\n");
                     else
                         $this->write("Not running.\n");
+                    break;
+                case "info":
+                    $this->write("Service Information:\n\n");
+                    $this->write("    Running . . . . : %s\n", ($svc->isRunning()?"Yes":"No"));
+                    if ($svc->isRunning())
+                        $this->write("    Process ID. . . : %d\n", $svc->getServicePid());
+                    $this->write("    Class . . . . . : %s\n", get_class($svc));
+                    $this->write("    Service ID. . . : %s\n", $svc->getServiceId());
+                    $this->write("    UUID. . . . . . : %s\n", $svc->getUuid());
+                    $this->write("\n");
                     break;
                 default:
                     $this->warn("No parameters or arguments found. Try -h or help.\n");

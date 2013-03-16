@@ -39,7 +39,7 @@ class SocketServer {
         if ($endpoint)
             $this->addListenPort($endpoint);
     }
-    
+
     public function addListenPort($endpoint) {
         $errno = null; $errstr = null;
         // Create the stream
@@ -71,14 +71,19 @@ class SocketServer {
         if (count($read) == 0) return [];
         // Add the readable sockets to a list as Socket instances
         $sock = [];
-        if (false !== \stream_select($read,$write,$except,0,50000)) {
+        if (false !== \stream_select($read,$write,$except,0,10000)) {
+            pcntl_signal_dispatch();
             foreach($read as $stream) {
                 if (in_array($stream, $this->streams)) {
                     // Create a new Socket
                     $peer = null;
                     $asock = \stream_socket_accept($stream,0,$peer);
                     if ($asock) {
-                        $socket = new $this->sockclass($asock);
+                        if (is_callable($this->sockclass))
+                            $class = $this->sockclass();
+                        else
+                            $class = $this->sockclass;
+                        $socket = new $class($asock);
                         $socket->socketserver = $this;
                         $this->clients[$socket->uuid] = $socket;
                         // Add the socket to the clients array

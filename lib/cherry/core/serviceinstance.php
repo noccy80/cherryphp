@@ -4,6 +4,8 @@ namespace Cherry\Core;
 
 abstract class ServiceInstance {
 
+    use \Cherry\Traits\TUuid;
+    use \Cherry\Traits\TDebug;
     use \Cherry\Core\TEventEmitter;
 
     // Control Queue messages
@@ -27,10 +29,13 @@ abstract class ServiceInstance {
 
     protected $role = self::ROLE_UNDEFINED;
     protected $spid = null;
+    protected $gpid = null;
+    protected $pidfile = null;
     protected $flags = null;
     protected $state = self::STA_STOPPED;
     protected $ipcid = null;
-    public $serviceid = null;
+    protected $serviceid = null;
+    protected $reload = false; // If the service should reload its config etc
 
     /** this class role has not been determined yet */
     const ROLE_UNDEFINED = null;
@@ -57,13 +62,30 @@ abstract class ServiceInstance {
 
     public function __construct($pidfile=null) {
         if ($pidfile) {
-            $this->pidfile = $pidfile;
-            if (file_exists($pidfile))
-                $this->spid = (int)file_get_contents($pidfile);
-            if ($this->testpid()) {
-                $this->state = self::STA_STARTED;
-            }
+            $this->setPidFile($pidfile);
         }
+    }
+
+    public function getPidFile() {
+        return $this->pidfile;
+    }
+
+    public function setPidFile($pidfile) {
+        $this->debug("Setting PidFile: {$pidfile}");
+        $this->pidfile = $pidfile;
+        if (file_exists($pidfile))
+            $this->spid = (int)file_get_contents($pidfile);
+        if ($this->testpid()) {
+            $this->state = self::STA_STARTED;
+        }
+    }
+
+    public function getState() {
+        return $this->state;
+    }
+
+    public function getServiceId() {
+        return $this->serviceid;
     }
 
     /**
@@ -80,10 +102,19 @@ abstract class ServiceInstance {
 
     public function __destruct() {
         if ($this->role == self::ROLE_CONTROLLER) {
+            $this->debug("Writing pid {$this->spid} to {$this->pidfile}");
             if ($this->spid) {
                 if ($this->pidfile)
                     file_put_contents($this->pidfile,$this->spid);
             }
+        } elseif ($this->role == self::ROLE_SERVICE) {
+            // Service
+            if ($this->gpid) {
+                $status = null;
+                pcntl_waitpid($this->gpid,$status,\WUNTRACED);
+            }
+        } else {
+            // Observer
         }
     }
 
@@ -91,8 +122,6 @@ abstract class ServiceInstance {
      * Main routine of the service
      */
     abstract public function servicemain();
-
-    abstract protected function onShutdown();
 
     /**
      * This function is invoked by the start() method and is responsible for
@@ -102,19 +131,13 @@ abstract class ServiceInstance {
     protected function runservice() {
         $this->state = self::STA_STARTED;
         // We break this loop manually
+        $flags = $this->getFlags();
         while(true) {
-            $gpid = pcntl_fork();
-            if ($gpid) {
-                pcntl_waitpid($gpid,$status,\WUNTRACED);
-            } else {
-                $this->servicemain();
-                exit;
-                // If the service is NOT set to restart, then break
-            }
+            $this->servicemain();
             pcntl_signal_dispatch();
             if ($this->state == self::STA_STOPPING) break;
-            if (!($this->flags & self::SVC_RESTART)) break;
-            if (!($this->flags & self::SVC_NO_DELAY)) sleep(1);
+            if (!($flags & self::SVC_RESTART)) break;
+            if (!($flags & self::SVC_NO_DELAY)) sleep(1);
         }
         $this->state = self::STA_STOPPED;
     }
@@ -123,24 +146,36 @@ abstract class ServiceInstance {
      * Set up the signal handlers for the child
      */
     protected function bindhandlers() {
-        pcntl_signal(\SIGQUIT, [ $this, "onShutdownHandler" ]);
-    }
-
-    public final function onShutdownHandler() {
-        \debug("ServiceInstance: Received SIGQUIT. Stopping service");
-        $this->state = self::STA_STOPPING;
-        if (is_callable([$this,"onShutdown"]))
-            $this->onShutdown();
+        pcntl_signal(\SIGQUIT, [ $this, "onSignalHandler" ]);
+        pcntl_signal(\SIGTERM, [ $this, "onSignalHandler" ]);
+        pcntl_signal(\SIGHUP, [ $this, "onSignalHandler" ]);
     }
 
     /**
      * this won't work. need a ServiceManager class for that
      */
     public final function onSignalHandler($signal) {
+        if ($this->gpid)
+            posix_kill($this->gpid, $signal);
         if ($signal == \SIGINT) {
-            \debug("ServiceInstance: Received SIGINT, shutting down.");
+            $this->debug("Received SIGINT, shutting down.");
+        } elseif ($signal == \SIGQUIT) {
+            $this->debug("Received SIGQUIT. Stopping service");
+            $this->state = self::STA_STOPPING;
+            if (is_callable([$this,"servicehalt"]))
+                $this->servicehalt();
+            if (is_callable([$this,"onShutdown"])) {
+                \App::app()->warn("Warning: Service is using onShutdown which is deprecated. It should use servicehalt.");
+                $this->onShutdown();
+            }
+        } elseif ($signal == \SIGTERM) {
+            exit;
+        } elseif ($signal == \SIGHUP) {
+            $this->debug("Received SIGHUP, flagging for reload...");
+            $this->reload = true;
         }
     }
+
 
     /**
      * Get the IpcChannel for the serviced
@@ -152,10 +187,10 @@ abstract class ServiceInstance {
     public function start() {
         // Do we have a thread? If not, create one.
         if ($this->spid) {
-            \debug("ServiceInstance: Service is already running");
+            $this->debug("Service is already running");
             return false;
         }
-        \debug("ServiceInstance: Starting service...");
+        $this->debug("Starting service...");
         $this->emit("service.starting",$this->serviceid);
         $pid = pcntl_fork();
         if ($pid === false) {
@@ -165,11 +200,11 @@ abstract class ServiceInstance {
             $this->role = self::ROLE_SERVICE;
             $this->bindhandlers();
             $this->runservice();
-            exit;
+            exit(0);
         } else {
             // For the instance controller
             $this->role = self::ROLE_CONTROLLER;
-            \debug("ServiceInstance: Service process is running with pid {$pid}");
+            $this->debug("Service process is running with pid {$pid}");
             $this->spid = $pid;
             pcntl_signal(\SIGINT, [$this,"onSignalHandler"]);
             return true;
@@ -197,33 +232,54 @@ abstract class ServiceInstance {
             $this->emit("service.stopping",$this->serviceid);
             pcntl_signal_dispatch();
             if (pcntl_waitpid($this->spid, $status, \WUNTRACED | \WNOHANG)) {
-                \debug("ServiceInstance: Service process has quit (%d)", pcntl_wexitstatus($status));
+                if (!$this->testpid()) $this->debug("Service process has quit (%d)", pcntl_wexitstatus($status));
             }
-            \debug("ServiceInstance: Killing service process {$this->spid}");
+            $this->debug("Killing service process {$this->spid}");
             for($n = 0; $n < 3; $n++) {
                 // Send the process the kill signal
                 posix_kill($this->spid, \SIGQUIT);
                 pcntl_signal_dispatch();
                 if (pcntl_waitpid($this->spid, $status, \WUNTRACED | \WNOHANG)) {
-                    \debug("ServiceInstance: Service process exited after SIGQUIT (%d)", pcntl_wexitstatus($status));
+                    if (!$this->testpid()) {
+                        $this->debug("Service process exited after SIGQUIT (%d)", pcntl_wexitstatus($status));
+                        $this->spid = null;
+                        return true;
+                    }
+                }
+                $this->debug("Service process still running, waiting 5 seconds (try %d of %d)", $n+1,3);
+                // Delay for ~5s
+                for($s = 0; $s < 50; $s++) {
+                    usleep(100000);
+                }
+            }
+            posix_kill($this->spid, \SIGTERM);
+            pcntl_signal_dispatch();
+            if (pcntl_waitpid($this->spid, $status, \WUNTRACED)) {
+                if (!$this->testpid()) {
+                    $this->debug("Service process exited after SIGTERM (%d)", pcntl_wexitstatus($status));
                     $this->spid = null;
                     return true;
                 }
-                \debug("ServiceInstance: Service process still running, waiting 5 seconds (try %d of %d)", $n+1,3);
-                // Delay for ~5s
-                for($s = 0; $s < 50; $s++)
-                    usleep(100000);
-            }
-            posix_kill($this->spid, \SIGKILL);
-            pcntl_signal_dispatch();
-            if (pcntl_waitpid($this->spid, $status, \WUNTRACED)) {
-                \debug("ServiceInstance: Service process exited after SIGTERM (%d)", pcntl_wexitstatus($status));
-                $this->spid = null;
-                return true;
+                $this->debug("Warning: Service is not responding...");
+                return false;
             } else {
-                \debug("ServiceInstance: The service process could not be stopped");
+                $this->debug("The service process could not be stopped");
                 return false;
             }
+        }
+        return null;
+    }
+
+    public function reload() {
+        // Do we have a thread? If so, send it a sighup
+        $status = null;
+        if ($this->spid) {
+            $this->debug("Sending SIGHUP to service process");
+            $this->emit("service.reloading",$this->serviceid);
+            pcntl_signal_dispatch();
+            posix_kill($this->spid, \SIGHUP);
+            pcntl_signal_dispatch();
+            return true;
         }
         return null;
     }

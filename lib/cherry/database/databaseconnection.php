@@ -180,7 +180,12 @@ class DatabaseConnection {
         for($n = 1; $n < $argcount; $n++) {
             $value = $args[$n];
             if (!is_numeric($value)) {
-                $argo[$n] = "'".str_replace("'","\'",$value)."'";
+                if ($this->type == "sqlite") {
+                    $str = \SQLite3::escapeString($value);
+                } else {
+                    $str = \mysqli::escape_string($value);
+                }
+                $argo[$n] = "'".$str."'";
             }
         }
         $esql = call_user_func_array('sprintf',$argo);

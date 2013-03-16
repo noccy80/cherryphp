@@ -1,8 +1,7 @@
 #!/usr/bin/php
 <?php
 
-define("XENON","cherryphp/trunk");
-require_once("xenon/xenon.php");
+require_once "cherryphp";
 
 class CherryKey extends \Cherry\Cli\ConsoleApplication {
     private $ksfile = null;

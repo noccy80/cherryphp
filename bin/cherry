@@ -1,24 +1,7 @@
 #!/usr/bin/php
 <?php
 
-define('APPLICATION','LeptonApplication');
-
-//LOADER:BEGIN
-// Bootstrap
-$libpath = getenv('CHERRY_LIB');
-if (!$libpath) {
-    fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
-    exit(1);
-}
-require($libpath.'/lib/bootstrap.php');
-//LOADER:END
-
-$lepton = new \cherry\Lepton(__FILE__);
-
-// We need this to set up a CLI application
-//require_once('lib/cherry/cli/application.php');
-//require_once('lib/cherryutil/command.php');
-//require_once('lib/cherryutil/commands/all.php');
+require_once "cherryphp";
 
 use cherry\Base\Event;
 
@@ -33,7 +16,7 @@ class CherryApplication extends \cherry\Cli\ConsoleApplication {
      * Init is called when the application is created. This is the perfect place to
      * register command line arguments, hook events and set up defaults.
      */
-    function init() {
+    function setup() {
 
         // Help:  -h or --help
         $this->addArgument('h','help',

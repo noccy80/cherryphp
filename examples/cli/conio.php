@@ -1,9 +1,6 @@
 <?php
 
-//LOADER:BEGIN
-require_once "xenon/xenon.php";
-Xenon\Frameworks\CherryPhp::bootstrap(__DIR__);
-//LOADER:END
+require_once __DIR__."/../../share/include/cherryphp";
 
 use Cherry\Cli\ConIo;
 use Cherry\Cli\ReadlineCompleter;

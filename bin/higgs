@@ -1,0 +1,34 @@
+#!/usr/bin/env php
+<?php
+
+require_once "cherryphp";
+
+use Cherry\Core\ServiceManager as SvcMan;
+use Cherry\Core\ServiceInstance;
+use Cherry\Expm\Cli\ArgumentParser;
+use Cherry\Expm\Cli\BooleanOption;
+use Cherry\Expm\Cli\ValueOption;
+use Cherry\Expm\Cli\ListOption;
+
+// Register service manager
+SvcMan::register();
+
+$ap = new ArgumentParser();
+$ap->addOption('upgrade', new BooleanOption([ 'u', 'upgrade' ]), "Upgrade the service");
+list($args,$parms) = $ap->parse();
+if ($args->upgrade) {
+    fprintf(STDERR,"Warning: Upgrading service, as requested.\n");
+    SvcMan::registerService(new \Higgs\HiggsService(),true);
+    return;
+} elseif (!SvcMan::queryServiceRecord("local:/services/com.noccy.higgs.daemon")) {
+    SvcMan::registerService(new \Higgs\HiggsService());
+}
+
+/**
+ * Higgs, the flexible socket daemon for Cherry.
+ *
+ * Based on code from Higgs/Lepton.
+ *
+ */
+$app = new \Cherry\Cli\ServiceController("local:/services/com.noccy.higgs.daemon",__DIR__);
+\App::run($app);
