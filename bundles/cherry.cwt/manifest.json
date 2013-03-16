@@ -1,7 +1,0 @@
-{
-    "name": "Cherry Widget Toolkit",
-    "description": "Draw graphical console interfaces",
-    "version": "1.0.0",
-    "depends": [],
-    "type": "cherry:bundle"
-}

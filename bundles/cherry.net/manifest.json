@@ -1,7 +1,0 @@
-{
-    "name": "Cherry Network Layer",
-    "description": "Provides sockets and other network related services",
-    "version": "1.0.0",
-    "depends": [],
-    "type": "cherry:bundle"
-}

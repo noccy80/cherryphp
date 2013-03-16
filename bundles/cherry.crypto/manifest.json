@@ -1,7 +1,0 @@
-{
-    "name": "Cherry Crypto Wrappers",
-    "description": "Unified wrappers for cryptography and hashing",
-    "version": "1.0.0",
-    "depends": [],
-    "type": "cherry:bundle"
-}
