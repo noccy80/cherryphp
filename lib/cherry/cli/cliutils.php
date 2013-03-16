@@ -12,4 +12,9 @@ class CliUtils {
         return join("\n",$out);
     }
 
+    static function printable($string) {
+        $str = preg_replace('|[\x00-\x1F\x80-\xFF]|',".",$string);
+        return $str;
+    }
+
 }

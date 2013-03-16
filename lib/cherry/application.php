@@ -2,7 +2,7 @@
 
 namespace Cherry;
 
-abstract class Application {
+abstract class Application implements \Cherry\Core\IApplication {
 
     protected $path = null;
     private static $instance = null;
@@ -135,9 +135,6 @@ abstract class Application {
         }
         return $ret;
     }
-
-    abstract function run();
-
 
     /**
      * Log text to the current logging facility on the

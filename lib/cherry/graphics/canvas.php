@@ -97,7 +97,7 @@ class Canvas implements IDrawable {
         $this->himage = imagecreatefromstring($string);
         $this->refresh();
     }
-    
+
     public static function createFromFile($filename) {
         $c = new Canvas();
         $c->load($filename);
@@ -123,7 +123,7 @@ class Canvas implements IDrawable {
             $this->drawFilledRect(0,0,$width,$height,$bgcolor);
     }
 
-    public function setDitherClass(Dither $class) {
+    public function setDitherClass(Dither\Dither $class) {
         $this->dither = $class;
     }
 

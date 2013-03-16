@@ -14,7 +14,7 @@ define('_IS_CLI_SERVER',(php_sapi_name() == 'cli-server'));
 define('CHERRY_VERSION','1.0.0-alpha');
 
 if ($_app = getenv("CHERRY_APP")) define('CHERRY_APP',$_app);
-if ($_lib = getenv("CHERRY_LIB")) define('CHERRY_LIB',$_lib);
+if ($_lib = getenv("CHERRY_LIB")) if (!defined("CHERRY_LIB")) define('CHERRY_LIB',$_lib);
 
 define('DEBUG_VERBOSE',(getenv('DEBUG_VERBOSE')==1));
 

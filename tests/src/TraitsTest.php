@@ -1,7 +1,7 @@
 <?php
 
 class TraitTest {
-    use \Cherry\Traits\SingletonAccess;
+    use \Cherry\Traits\TSingletonAccess;
     public function foo() {
         return "bar";
     }

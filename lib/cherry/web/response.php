@@ -2,6 +2,10 @@
 
 namespace Cherry\Web;
 
+// Max memory the response can hold before it is being flushed to disk. For
+// file uploads and other where you don't want to exhaust your ram.
+define("RESPONSE_MAX_MEMORY", 500000);
+
 class Response {
     
     private $headers = null;
@@ -67,24 +71,29 @@ class Response {
         if ($location)
             $this->location = $location;
     }
+    
     public function getStatus() {
         return $this->httpcode;
     }
+    
     public function setStatus($status) {
         if (($status >= 100) && ($status <= 599))
             $this->httpcode = $status;
         else
             throw new \UnexpectedValueException("Invalid HTTP response code: {$status}");
     }
+    
     public function setProtocol($protocol) {
         $this->protocol = $protocol;
     }
+    
     public function getHeaders() {
         if ($this->headers === null)
             return headers_list();
         else
             return $this->headers;
     }
+    
     public function getHeader($header) {
         $header = strtolower($header);
         if ($this->headers === null) {
@@ -102,6 +111,7 @@ class Response {
             return null;
         }
     }
+    
     public function setHeader($header,$value,$replace=true,$httpcode=null) {
         if ($this->headers === null) {
             header("{$header}: {$value}", $replace, $httpcode);
@@ -111,6 +121,7 @@ class Response {
             $this->headers[strtolower($header)] = $value;
         }
     }
+    
     public function clearHeader($header) {
         if ($this->headers === null) {
             header("{$header}: ", true);
@@ -124,13 +135,20 @@ class Response {
             }
         }
     }
+    
     public function setContent($content) {
         $this->contentLength = strlen($content);
         $this->content = $content;
     }
+    
     public function getContent() {
         return $this->content;
     }
+    
+    protected function formatHeaderString($str) {
+        return str_replace(" ","-",ucwords(str_replace("-"," ",$str)));    
+    }
+    
     public function asHttpResponse($withcontent=false) {
         $httptext = $this->getHttpStatusText($this->httpcode);
         // Check for some of the required headers
@@ -143,7 +161,7 @@ class Response {
         }
         $str = "{$this->protocol} {$this->httpcode} {$httptext}\r\n";
         foreach($this->getHeaders() as $k=>$v) {
-            $hn = str_replace(" ","-",ucwords(str_replace("-"," ",$k)));
+            $hn = $this->formatHeaderName($k);
             $str.= "{$hn}: {$v}\r\n";
         }
         $str.= "\r\n";
@@ -156,7 +174,7 @@ class Response {
         $httptext = $this->getHttpStatusText($this->httpcode);
         $out[] = "{$this->protocol} {$this->httpcode} {$httptext}";
         foreach($this->getHeaders() as $header=>$value) {
-            $hstr = str_replace(' ', '-', ucwords(str_replace('-', ' ', $header)));
+            $hstr = $this->formatHeaderString($header);
             $out[] = "{$hstr}: {$value}";
         }
         return join("\r\n",$out);
@@ -168,7 +186,7 @@ class Response {
             "<span style=\"font-weight:bold;\">{$this->protocol} {$this->httpcode}</span> <span style=\"color:#c00\">{$httptext}</span>",
         ];
         foreach($this->getHeaders() as $k=>$v) {
-            $hn = str_replace(" ","-",ucwords(str_replace("-"," ",$k)));
+            $hn = $this->formatHeaderString($k);
             $len = strlen($v);
             $out[] = "<span style=\"font-weight:bold;\">{$hn}</span>: '<span style=\"color: #c00;\">{$v}</span>' <span style=\"font-style:italic;\">(length={$len})</span>";
         }

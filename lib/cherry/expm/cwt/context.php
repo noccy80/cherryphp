@@ -6,7 +6,7 @@ namespace Cherry\Expm\Cwt;
  * @class Context
  */
 class Context {
-    use \Cherry\Traits\SingletonAccess;
+    use \Cherry\Traits\TSingletonAccess;
     private $nc = null;
     private $screen = null;
     public function __construct() {

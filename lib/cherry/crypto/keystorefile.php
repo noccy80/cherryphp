@@ -2,7 +2,7 @@
 
 namespace Cherry\Crypto;
 
-use Cherry\Traits\SingletonAccess;
+use Cherry\Traits\TSingletonAccess;
 use Cherry\Crypto\Algorithm as Crypto;
 use App;
 use debug;

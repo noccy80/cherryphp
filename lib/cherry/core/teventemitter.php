@@ -31,6 +31,7 @@ trait TEventEmitter {
             // Send the event to the handlers
             foreach($this->handlers[$event] as $cb) {
                 $ret = call_user_func($cb,$evt);
+                if (!$evt->propagate) return $ret;
                 if ($ret) return $ret;
             }
         } else {

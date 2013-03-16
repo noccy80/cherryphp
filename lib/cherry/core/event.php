@@ -7,6 +7,7 @@ class Event {
     public $target = null;
     public $type = null;
     public $data = [];
+    public $propagate = true;
     public function __construct($sender, $target, $type, array $data) {
         $this->sender = $sender;
         $this->target = $target;
@@ -15,5 +16,8 @@ class Event {
         $fromstr = ($this->sender)?get_class($this->sender):'*';
         $tostr = ($this->target)?get_class($this->target):'*';
         \debug("Event: Spawned [%s]->[%s] type=%s", $fromstr,$tostr,$type);
+    }
+    public function stop() {
+        $this->propagate = false;
     }
 }

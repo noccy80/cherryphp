@@ -1,0 +1,29 @@
+<?php
+
+$findlib = function() {
+    $bootfile = "lib/_bootstrap.php";
+    if (defined("CHERRY_LIB"))
+        if (file_exists(CHERRY_LIB."/".$bootfile))
+            return CHERRY_LIB;
+    $_env = getenv("CHERRY_LIB");
+    if ($_env)
+        if (file_exists($_env."/".$bootfile))
+            return $_env;
+    $_init = $_SERVER["SCRIPT_NAME"];
+    while(dirname($_init)) {
+        if (file_exists($_init."/".$bootfile))
+            return $_init;
+        $_init = dirname($_init);
+    }
+    $_dir = __DIR__;
+    while(dirname($_dir)) {
+        if (file_exists($_dir."/".$bootfile))
+            return $_init;
+        $_dir = dirname($_dir);
+    }
+    throw new \Exception("Unable to find CherryPHP bootstrap file");
+};
+
+if (!defined("CHERRY_LIB"))
+    define("CHERRY_LIB", $findlib());
+require_once CHERRY_LIB . "/lib/_bootstrap.php";

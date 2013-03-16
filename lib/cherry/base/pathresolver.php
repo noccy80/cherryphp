@@ -4,7 +4,7 @@ namespace Cherry\Base;
 
 class PathResolver {
 
-    use \Cherry\Traits\SingletonAccess;
+    use \Cherry\Traits\TSingletonAccess;
 
     private $apppath = null;
 

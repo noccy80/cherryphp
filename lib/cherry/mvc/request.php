@@ -5,7 +5,7 @@ namespace Cherry\Mvc;
 use Cherry\Base\Event;
 
 class Request implements \ArrayAccess {
-    use \Cherry\Traits\SingletonAccess;
+    use \Cherry\Traits\TSingletonAccess;
 
     // Constants
     const CTX_APACHE = 'apache';

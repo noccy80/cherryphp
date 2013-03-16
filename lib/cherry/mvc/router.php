@@ -1,10 +1,10 @@
 <?php
 
 namespace Cherry\Mvc;
-use Cherry\Traits\SingletonAccess;
+use Cherry\Traits\TSingletonAccess;
 
 class Router {
-    use SingletonAccess;
+    use TSingletonAccess;
     private
             $request = null,
             $response = null,

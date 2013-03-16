@@ -2,40 +2,35 @@
 
 namespace Cherry\Net\Socket\Transport;
 
-use cherry\base\Event;
-use cherry\base\EventEmitter;
-
 abstract class Transport extends EventEmitter {
 
-    abstract function initialize();
-    abstract function read();
+    protected $socket;
+    public $new_transport;
+    protected $is_upgrading = false;
 
-}
-
-class HttpTransport extends Transport {
-
-    private $headers = array();
-
-    function initialize() {
-    }
-
-    function read() {
-        // If this is a websocket request, we go ahead and upgrade to a
-        // websocket connection.
-        if (!empty($this->headers['upgrade'])) {
-            if ($this->headers['upgrade'] == 'websocket') {
-                $this->emit('upgrade', new \cherry\net\socket\transport\HttpTransport(), $headers);
-            }
+    public function __construct($tos) {
+        if ($tos instanceOf Transport) {
+            $this->doUpgrade($tos);
+        } elseif ($tos instanceOf Socket) {
+            $this->socket = $tos;
         }
     }
 
-}
-
-class WebSocketTransport extends Transport {
-
-    function initialize() {
-    }
-    function read() {
+    public function __destruct() {
+        if ($this->is_upgrading) return;
     }
 
+    abstract function initialize();
+
+    abstract function read();
+
+    protected function beginUpgrade(Transport $transport) {
+        $this->new_transport = $transport;
+        // Set is_upgrading to true so we don't do cleanup in destructor
+        $this->is_upgrading = true;
+    }
+
+    protected abstract function doUpgrade(Transport $transport);
+
 }
+
