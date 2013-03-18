@@ -10,6 +10,7 @@ namespace Cherry\Expm\Process;
  *
  */
 class CoRoutine {
+    use \Cherry\Traits\TDebug;
     private $routine = null;
     private $ipc_copi = null;
     private $ipc_poci = null;
@@ -17,17 +18,19 @@ class CoRoutine {
     private $ipc_pocif = null;
     private $childpid = null;
     public $onmessage = null;
-    public function __construct(callable $routine = null) {
+    private $bind = null;
+    public function __construct(callable $routine = null,$bind = null) {
         $this->ipc_copi = null;
         $this->ipc_poci = null;
         $this->routine = $routine;
+        $this->bind = $bind;
     }
     public function __destruct() {
         if ($this->childpid) {
             $status = 0;
-            \debug("Waiting for child {$this->childpid}");
+            $this->debug("Waiting for child {$this->childpid}");
             pcntl_waitpid($this->childpid,$status,\WUNTRACED);
-            \debug("Child terminated {$this->childpid}");
+            $this->debug("Child terminated {$this->childpid}");
             // Close fifo in parent
             @fclose($this->ipc_copi);
             @fclose($this->ipc_poci);
@@ -35,7 +38,8 @@ class CoRoutine {
             @unlink($this->ipc_copif);
             @unlink($this->ipc_pocif);
         } else {
-            \debug("Child destructing");
+            $this->debug("Child destructing");
+            exit();
         }
     }
     public function start() {
@@ -65,8 +69,13 @@ class CoRoutine {
                 if (!$this->routine)
                     user_error("No CoRoutine assigned!");
                 if ($this->routine instanceof \Closure) {
-                    \debug("Assigning scope of coroutine");
-                    $call = $this->routine->bindTo($this,$this);
+                    $this->debug("Assigning scope of coroutine");
+                    if (!empty($this->bind)) {
+                        $call = $this->routine->bindTo($this->bind,$this->bind);
+                    } else {
+                        $call = $this->routine->bindTo($this,$this);
+                        $call = $this->routine;
+                    }
                 }
                 call_user_func_array($call,$args);
             }

@@ -20,7 +20,7 @@ if ($args->upgrade) {
     fprintf(STDERR,"Warning: Upgrading service, as requested.\n");
     SvcMan::registerService(new \Higgs\HiggsService(),true);
     return;
-} elseif (!SvcMan::queryServiceRecord("local:/services/com.noccy.higgs.daemon")) {
+} elseif (!SvcMan::queryServiceRecord("com.noccy.higgs.daemon")) {
     SvcMan::registerService(new \Higgs\HiggsService());
 }
 

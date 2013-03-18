@@ -26,7 +26,7 @@ $findlib = function() {
 };
 
 $findapp = function() {
-    $appfiles = [ "config/application.sdl", "application.json", "config/_setup.php", "src" ];
+    $appfiles = [ "config/application.sdl", "application.json", "config/_setup.php", "src", "lib/_bootstrap.php" ];
     while(count($appfiles)>0) {
         $appfile = array_shift($appfiles);
         if (defined("CHERRY_APP"))
