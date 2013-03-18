@@ -84,8 +84,26 @@ class ServiceController extends ConsoleApplication {
                     $this->write("    Class . . . . . : %s\n", get_class($svc));
                     $this->write("    Service ID. . . : %s\n", $svc->getServiceId());
                     $this->write("    UUID. . . . . . : %s\n", $svc->getUuid());
+                    $this->write("\nProperties:\n\n");
+                    $prop = ObjectManager::getObjectProperties($this->serviceuri);
+                    $m = 0;
+                    foreach($prop as $k=>$v) $m = max($m,strlen($k));
+                    foreach($prop as $k=>$v) {
+                        if (is_bool($v)) {
+                            $v = ($v===true)?"True":"False";
+                        } elseif (is_numeric($v)) {
+
+                        } elseif (is_string($v)) {
+                            $v = "\"{$v}\"";
+                        } elseif (is_null($v)) {
+                            $v = "Null";
+                        }
+                        $this->write("    %-{$m}s : %s\n", $k, $v);
+                    }
                     $this->write("\n");
                     break;
+                case "propset":
+                case "propget":
                 default:
                     $this->warn("No parameters or arguments found. Try -h or help.\n");
             }

@@ -17,16 +17,18 @@ $findlib = function() {
     }
     $_dir = __DIR__;
     while($_dir != "/") {
-        if (file_exists($_dir."/".$bootfile))
-            return $_init;
+        if (file_exists($_dir."/".$bootfile)) {
+            return $_dir;
+        }
         $_dir = dirname($_dir);
     }
     throw new \Exception("Unable to find CherryPHP bootstrap file");
 };
 
 $findapp = function() {
-    $appfiles = [ "application.json", "config/_setup.php", "config/application.sdl", "src" ];
-    foreach($appfiles as $appfile) {
+    $appfiles = [ "config/application.sdl", "application.json", "config/_setup.php", "src" ];
+    while(count($appfiles)>0) {
+        $appfile = array_shift($appfiles);
         if (defined("CHERRY_APP"))
             if (file_exists(CHERRY_APP."/".$appfile))
                 return CHERRY_APP;
@@ -43,7 +45,7 @@ $findapp = function() {
         $_dir = __DIR__;
         while($_dir != "/") {
             if (file_exists($_dir."/".$appfile))
-                return $_init;
+                return $_dir;
             $_dir = dirname($_dir);
         }
     }

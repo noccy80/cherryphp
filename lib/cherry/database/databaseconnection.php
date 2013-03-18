@@ -8,6 +8,10 @@ use Cherry\Data\Ddl\SdlTag;
 
 class DatabaseConnection {
 
+    use \Cherry\Traits\TStaticDebug {
+        \Cherry\Traits\TStaticDebug::debug as sdebug;
+    }
+
     const POOL_DEFAULT = 'default';
 
     private static $dbpool = [];
@@ -48,7 +52,7 @@ class DatabaseConnection {
                 $database = "{APP}/{$ci['host']}";
                 if (!empty($ci['path'])) $database.= '/'.$ci['path'];
                 $database = \Cherry\Base\PathResolver::path($database);
-                \debug("SQLite3: Using database {$database}");
+                $this->debug("SQLite3: Using database {$database}");
                 $dsn = "sqlite:{$database}";
                 $username = null;
                 $password = null;
@@ -76,11 +80,11 @@ class DatabaseConnection {
         try {
             $curi = "{$type}://{$username}@{$host}/{$database}";
             $password = $ks->queryCredentials($curi);
-        } catch (Exception $e) { \debug("Unable to access credentials for connection {$curi}"); }
+        } catch (Exception $e) { $this->debug("Unable to access credentials for connection {$curi}"); }
         if (!$password) try {
             $curi = "{$type}://{$username}@{$host}";
             $password = $ks->queryCredentials($curi);
-        } catch (Exception $e) { \debug("Unable to access credentials for connection {$curi}"); }
+        } catch (Exception $e) { $this->debug("Unable to access credentials for connection {$curi}"); }
         return $password;
     }
 
@@ -107,7 +111,7 @@ class DatabaseConnection {
     }
 
     public static function register($pool,$conn) {
-        \debug("Database: Registered connection '{$conn}' to pool {$pool}");
+        self::sdebug("Database: Registered connection '{$conn}' to pool {$pool}");
         self::$connections[$pool] = new SdlTag("connection",[ $pool,$conn ]);
     }
 
@@ -122,7 +126,7 @@ class DatabaseConnection {
                     $curi = $connection[1];
                     if (empty(self::$connections[$cpool]))
                         self::$connections[$cpool] = [];
-                    \debug("Database: Registered connection '{$curi}' to pool {$cpool}");
+                    $this->debug("Database: Registered connection '{$curi}' to pool {$cpool}");
                     self::$connections[$cpool][] = $connection;
                 }
             }
@@ -169,7 +173,7 @@ class DatabaseConnection {
         if ($argcount>1) {
             $esql = call_user_func_array('sprintf',$argo);
         } else { $esql = $argo[0]; }
-        \debug("DB:Escape: %s", $esql);
+        $this->debug("Escaping string: %s", $esql);
         return $esql;
     }
 
@@ -189,7 +193,7 @@ class DatabaseConnection {
             }
         }
         $esql = call_user_func_array('sprintf',$argo);
-        \debug("DB:Query: %s", $esql);
+        $this->debug("Running query: %s", $esql);
         if ($this->hlog) fputs($this->hlog,$esql."\n");
         return $this->conn->query($esql); // fetchmode?
     }
@@ -209,7 +213,7 @@ class DatabaseConnection {
             }
         }
         $esql = call_user_func_array('sprintf',$argo);
-        \debug("DB:Exec: %s", $esql);
+        $this->debug("Executing statement: %s", $esql);
         if ($this->hlog) fputs($this->hlog,$esql."\n");
         return $this->conn->exec($esql); // fetchmode?
     }

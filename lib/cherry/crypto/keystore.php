@@ -23,6 +23,7 @@ use debug;
  */
 class KeyStore {
 
+    use \Cherry\Traits\TDebug;
     use TSingletonAccess;
     private $keys = [];
 
@@ -35,7 +36,7 @@ class KeyStore {
 
     public function attachFile($store, $key=null) {
         if (file_exists($store)) {
-            debug("KeyStore: Opening %s", $store);
+            $this->debug("Opening %s", $store);
             $buf = file_get_contents($store);
             if (!$key) $key = 0xDEADBEEF;
             $key = $this->derivekey($key);
@@ -63,9 +64,9 @@ class KeyStore {
         $bt = array_slice($bt,2,1);
         $bc = \array_map(function($v) { return (!empty($v['class'])?$v['class'].'::':'').$v['function']; }, $bt);
         foreach($bc as $func) {
-            debug("KeyStore: Checking {$func}");
+            $this->debug("Checking {$func}");
             foreach($rules as $rule) {
-                debug("KeyStore: Matching {$rule}");
+                $this->debug("Matching {$rule}");
                 if (\fnmatch($rule,$func,\FNM_NOESCAPE)) return true;
             }
         }
@@ -91,13 +92,13 @@ class KeyStore {
     public function queryCredentials($key) {
         if (array_key_exists($key,$this->keys)) {
             if (!$this->checkAccess($this->keys[$key]->rules)) {
-                \debug("KeyStore: Access denied for {$key}");
+                $this->debug("Access denied for {$key}");
                 throw new \Exception("Improper keystore access from non-allowed path for key {$key}");
             }
-            \debug("KeyStore: Query ok for {$key}");
+            $this->debug("Query ok for {$key}");
             return $this->keys[$key]->value;
         }
-        \debug("KeyStore: No match for {$key}");
+        $this->debug("No match for {$key}");
         return false;
     }
 

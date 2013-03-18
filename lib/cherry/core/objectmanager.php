@@ -2,6 +2,64 @@
 
 namespace Cherry\Core;
 
+/**
+ * ObjectManager::getObject($uri)
+ *  - Returns the registered (or mapped) instance
+ *  - Returns null on paths (ending with "/") and non-existing uris.
+ * ObjectManager::getObjectRecord($uri)
+ *  - Returns either a ObjectList or an ObjectRecord.
+ *  - The list allows iteration over the child nodes
+ *  - The record gives access to the instance and its properties.
+ * ObjectManager::registerObject($uri,$object)
+ *  - Adds a new object
+ *  - Parents are automatically created
+ * ObjectManager::registerTree($uri,$tree)
+ *  - Adds a new tree to the node tree.
+ *  - Parents are automatically created
+ */
+
+class ObjectRecord extends ObjectUri {
+
+    private $uri;
+    private $obj;
+
+    function __construct($uri,$obj) {
+        $this->uri = $uri;
+        $this->obj = $obj;
+        parent::__construct($uri);
+    }
+
+    public function getObjectUri() {
+        return $this->uri;
+    }
+
+    public function getAllProperties() {
+        $props = ObjectManager::getObjectProperties();
+        return $props;
+    }
+
+    public function getProperty($propname) {
+        $props = ObjectManager::getObjectProperties($this->uri);
+        if (array_key_exists($propname,$props))
+            return $props[$propname];
+        return null;
+    }
+
+    public function setProperty($propname,$value) {
+
+    }
+
+    public function getInstance() {
+        return $this->obj;
+    }
+
+    public function getType() {
+        return get_class($this->obj);
+    }
+
+}
+
+
 /*
  * class ObjectUri
  */
@@ -11,6 +69,9 @@ class ObjectUri {
     public $path = null;
     public $object = null;
     public $index = null;
+    public function isLocal() {
+        return ($this->host == "local");
+    }
     public function __construct($uri) {
 
         $path = $uri;
@@ -162,35 +223,85 @@ class ObjectManager {
     }
     public static function enumPath($path) {
         if (!($path instanceof ObjectUri)) $path = new ObjectUri($path);
-
+        $m = [];
+        $ps = $path->path;
+        if (array_key_exists($ps,self::$_omstorage)) {
+            if (self::$_omstorage[$ps] instanceof IObjectManagerInterface) {
+                return self::$_omstorage[$ps]->omiGetObjectList();
+            }
+        }
+        foreach(self::$_omstorage as $k=>$v) {
+            if (substr($k,0,strlen($ps))==$ps) {
+                $np = substr(rtrim($k,"/"),strlen($ps));
+                if ((strlen($np)>0) && (strpos($np,"=")===false))
+                    $m[$k] = $v;
+            }
+        }
+        return $m;
     }
     public static function getObject($path) {
-        // if (!self::$_ovfs) return null;
         if (!($path instanceof ObjectUri)) $path = new ObjectUri($path);
+        if (!$path->isLocal()) return self::doRpcOp($path,"object.get");
         self::debug("Looking for object '{$path}' in storage");
         if (!$path->name) {
             throw new \UnexpectedValueException("path for getObject must contain an object name");
         }
-        if ($path->host != "local") {
-            return self::getObjectRemote($path);
-        } else {
-            if (!array_key_exists($path->path,self::$_omstorage)) {
-                self::debug("No matching service found for '{$path}'");
+        if (!array_key_exists($path->path,self::$_omstorage)) {
+            self::debug("No matching object found for '{$path}'");
+            return false;
+        }
+        if (is_array(self::$_omstorage[$path->path])) {
+            if (!array_key_exists($path->name,self::$_omstorage[$path->path])) {
+                self::debug("No matching object found for '{$path->name}' in '{$path->path}'");
                 return false;
             }
-            if (is_array(self::$_omstorage[$path->path])) {
-                if (!array_key_exists($path->name,self::$_omstorage[$path->path])) {
-                    self::debug("No matching service found for '{$path->name}' in '{$path->path}'");
-                    return false;
-                }
-                return self::$_omstorage[$path->path][$path->name];
-            } else {
-                return self::$_omstorage[$path->path]->omiGetObject($path);
-            }
+            return self::$_omstorage[$path->path][$path->name];
+        } else {
+            return self::$_omstorage[$path->path]->omiGetObject($path);
         }
     }
-    private static function getObjectRemote($path) {
-
+    public static function getObjectRecord($path) {
+        if (!($path instanceof ObjectUri)) $path = new ObjectUri($path);
+        if (!$path->isLocal()) return self::doRpcOp($path,"object.get");
+        self::debug("Looking for object '{$path}' in storage");
+        if (!array_key_exists($path->path,self::$_omstorage)) {
+            self::debug("No matching object found for '{$path}'");
+            return false;
+        }
+        if (is_array(self::$_omstorage[$path->path])) {
+            if (empty($path->name)) return self::$_omstorage[$path->path];
+            if (!array_key_exists($path->name,self::$_omstorage[$path->path])) {
+                self::debug("No matching object found for '{$path->name}' in '{$path->path}'");
+                return false;
+            }
+            return self::$_omstorage[$path->path][$path->name];
+        } else {
+            $obj = self::$_omstorage[$path->path]->omiGetObject($path);
+            $rec = new ObjectRecord($path,$obj);
+            return $rec;
+        }
+    }
+    public static function getObjectProperties($path) {
+        // if (!self::$_ovfs) return null;
+        if (!($path instanceof ObjectUri)) $path = new ObjectUri($path);
+        if (!$path->isLocal()) return self::doRpcOp($path,"object.getprops");
+        self::debug("Looking for object '{$path}' in storage");
+        if (!$path->name) {
+            throw new \UnexpectedValueException("path for getObject must contain an object name");
+        }
+        if (!array_key_exists($path->path,self::$_omstorage)) {
+            self::debug("No matching object found for '{$path}'");
+            return false;
+        }
+        if (is_array(self::$_omstorage[$path->path])) {
+            if (!array_key_exists($path->name,self::$_omstorage[$path->path])) {
+                self::debug("No matching object found for '{$path->name}' in '{$path->path}'");
+                return false;
+            }
+            return self::$_omstorage[$path->path][$path->name];
+        } else {
+            return self::$_omstorage[$path->path]->omiGetObjectProperties($path);
+        }
     }
 }
 

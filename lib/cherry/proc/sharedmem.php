@@ -4,6 +4,8 @@ namespace Cherry\Proc;
 
 class SharedMem {
 
+    use \Cherry\Traits\TDebug;
+
     const SCOPE_APP = 1;
     const SCOPE_PID = 2;
 
@@ -17,7 +19,7 @@ class SharedMem {
         if (!file_exists($mf))
             touch($mf);
         $this->key = fileinode($mf);
-        \Cherry\Debug("SHM key: %d", $this->key);
+        $this->debug("SHM key: %d", $this->key);
         $this->shm = shm_attach($this->key, $size, 0700);
     }
 

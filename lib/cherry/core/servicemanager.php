@@ -26,6 +26,16 @@ table "instances" {
 EOD
 );
 
+define("SM_TABLE_SERVICEPROPS",
+<<<EOD
+table "serviceprops" {
+    column "uuid" type="char:36"
+    column "property" type="char:128"
+    column "value" type="string:512"
+}
+EOD
+);
+
 /**
  * ServiceManager links in with ObjectManager, providing access to the services
  * via a path such as:
@@ -49,6 +59,8 @@ class ServiceManager implements IObjectManagerInterface {
             $tl = $sm->getTableList();
             if (!in_array("services", $tl))
                 $sm->applyTableSdlString(SM_TABLE_SERVICES);
+            if (!in_array("serviceprops", $tl))
+                $sm->applyTableSdlString(SM_TABLE_SERVICEPROPS);
             if (!in_array("instances", $tl))
                 $sm->applyTableSdlString(SM_TABLE_INSTANCES);
             $initd = true;
@@ -78,11 +90,18 @@ class ServiceManager implements IObjectManagerInterface {
     }
     public static function queryServiceRecord($id) {
         $db = self::getDbInstance();
-        return (count($db->query("SELECT * FROM services WHRE ")->fetchAll())>0);
+        $rec = $db->query("SELECT * FROM services WHERE id=%s OR uuid=%s", $id, $id)->fetchAll();
+        return (count($rec)>0);
     }
     public static function startAll() { }
-    public function omiGetNodeList($path) {
+    public function omiGetObjectList($path) {
         $db = self::getDbInstance();
+        $rec = $db->query("SELECT * FROM services")->fetchAll();
+        $m = [];
+        foreach($rec as $r) {
+            $m[$r["id"]] = "ServiceInstance";
+        }
+        return $m;
     }
     public function omiGetObject($path) {
         if (array_key_exists($path->name,self::$instances)) {
@@ -94,6 +113,7 @@ class ServiceManager implements IObjectManagerInterface {
             $db = self::getDbInstance();
             $rec = $db->query("SELECT * FROM services where id=%s OR uuid=%s",
                         $path->name, $path->name)->fetch();
+            if (!$rec) return null;
             $obj = unserialize(base64_decode($rec['baseinstance']));
             $obj->setPidFile("/tmp/{$rec['uuid']}.pid");
             $obj->setUuid($rec['uuid']);
@@ -104,6 +124,17 @@ class ServiceManager implements IObjectManagerInterface {
         }
         self::debug("No such class registered: '%s'", $path->name);
         return null;
+    }
+    public function omiGetObjectProperties($path) {
+        if (array_key_exists($path->name,self::$instances)
+            || self::queryServiceRecord($path->name)) {
+            return [
+                "service.reentrant" => true,
+                "service.logfile" => null,
+                "service.autostart" => false,
+                "service.instancelock" => true
+            ];
+        }
     }
     public static function register() {
         ObjectManager::registerObjectRoot("/services/", new ServiceManager());

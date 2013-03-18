@@ -3,7 +3,8 @@
 namespace Cherry\Core;
 
 interface IObjectManagerInterface {
-    public function omiGetNodeList($path);
+    public function omiGetObjectList($path);
     public function omiGetObject($path);
+    public function omiGetObjectProperties($path);
 }
 

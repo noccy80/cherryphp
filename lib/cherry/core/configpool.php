@@ -6,6 +6,7 @@ use Cherry\Base\PathResolver;
 use Cherry\Data\Ddl\SdlTag;
 
 abstract class ConfigPool {
+    use \Cherry\Traits\TStaticDebug;
     private static $configfiles = [];
     private static $pools = [];
     private function __construct() {
@@ -18,11 +19,11 @@ abstract class ConfigPool {
             if (self::$pools[$identifier]->cfgpath == $cfgpath) {
                 // Already set up, so update flags and return.
                 self::$pools[$identifier]->writeable = $writeable;
-                \debug("ConfigPool: Pool already bound. Updating flags for '{$identifier}");
+                self::debug("Pool already bound. Updating flags for '{$identifier}");
                 return true;
             }
         }
-        \debug("ConfigPool: Binding pool '{$identifier}' to '{$cfgpath}'");
+        self::debug("Binding pool '{$identifier}' to '{$cfgpath}'");
         $poolinfo = (object)[
             'id' => $identifier,
             'cfgpath' => $cfgpath,
@@ -42,23 +43,23 @@ abstract class ConfigPool {
                     // Check for a serialized cache of the config
                     if (file_exists($cpath) && (filemtime($cpath)>filemtime($path))) {
                         // Load from cache
-                        \debug("ConfigPool: Reading config '{$identifier}' from cache...");
+                        self::debug("Reading config '{$identifier}' from cache...");
                         $tag = unserialize(file_get_contents($cpath));
                     } else {
                         // Update cache
-                        \debug("ConfigPool: Updating cache for config '{$identifier}'...");
+                        self::debug("Updating cache for config '{$identifier}'...");
                         $tag = SdlTag::createFromFile($path);
                         file_put_contents($cpath,serialize($tag));
                     }
                     self::$configfiles[$pool->cfghash] = $tag;
                 } else {
-                    \debug("ConfigPool: File not found: {$path}");
+                    self::debug("File not found: {$path}");
                     self::$configfiles[$pool->cfghash] = null;
                 }
             }
             return self::$configfiles[$pool->cfghash];
         } else {
-            \debug("ConfigPool: Pool has not been bound: {$identifier}");
+            self::debug("Pool has not been bound: {$identifier}");
             return null;
         }
     }

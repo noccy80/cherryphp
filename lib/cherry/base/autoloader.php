@@ -4,6 +4,8 @@ namespace Cherry\Base;
 
 if (!defined('_NS_')) define('_NS_',"\\");
 
+require_once __DIR__ . "/../traits/tdebug.php";
+
 /**
  * @brief Autoloader implementation.
  *
@@ -17,6 +19,7 @@ if (!defined('_NS_')) define('_NS_',"\\");
  *
  */
 class AutoLoader {
+    use \Cherry\Traits\TDebug;
     const CP_AUTO = 'auto';
     const CP_PRESEVE = 'yes';
     const CP_LOWERCASE = 'no';
@@ -121,14 +124,6 @@ class AutoLoader {
         $this->debug("Autoloader: Failed to match class for autoload, tried: %s", join(", ",$tested));
         return false;
 
-    }
-
-    protected function debug($str) {
-        $args = func_get_args();
-        $fmt = array_shift($args);
-        $fmt = "\033[1m".get_called_class()."\033[21m: ".$fmt;
-        array_unshift($args,$fmt);
-        call_user_func_array("\Cherry\debug",$args);
     }
 
 }

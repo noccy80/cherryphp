@@ -6,21 +6,9 @@ if (!function_exists('yaml_parse')) {
     exit(1);
 }
 
-$libpath = getenv('CHERRY_LIB');
-if (!$libpath) {
-    if (file_exists('lib/bootstrap.php')) {
-        require 'lib/bootstrap.php';
-    } else {
-        fprintf(STDERR,"Define the CHERRY_LIB envvar first.");
-        exit(1);
-    }
-} else {
-    require($libpath.'/lib/bootstrap.php');
-}
+require_once "cherryphp";
 
-$lepton = new \cherry\Lepton(__FILE__);
-
-require('lib/markdown.php');
+require_once CHERRY_LIB."/lib/markdown.php";
 
 // We need this to set up a CLI application
 //require_once('lib/cherry/cli/application.php');

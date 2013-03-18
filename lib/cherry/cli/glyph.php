@@ -27,7 +27,10 @@ class Glyph {
         'arrowright' => '&#x25B6;',
         'diamond' => '&#x25C6;',
         'checkmark' => '&#x2714;',
-        'ballotx' => '&#x2718;'
+        'ballotx' => '&#x2718;',
+        'lefthalfblock' => '&#x258B;',
+        'righthalfblock' => '&#x2590;',
+        'blacksquare' => '&#x25FC;'
     ];
     private static $work = [
         'snake' => [

@@ -24,7 +24,7 @@ class TestService extends ServiceInstance {
             echo ".";
         }
     }
-    function onShutdown() {
+    function servicehalt() {
         echo "X\n";
     }
 }

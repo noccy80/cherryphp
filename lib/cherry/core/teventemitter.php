@@ -12,14 +12,14 @@ trait TEventEmitter {
             $this->handlers[$event] = array();
         }
         $this->handlers[$event][] = $callback;
-        if (DEBUG_VERBOSE) \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Hooked event <%s>", get_class($this),$event);
+        if (is_callable([$this,'debug'])) $this->debug("Event hooked: <%s>", $event);
     }
 
     protected function emit($event,$args=null) {
         $args = func_get_args();
         $args = array_slice($args,1);
         if (array_key_exists($event,$this->handlers)) {
-            \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Emiting event <%s> to %d listeners", get_class($this), $event, count($this->handlers[$event]));
+            if (is_callable([$this,'debug'])) $this->debug("Emiting event <%s> to %d listeners", $event, count($this->handlers[$event]));
             // If only one arg, and arg is array we use that as the argument.
             if ((count($args)==1) && (is_array($args[0])))
                 $args = $args[0];
@@ -35,7 +35,7 @@ trait TEventEmitter {
                 if ($ret) return $ret;
             }
         } else {
-            if (DEBUG_VERBOSE) \cherry\log(\cherry\LOG_DEBUG,"EventEmitter[%s]: Event <%s> has no listeners so not emited", get_class($this), $event);
+            if (DEBUG_VERBOSE) if (is_callable([$this,'debug'])) $this->debug("Event <%s> has no listeners so not emited", $event);
         }
     }
 

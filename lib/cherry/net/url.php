@@ -246,19 +246,19 @@ class Url {
      */
     public function apply($url) {
         $url = (string)$url;
-        $qurl = url($url);
+        $qurl = new Url($url);
 
         // If we got a scheme, we return the URL straight away
         if ($qurl->scheme != null) {
             return $qurl;
         }
 
-        $ret = url((string)$this);
+        $ret = new Url((string)$this);
 
         // If the url begins with a / we ditch the old path, otherwise we have
         // to process the path to create a new url.
         if (substr($url,0,1) == '/') {
-            $ret->path = $url;
+            $ret->path = $qurl->path;
         } else {
             $retpath = explode('/',$ret->path);
             $newpath = explode('/',$url);

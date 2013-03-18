@@ -70,6 +70,10 @@ abstract class ServiceInstance {
         return $this->pidfile;
     }
 
+    public function getFlags() {
+        return $this->flags;
+    }
+
     public function setPidFile($pidfile) {
         $this->debug("Setting PidFile: {$pidfile}");
         $this->pidfile = $pidfile;
@@ -102,10 +106,13 @@ abstract class ServiceInstance {
 
     public function __destruct() {
         if ($this->role == self::ROLE_CONTROLLER) {
-            $this->debug("Writing pid {$this->spid} to {$this->pidfile}");
-            if ($this->spid) {
-                if ($this->pidfile)
+            if ($this->pidfile) {
+                if ($this->spid) {
+                    $this->debug("Writing pid {$this->spid} to {$this->pidfile}");
                     file_put_contents($this->pidfile,$this->spid);
+                } else {
+                    unlink($this->pidfile);
+                }
             }
         } elseif ($this->role == self::ROLE_SERVICE) {
             // Service
@@ -132,6 +139,10 @@ abstract class ServiceInstance {
         $this->state = self::STA_STARTED;
         // We break this loop manually
         $flags = $this->getFlags();
+        if (is_callable([$this,"serviceinit"])) {
+            $this->debug("Calling serviceinit()");
+            $this->serviceinit();
+        }
         while(true) {
             $this->servicemain();
             pcntl_signal_dispatch();
@@ -165,7 +176,7 @@ abstract class ServiceInstance {
             if (is_callable([$this,"servicehalt"]))
                 $this->servicehalt();
             if (is_callable([$this,"onShutdown"])) {
-                \App::app()->warn("Warning: Service is using onShutdown which is deprecated. It should use servicehalt.");
+                fprintf(STDERR,"Warning: Service is using onShutdown which is deprecated. It should use servicehalt.\n");
                 $this->onShutdown();
             }
         } elseif ($signal == \SIGTERM) {
@@ -240,6 +251,7 @@ abstract class ServiceInstance {
                 posix_kill($this->spid, \SIGQUIT);
                 pcntl_signal_dispatch();
                 if (pcntl_waitpid($this->spid, $status, \WUNTRACED | \WNOHANG)) {
+                    usleep(500000);
                     if (!$this->testpid()) {
                         $this->debug("Service process exited after SIGQUIT (%d)", pcntl_wexitstatus($status));
                         $this->spid = null;
