@@ -12,7 +12,11 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     private $requester = null;
 
     /**
+     * Create a new request.
      *
+     * For the CLI_SERVER and Apache, the request will be populated from the
+     * current request. for CLI and any other sapi, the request will be blank
+     * until it has been parsed via the createFromString() method.
      *
      */
     public function __construct() {
@@ -52,6 +56,14 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         }
     }
 
+    /**
+     * Set the server IP and port
+     *
+     * @todo Deprecate: Makes more sense to set the server from the endpoint URI.
+     * 
+     * @param string $server The IP address of the server instance
+     * @param int $port The port of the server instance.
+     */
     public function setServer($server,$port=80) {
         if (strpos($server,':')!==false)
             list($server,$port) = explode(":",$server,2);
@@ -59,6 +71,12 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     }
 
     /**
+     * Create a request from raw HTTP request data.
+     *
+     * @todo Break at custom size and drop the buffer to disk. Set a flag to
+     *      indicate that the request was too big to be kept in memory, and
+     *      provide access to the parsed data on the disk, with headers kept
+     *      in memory.
      *
      * @param string $string The HTTP stream
      * @param bool $append If true, the data will be appended if data already
@@ -136,6 +154,10 @@ class Request implements \ArrayAccess, \IteratorAggregate {
      */
     public function getRequestMethod() {
         return $this->requester["method"];
+    }
+    
+    public function getRequestProtocol() {
+        return $this->requester["protocol"];
     }
 
     /**
@@ -245,8 +267,8 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             $qs = "";
         }
         $out = [
-            "<div style=\"padding:5px; background-color:#ffffff;\"><span style=\"color:#b99\">Request from ".$this->getRemoteIp().':'.$this->getRemotePort()."[".$this->getRemoteHost()."]</span></div>",
-            "<div style=\"padding:5px; background-color:#f8f8ff;\"><span style=\"font-weight:bold;\">{$protocol} {$method}</span> <span style=\"color:#c00\">{$url}</span><span style=\"color:#c40; font-style:italic\">{$qs}</span>"
+            "<div>Request from ".$this->getRemoteIp().':'.$this->getRemotePort()."[".$this->getRemoteHost()."]</div>",
+            "<div><span style=\"font-weight:bold;\">{$protocol} {$method}</span> <span style=\"color:#c00\">{$url}</span><span style=\"color:#c40; font-style:italic\">{$qs}</span>"
         ];
         foreach($this->headers as $header=>$value) {
             $hstr = $this->formatHeader($header);
