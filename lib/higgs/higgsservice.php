@@ -23,6 +23,7 @@ class HiggsService extends ServiceInstance {
     private $httplog = null;
     private $cfg = null;
     public $dataroot = null;
+    private $stop = false;
 
     public function getFlags() {
         return ServiceInstance::SVC_RESTART;
@@ -44,26 +45,31 @@ class HiggsService extends ServiceInstance {
         $this->debug("Using certificate %s", "server.pem");
         $info = $cert->getCertificateInfo();
         $this->debug("    %s", $info["name"]);
+        list($vfrom,$vto) = $cert->getValidity();
+        $this->debug("    Valid from: %s", $vfrom);
+        $this->debug("    Valid until: %s", $vto);
+        if ($cert->isSelfSigned()) {
+            $this->warn("Warning! The certificate in use is self-signed. Consider getting a proper certificate for production use.");
+        }
 
+        /*
         $server = new SocketServer(null, "\\Higgs\\HttpServer", $cert);
         $server->addListenPort("tcp://127.0.0.1:9700");
         $server->addListenPort("ssl://127.0.0.1:9701");
+        */
 
-        while($this->getState() == ServiceInstance::STA_STARTED) {
-            pcntl_signal_dispatch();
-            // Go over the sockets that are ready to read
-            foreach($server->select() as $sock) {
-                $sock->onDataWaiting();
-                if ($sock->discard)
-                    $server->close($sock);
-            }
-            // Do this for each loop
-            $server->each(function($client){
-                $client->onTick();
-            });
+        // Set up the httpd. Will be cloned for each new instance.
+        $http = new \Higgs\HttpServer();
 
+        $server = new SocketServer();
+        $server->addListener("tcp://127.0.0.1:9700", $http);
+        $server->addListener("ssl://127.0.0.1:9701", $http, $cert);
+        while($server->process()) {
+            usleep(5000);
+            if ($this->stop) break;
         }
     }
     function servicehalt() {
+        $this->stop = true;
     }
 }

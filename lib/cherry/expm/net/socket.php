@@ -15,6 +15,7 @@ use Cherry\Expm\Stream\Context\StreamContext;
  */
 class Socket {
 
+    use \Cherry\Traits\TUuid;
     use \Cherry\Traits\TDebug;
 
     public $userdata = null;
@@ -32,6 +33,14 @@ class Socket {
     public $discard =  false;
 
     const ERR_NOT_OPEN = 0x01;
+
+    public function __clone() {
+        $this->setUuid(null);
+    }
+
+    public function canDiscard() {
+        return (bool)$this->discard;
+    }
 
     public function __construct($endpoint = null) {
         $this->uuid = Uuid::getInstance()->generate(Uuid::UUID_V4);
@@ -151,7 +160,7 @@ class Socket {
     }
 
     public function onDisconnect() {
-
+        $this->discard = true;
     }
 
     public function onError() {

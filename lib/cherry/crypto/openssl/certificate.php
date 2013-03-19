@@ -4,29 +4,44 @@ namespace Cherry\Crypto\OpenSSL;
 
 class Certificate {
 
+    use \Cherry\Traits\TDebug;
+
     private $certfile = null;
     private $certpass = null;
+    private $certmeta = [];
     private $certstr = null;
 
     public function __construct($file,$password=null) {
-        \debug("Certificate: Creating certificate handler for '{$file}'");
+        $this->debug("Certificate: Creating certificate handler for '{$file}'");
         if (!file_exists($file))
             throw new CertificateException("Certificate not found: {$file}");
         $this->certfile = realpath($file);
+        $this->certmeta = $this->getCertificateInfo();
         $this->certpass = $password;
     }
-    
+
     public function getCertificateInfo() {
         if (!$this->certstr) $this->certstr = file_get_contents($this->certfile);
         $info = openssl_x509_parse($this->certstr);
         return $info;
     }
-    
+
+    public function isSelfSigned() {
+        if ($this->certmeta["subject"]==$this->certmeta["issuer"])
+            return true;
+    }
+
+    public function getValidity() {
+        $from = date(\DateTime::RFC822, $this->certmeta["validFrom_time_t"]);
+        $to   = date(\DateTime::RFC822, $this->certmeta["validTo_time_t"]);
+        return [ $from, $to ];
+    }
+
     public function getCertificateText() {
         $info = $this->getCertificateInfo();
         return $this->_getCertText($info);
     }
-    
+
     private function _getCertText($info,$indent=0) {
         $ind = str_repeat(" ",$indent);
         $str = "";
@@ -42,7 +57,7 @@ class Certificate {
     }
 
     public function getStreamContext() {
-        \debug("Certificate: Generating stream context for certificate '{$this->certfile}'");
+        $this->debug("Certificate: Generating stream context for certificate '{$this->certfile}'");
         $context = stream_context_create();
         // local_cert must be in PEM format
         stream_context_set_option($context, 'ssl', 'local_cert', $this->certfile);
@@ -53,7 +68,7 @@ class Certificate {
         return $context;
     }
 
-}   
+}
 
 class CertificateException extends \Exception {
 }

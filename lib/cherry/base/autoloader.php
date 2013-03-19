@@ -65,12 +65,20 @@ class AutoLoader {
         $this->debug('Registered loader for %s', $this->path);
     }
 
+    private function debugInfo($fl,$class) {
+        if (trait_exists($class)) $type = "trait";
+        elseif (class_exists($class,false)) $type = "class";
+        elseif (interface_exists($class,false)) $type = "interface";
+        else $type = "<???>";
+        $this->debug("Autoloaded %s for %s %s", $fl, $type, $class);
+    }
+
     /**
      *
      *
      */
     public function autoload($class) {
-        $this->debug("Autoload requested: {$class}");
+        //$this->debug("Autoload requested: {$class}");
         if ($this->ns) {
             $cm = strtolower($class);
             $nm = strtolower($this->ns);
@@ -93,8 +101,8 @@ class AutoLoader {
                 $fl = $loc.strtolower($cfn).$ext;
                 $tested[] = $fl;
                 if (file_exists($fl) && is_readable($fl)) {
-                    $this->debug("Autoloading: %s", $fl);
                     require_once $fl;
+                    $this->debugInfo($fl,$class);
                     return true;
                 }
             }
@@ -103,8 +111,8 @@ class AutoLoader {
                 $fl = $loc.$cfn.$ext;
                 $tested[] = $fl;
                 if (file_exists($fl) && is_readable($fl)) {
-                    $this->debug("Autoloading %s", $fl);
                     require_once $fl;
+                    $this->debugInfo($fl,$class);
                     return true;
                 }
             }
@@ -114,8 +122,8 @@ class AutoLoader {
                     $fl = $loc.(($case==1)?strtolower($cfn):$cfn).$ext;
                     $tested[] = $fl;
                     if (file_exists($fl) && is_readable($fl)) {
-                        $this->debug("Autoloading %s", $fl);
                         require_once $fl;
+                        $this->debugInfo($fl,$class);
                         return true;
                     }
                 }

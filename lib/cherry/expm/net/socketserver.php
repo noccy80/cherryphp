@@ -5,6 +5,7 @@ namespace Cherry\Expm\Net;
 use debug;
 use Cherry\Crypto\OpenSSL\Certificate;
 
+
 /**
  *
  *
@@ -18,9 +19,203 @@ class SocketServer {
 
     private $streams = [];
     private $stream;
-    private $clients = [];
     private $sockclass = null;
-    private $©ertificate = null;
+    private $certificate = null;
+
+    private $listeners = [];
+    private $endpoints = [];
+    private $clients = [];
+
+    /**
+     * Add a listener to the socket server.
+     *
+     * @code
+     * addListener("tcp://0.0.0.0:6060", '\MyHttpTransport'); // HTTP
+     * addListener("ssl://0.0.0.0:6061", '\MyHttpTransport', $cert); // HTTPS
+     * addListener("unix:///var/run/myhttpd-control", '\MyControlTransport'); // Unix Domain Socket
+     * @endcode
+     *
+     * @param mixed $endpoint The endpoint (eg. tcp://0.0.0.0:6667)
+     * @param ISocketTransport $transport The transport to use
+     *
+     * @x-new
+     * @x-replaces addListener
+     * @x-replaces addListenPort
+     */
+    public function addListener($endpoint, SocketTransport $transport,
+                                Certificate $cert = null, array $options = null) {
+        // Initialize a null context
+        $ctx = null;
+        // If we got a certificate, let's set up an SSL context and then listen.
+        if ($cert) {
+            $ctx = $cert->getStreamContext();
+            $server = \stream_socket_server(
+                $endpoint, $errno, $errstr,
+                STREAM_SERVER_BIND|STREAM_SERVER_LISTEN, $ctx);
+        } else {
+            // Add the listener, and start listening.
+            $server = \stream_socket_server(
+                $endpoint, $errno, $errstr,
+                STREAM_SERVER_BIND|STREAM_SERVER_LISTEN);
+        }
+        if (!$server)
+            throw new \Exception("Server setup failed: {$errstr} ({$errno})");
+        // Save our instances so we can use them for select as well as to look
+        // up the status.
+        $this->listeners[$endpoint] = $server;
+        $this->endpoints[$endpoint] = (object)[
+            "socket" => $server,
+            "endpoint" => $endpoint,
+            "transport" => $transport,
+            "clients" => 0,
+            "options" => (array)$options
+        ];
+    }
+
+    /**
+     * Remove an endpoint from the set of listeners and stop listening on the
+     * specified endpoint.
+     *
+     * @param mixed $endpoint The endpoint to remove from the set of active listening endpoints.
+     */
+    public function removeListener($endpoint) {
+        // Check if the endpoint exist in the pool
+        if (array_key_exists($endpoint,$this->listeners)) {
+            // If so, grab it, close it and then unset it
+            $lobj = $this->listeners[$endpoint];
+            fclose($lobj);
+            unset($this->listeners[$endpoint]);
+            // Return true on success
+            return true;
+        }
+        // If not, return false
+        return false;
+    }
+
+    public function process() {
+        // Get the client socket list, which also discards closed sockets.
+        $clients = $this->getClientSockets();
+        $sread = array_merge(array_values($this->listeners), $clients);
+        if (count($sread) == 0)
+            return;
+        // Add the readable sockets to a list as Socket instances
+        $swrite = []; $sexcept = [];
+        $ssel = stream_select($sread,$swrite,$sexcept,0,10000);
+        if ($ssel == 0)
+            return true;
+        $sread = array_unique($sread);
+        // Go over our readable sockets
+        foreach ($sread as $socket) {
+            // Is this socket a listening socket?
+            if ($this->isListeningSocket($socket)) {
+                // Create a new Socket
+                $peer = null;
+                $asock = \stream_socket_accept($socket,0,$peer);
+                // Success?
+                if ($asock) {
+                    $transport = $this->getNewTransportForSocket($socket);
+                    $endpoint = $this->getListenerEndpoint($socket);
+                    $transport->onAccept($asock,$peer,$endpoint);
+                    $this->clients[$transport->getUuid()] = (object)[
+                        "transport" => $transport,
+                        "socket" => $asock,
+                        "uuid" => $transport->getUuid()
+                    ];
+                }
+            } else {
+                $transport = $this->getClientTransport($socket);
+                $transport->onDataWaiting();
+            }
+        }
+
+        // Do this for each loop to update the clients if needed
+        $this->each(function($client){
+            $client->onProcess();
+        });
+        return true;
+    }
+
+    private function isListeningSocket($socket) {
+        return in_array($socket,$this->listeners);
+    }
+
+    /**
+     * Return a new transport for the listening sockets endpoint.
+     *
+     * @param mixed $socket The listening socket for the endpoint
+     * @return SocketTransport The transport
+     */
+    private function getNewTransportForSocket($socket) {
+        foreach($this->endpoints as $endpoint) {
+            if ($endpoint->socket == $socket) {
+                $tp = clone $endpoint->transport;
+                $this->debug("<%s> Spawning transport %s", $tp->getUuid(), get_class($endpoint->transport));
+                return $tp;
+            }
+        }
+        return false;
+    }
+
+    private function getListenerEndpoint($socket) {
+        foreach($this->endpoints as $name=>$endpoint) {
+            if ($endpoint->socket == $socket) {
+                return $name;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Retrieve the transport for the (currently connected) socket
+     *
+     * @param mixed $socket The socket
+     */
+    private function getClientTransport($socket) {
+        foreach($this->clients as $client) {
+            if ($client->socket == $socket) {
+                return $client->transport;
+            }
+        }
+        return false;
+    }
+
+    /**
+     *
+     *
+     *
+     */
+    private function getClientSockets() {
+        $read = [];
+        foreach($this->clients as $k=>$client) {
+            if ($client->transport->canDiscard()) {
+                $this->debug("<{$client->uuid}> Discarding client");
+                unset($this->clients[$k]);
+            } else {
+                $read[] = $client->socket;
+            }
+        }
+        return $read;
+    }
+
+    /**
+     *
+     *
+     */
+    public function each(callable $func) {
+        $args = func_get_args();
+        $func = array_shift($args);
+        foreach($this->clients as $client) {
+            $cargs = array_merge([$client->transport],$args);
+            call_user_func_array($func,$cargs);
+        }
+    }
+
+
+
+
+
+
+
     /**
      * Create a socket server
      *
@@ -39,6 +234,8 @@ class SocketServer {
         if ($endpoint)
             $this->addListenPort($endpoint);
     }
+
+
 
     public function addListenPort($endpoint) {
         $errno = null; $errstr = null;
@@ -78,6 +275,8 @@ class SocketServer {
                     // Create a new Socket
                     $peer = null;
                     $asock = \stream_socket_accept($stream,0,$peer);
+                    // C
+                    $class = $this->getNewTransportForSocket($stream);
                     if ($asock) {
                         if (is_callable($this->sockclass))
                             $class = $this->sockclass();
@@ -102,14 +301,6 @@ class SocketServer {
         return $sock;
     }
 
-    public function each(callable $func) {
-        $args = func_get_args();
-        $func = array_shift($args);
-        foreach($this->clients as $client) {
-            $cargs = array_merge([$client],$args);
-            call_user_func_array($func,$cargs);
-        }
-    }
 
     private function getStreamId($stream) {
         foreach($this->clients as $client) {

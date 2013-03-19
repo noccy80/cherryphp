@@ -15,6 +15,7 @@ SvcMan::register();
 
 $ap = new ArgumentParser();
 $ap->addOption('upgrade', new BooleanOption([ 'u', 'upgrade' ]), "Upgrade the service");
+$ap->addOption('interactive', new BooleanOption([ 'i', 'interactive' ]), "Don't use service manager and don't fork");
 list($args,$parms) = $ap->parse();
 if ($args->upgrade) {
     fprintf(STDERR,"Warning: Upgrading service, as requested.\n");
@@ -22,6 +23,11 @@ if ($args->upgrade) {
     return;
 } elseif (!SvcMan::queryServiceRecord("com.noccy.higgs.daemon")) {
     SvcMan::registerService(new \Higgs\HiggsService());
+}
+if ($args->interactive) {
+    $hs = new \Higgs\HiggsService();
+    $hs->servicemain();
+    return;
 }
 
 /**

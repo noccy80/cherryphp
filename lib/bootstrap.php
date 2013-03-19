@@ -4,6 +4,8 @@ namespace Cherry;
 
 $_os = strtolower(PHP_OS);
 
+require_once CHERRY_LIB.'/lib/utils.php';
+
 // Defines
 define('_DS_',DIRECTORY_SEPARATOR);
 define('_IS_LINUX', ($_os=='linux'));

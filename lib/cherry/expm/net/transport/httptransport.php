@@ -3,29 +3,26 @@
 namespace Cherry\Expm\Net\Transport;
 
 use \Cherry\Expm\Net\Socket;
+use \Cherry\Expm\Net\SocketTransport;
 use \Cherry\Web\Response;
 use \Cherry\Web\Request;
 
-abstract class HttpTransport extends Socket {
+abstract class HttpTransport extends SocketTransport {
 
     protected $request = null;
     protected $response = null;
 
-    /**
-     * onConnect is called when our socket is connected to a client.
-     */
-    public function onConnect($peer) {
-        parent::onConnect($peer);
-        $this->debug("Connected to {$peer}");
+    abstract protected function onHttpRequest();
+
+    public function onAccept($socket,$peer,$endpoint) {
+
+        $this->debug("<%s> Accepted connection from %s on %s", $this->getUuid(), $peer, $endpoint);
+        parent::onAccept($socket, $peer, $endpoint);
+        // Create the request object
         $this->request = new Request();
         $this->request->setRemoteIp($peer);
+        // Empty the response object
         $this->response = null;
-    }
-
-    abstract protected function onRequest();
-
-    private function logHit() {
-        // App::app()->getHttpLogger()->logHit($this->request,$this->response);
     }
 
     /**
@@ -33,14 +30,15 @@ abstract class HttpTransport extends Socket {
      * data.
      */
     public function onDataWaiting() {
+
+        // Read data from the socket
         $data = $this->read(8192);
+        $this->debug("<%s> Read %d bytes of data ", $this->getUuid(), strlen($data));
         if (empty($data)) {
-         $this->disconnect();
-         return;
+            $this->onDisconnect();
+            return;
         }
-        $len = strlen($data);
-        $gh = $this->request->isRequestComplete();
-        $this->debug("{$this->uuid}: incoming data, len={$len}, gotheaders={$gh}");
+
 
         // Read until we got the whole request. The isRequestComplete() method
         // will return true once it has detected a full request.
@@ -48,24 +46,22 @@ abstract class HttpTransport extends Socket {
             $this->request->createFromString($data,true);
             if (!$this->request->isRequestComplete()) return;
         }
+
+        $this->debug("<%s> Received request %s for %s", $this->getUuid(), $this->request->getRequestMethod(), $this->request->getRequestUrl());
+        $this->debug("<%s> Creating response object", $this->getUuid());
         if (!$this->response) $this->response = $this->request->createResponse();
 
-        $this->onRequest();
-
-        $this->write($this->response->asHttpResponse());
-        // If we got content we send the content
-        if ($this->response->hasContent()) {
-            $this->write($this->response->getContent());
-            $this->disconnect();
-            $this->logHit();
+        if ($this->onHttpRequest()) {
+            $this->debug("<%s> Sending response %d (%s, %d bytes)", $this->getUuid(), $this->response->getStatus(), $this->response->contentType, $this->response->contentLength );
+            $this->write($this->response->asHttpResponse());
+            // If we got content we send the content
+            if ($this->response->hasContent()) {
+                $this->write($this->response->getContent());
+                $this->disconnect();
+            }
         }
-
     }
 
-    /**
-     * onTick is called once every loop and is responsible for dispatching the
-     * message to the clients as they are received.
-     */
-    public function onTick() { }
+    public function onProcess() { }
 
 }
