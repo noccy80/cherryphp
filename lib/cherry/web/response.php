@@ -113,12 +113,12 @@ class Response {
     }
 
     public function setHeader($header,$value,$replace=true,$httpcode=null) {
-        if ($this->headers === null) {
-            header("{$header}: {$value}", $replace, $httpcode);
-            return;
-        } else {
+        if (_IS_CLI) {
             if ($httpcode) $this->httpcode = $httpcode;
             $this->headers[strtolower($header)] = $value;
+        } else {
+            header("{$header}: {$value}", $replace, $httpcode);
+            return;
         }
     }
 
@@ -136,9 +136,10 @@ class Response {
         }
     }
 
-    public function setContent($content) {
+    public function setContent($content,$httpcode=null) {
         $this->contentLength = strlen($content);
         $this->content = $content;
+        if ($httpcode) $this->setStatus((int)$httpcode);
     }
 
     public function getContent() {
@@ -245,6 +246,7 @@ class Response {
     }
     public function redirect($url,$httpcode=302) {
         $this->setHeader("Location",$url, true, $httpcode);
+        if (_IS_CLI) return;
         exit;
     }
     public function sendFile($file) {

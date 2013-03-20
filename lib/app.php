@@ -2,6 +2,8 @@
 
 class App {
 
+    use \Cherry\Traits\TStaticDebug;
+
     private static $_apps = [];
     private static $_context = null;
     private static $_config = null;
@@ -31,10 +33,15 @@ class App {
     public static function run($app) {
         global $argv;
         self::$_apps[] = $app;
-        \Cherry\debug("Running application class %s, total of %d apps on stack after.", get_class($app),count(self::$_apps));
+        self::debug("Running application class %s, total of %d apps on stack after.", get_class($app),count(self::$_apps));
+        if (count(self::$_apps)==1) {
+            self::debug("    Environment:       %s", __ENV__);
+            self::debug("    Application path:  %s", CHERRY_APP);
+            self::debug("    Library path:      %s", CHERRY_LIB);
+        }
         $ev = $app->run($argv);
         array_shift(self::$_apps);
-        \Cherry\debug("Application %s returned code %d after exit.", get_class($app),$ev);
+        self::debug("Application %s returned code %d after exit.", get_class($app),$ev);
         return $ev;
     }
 

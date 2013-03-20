@@ -36,10 +36,6 @@ $al->register();
 
 require_once CHERRY_LIB.'/lib/_globals.php';
 
-\debug("Application path: %s", CHERRY_APP);
-\debug("Library path: %s", CHERRY_LIB);
-
-
 
 if (getenv("PROFILE")) {
     $pc = explode(":",getenv("PROFILE"));

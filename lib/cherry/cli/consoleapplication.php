@@ -26,10 +26,10 @@ class ConsoleApplication extends \Cherry\Application {
                 $ks->attachFile($ks_user,$key);
                 putenv("KEYSTORE_USERKEY");
             } else {
-                \debug("Info: To auto-mount the user KeyStore, define the KEYSTORE_USERKEY envvar.");
+                $this->debug("Info: To auto-mount the user KeyStore, define the KEYSTORE_USERKEY envvar.");
             }
         } else {
-            \debug("Keystore {$ks_user} not found.");
+            $this->debug("Keystore {$ks_user} not found.");
         }
         if (file_exists($ks_system)) {
             $key = getenv("KEYSTORE_SYSTEMKEY");
@@ -37,10 +37,10 @@ class ConsoleApplication extends \Cherry\Application {
                 $ks->attachFile($ks_system,$key);
                 putenv("KEYSTORE_SYSTEMKEY");
             } else {
-                \debug("Info: To auto-mount the system KeyStore, define the KEYSTORE_SYSTEMKEY envvar.");
+                $this->debug("Info: To auto-mount the system KeyStore, define the KEYSTORE_SYSTEMKEY envvar.");
             }
         } else {
-            \debug("Keystore {$ks_system} not found.");
+            $this->debug("Keystore {$ks_system} not found.");
         }
         return $this->main();
     }
@@ -59,7 +59,7 @@ class ConsoleApplication extends \Cherry\Application {
         }
         parent::__construct();
 
-        debug('Spawning application');
+        $this->debug('Spawning application');
         $this->setup();
         $opts = '';
         $lopts = array();
@@ -190,7 +190,7 @@ class ConsoleApplication extends \Cherry\Application {
             $this->init();
             return;
         }
-        debug('Warning: application does not override setup().');
+        $this->debug('Warning: application does not override setup().');
     }
     function usage() {
         $this->usageheader();
@@ -285,7 +285,7 @@ class ConsoleApplication extends \Cherry\Application {
     }
 
     public function handleException(\Exception $exception) {
-        debug("Unhandled exception %s in %s on line %d", get_class($exception), $exception->getFile(), $exception->getLine());
+        $this->debug("Unhandled exception %s in %s on line %d", get_class($exception), $exception->getFile(), $exception->getLine());
         $log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
 
@@ -309,7 +309,7 @@ class ConsoleApplication extends \Cherry\Application {
         if ($handler === null) $handler = SIG_DFL;
         if ($handler === false) $handler = SIG_IGN;
         if (!pcntl_signal($signal,$handler,$restart)) {
-            \debug("Warning: Could not attach signal %d", $signal);
+            $this->debug("Warning: Could not attach signal %d", $signal);
         }
     }
 

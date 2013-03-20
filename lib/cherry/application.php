@@ -4,6 +4,8 @@ namespace Cherry;
 
 abstract class Application implements \Cherry\Core\IApplication {
 
+    use \Cherry\Traits\TDebug;
+
     protected $path = null;
     private static $instance = null;
     private $logtarget = null;
@@ -21,7 +23,7 @@ abstract class Application implements \Cherry\Core\IApplication {
         }
         $this->path = APPPATH;
         if (is_callable([ $this, 'handleException' ])) {
-            \Cherry\debug("Registering application exception handler...");
+            $this->debug("Registering application exception handler...");
             set_error_handler(array($this,'__php_handleError'), E_ALL);
             set_exception_handler(array($this,'handleException'));
             // Active assert and make it quiet
@@ -48,7 +50,7 @@ abstract class Application implements \Cherry\Core\IApplication {
 
         if ($errno & E_WARNING) {
             //fprintf(STDERR,"Warning: %s [from %s:%d]\n", $errstr,$errfile,$errline);
-            \Cherry\debug("Warning: %s [from %s:%d]\n", $errstr,$file,$line);
+            $this->debug("Warning: %s [from %s:%d]\n", $errstr,$file,$line);
             return true;
         }
         if ($errno & E_DEPRECATED) {
@@ -63,7 +65,7 @@ abstract class Application implements \Cherry\Core\IApplication {
     // Create a handler function
     public static function __php_handleAssert($file, $line, $code, $desc = null) {
 
-        \Cherry\debug("Assertion failed in %s on line %d", $file, $line);
+        $this->debug("Assertion failed in %s on line %d", $file, $line);
         /*$log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
 
@@ -181,6 +183,7 @@ abstract class Application implements \Cherry\Core\IApplication {
         $this->logtarget = $target;
     }
 
+    /*
     public function debug($str) {
         call_user_func_array('\Cherry\Debug',func_get_args());
     }
@@ -189,7 +192,7 @@ abstract class Application implements \Cherry\Core\IApplication {
         $msg = call_user_func_array('sprintf',func_get_args());
         error_log($msg);
     }
-
+*/
     public function write($str) {
         $this->writebuffer .= $str;
     }

@@ -51,8 +51,8 @@ class AutoLoader {
      * @brief Register the autoloader.
      *
      */
-    public function register() {
-        spl_autoload_register([&$this,'autoload'],true);
+    public function register($prepend=false) {
+        spl_autoload_register([&$this,'autoload'],true,$prepend);
         $this->debug('Registered loader for %s', $this->path);
     }
 
@@ -129,7 +129,7 @@ class AutoLoader {
                 }
             }
         }
-        $this->debug("Autoloader: Failed to match class for autoload, tried: %s", join(", ",$tested));
+        $this->debug("No candidate for autoloading {$class}; tried %s", join(", ",$tested));
         return false;
 
     }

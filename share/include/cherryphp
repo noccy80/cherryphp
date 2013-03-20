@@ -56,6 +56,9 @@ if (!defined("CHERRY_LIB"))
     define("CHERRY_LIB", $findlib());
 if (!defined("CHERRY_APP"))
     define("CHERRY_APP", $findapp());
+define("__APP__",CHERRY_APP);
+define("__LIB__",CHERRY_LIB);
+define("__ENV__",getenv("env")?:"dev");
 if (file_exists(CHERRY_APP . "/config/_setup.php"))
     require_once CHERRY_APP . "/config/_setup.php";
 

@@ -7,6 +7,9 @@ namespace Cherry\Web;
  *
  */
 class Request implements \ArrayAccess, \IteratorAggregate {
+    
+    use \Cherry\Traits\TDebug;
+    
     private $headers = [];
     private $complete = false;
     private $requester = null;
@@ -98,6 +101,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             $this->parser->buffer.= $string;
         }
         if ((!$this->parser->headers) && (strpos($this->parser->buffer,"\r\n\r\n")!==false)) {
+            $this->debug("Parsing headers");
             $this->parser->datapos = strpos($this->parser->buffer,"\r\n\r\n");
             $this->parser->rawheader = substr($this->parser->buffer,0,$this->parser->datapos);
             $this->parser->rawdata = substr($this->parser->buffer,$this->parser->datapos);
@@ -112,6 +116,8 @@ class Request implements \ArrayAccess, \IteratorAggregate {
                 }
             }
             $this->complete = true;
+        } else {
+            $this->debug("Warning: Incomplete request:\n{$this->parser->buffer}");
         }
         if (($append) && empty($string)) $this->complete = true;
     }
@@ -170,6 +176,13 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         /* $url = new \Cherry\Net\Url("http://".$this->request["server"]);
         echo "URL: {$url}\n"; */
         return $this->requester["url"];
+    }
+    
+    public function getRequestUrlSegment($index) {
+        $seg = explode("/",$this->requester["url"]);
+        if (count($seg) > $index + 1)
+            return $seg[$index+1];
+        return null;
     }
 
     /**
