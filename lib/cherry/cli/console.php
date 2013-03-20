@@ -47,6 +47,8 @@ abstract class ConsoleAdapter {
 
 class Console {
 
+    use \Cherry\Traits\TStaticDebug;
+
     const ADAPTER_BEST = NULL;
     private static $adapter = null;
 
@@ -60,19 +62,19 @@ class Console {
                     $objadapter = new \Cherry\Cli\Adapters\NullConsole();
                 elseif (_IS_LINUX) {
                     if (getenv("NOANSI")=='1') {
-                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: NOANSI envvar is 1. Falling back on simple adapter.");
+                        self::debug("Console: NOANSI envvar is 1. Falling back on simple adapter.");
                         $objadapter = new \Cherry\Cli\Adapters\SimpleConsole();
                     } elseif (getenv("ANSI")=='1') {
-                        \Cherry\Log(\Cherry\LOG_DEBUG,"Console: ANSI envvar is 1, enabling ANSI.");
+                        self::debug("Console: ANSI envvar is 1, enabling ANSI.");
                         $objadapter = new \Cherry\Cli\Adapters\AnsiConsole();
                     } else {
                         $out = null; $ret = 0;
                         exec('tty',$out,$ret);
                         if ($ret == 0) {
-                            \Cherry\Log(\Cherry\LOG_DEBUG,"Console: Terminal seems to be a TTY, enabling ANSI.");
+                            self::debug("Console: Terminal seems to be a TTY, enabling ANSI.");
                             $objadapter = new \Cherry\Cli\Adapters\AnsiConsole();
                         } else {
-                            \Cherry\Log(\Cherry\LOG_DEBUG,"Console: No TTY. Falling back on simple adapter.");
+                            self::debug("Console: No TTY. Falling back on simple adapter.");
                             $objadapter = new \Cherry\Cli\Adapters\SimpleConsole();
                         }
                     }

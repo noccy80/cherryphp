@@ -11,7 +11,7 @@ class WebRequestTestCase extends \PHPUnit_Framework_TestCase {
 
     public function setup() { }
     public function teardown() { }
-    
+
     public function testCreateRequestFromFullString() {
         $r = new Request();
         $r->createFromString("GET / HTTP/1.1\r\nserver: localhost\r\nuser-agent: phpunit\r\n\r\n");
@@ -22,5 +22,17 @@ class WebRequestTestCase extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($r->getHeader("server"),"localhost");
         $this->assertEquals($r->getHeader("user-agent"),"phpunit");
     }
-    
+
+    public function testRequestAsText() {
+
+    }
+
+    public function testRequestAsHtml() {
+
+    }
+
+    public function testRequestHeaders() {
+        
+    }
+
 }

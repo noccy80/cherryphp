@@ -21,7 +21,6 @@ class Socket {
     public $userdata = null;
     public $stream = null;
     public $datawaiting = false;
-    public $uuid = null;
     public $peer = null;
     public $socketserver = null;
 
@@ -30,7 +29,7 @@ class Socket {
      * done and can be discarded from whatever pool it belongs to, effectively
      * destructing it.
      */
-    public $discard =  false;
+    protected $discard =  false;
 
     const ERR_NOT_OPEN = 0x01;
 
@@ -43,7 +42,6 @@ class Socket {
     }
 
     public function __construct($endpoint = null) {
-        $this->uuid = Uuid::getInstance()->generate(Uuid::UUID_V4);
         if ($endpoint) {
             if (is_string($endpoint)) {
                 // Connect to endpoint url

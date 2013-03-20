@@ -59,7 +59,7 @@ abstract class ConfigPool {
             }
             return self::$configfiles[$pool->cfghash];
         } else {
-            self::debug("Pool has not been bound: {$identifier}");
+            self::debug("Error: Pool has not been bound: {$identifier}");
             return null;
         }
     }

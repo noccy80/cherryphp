@@ -21,12 +21,19 @@ class DatabaseConnection {
     private $type = null;
     private $database = null;
     private $hlog = null;
+    private $pool = null;
 
     public function __construct($uri, $opts=array()) {
 
+        $opts = (array)$opts;
+        if (!empty($opts['pool']))
+            $this->pool = $opts['pool'];
+        else
+            $this->pool = $uri;
         if (!$uri) throw new \UnexpectedValueException("DatabaseConnection::__construct() expects an URI");
 
         $ci = parse_url($uri);
+        $this->uri = $uri;
         if (strpos($uri,"://")===false) {
             // Connectionstring is in PDO format
             throw new \Exception("Invalid URI: {$uri}");
@@ -141,7 +148,8 @@ class DatabaseConnection {
                 //var_dump($pool);
                 //die();
                 //self::$dbpool[$pool] = new self(self::$connections[$pool]);
-                self::$dbpool[$pool] = new self($dp);
+                $opts = [ "pool"=>$pool ];
+                self::$dbpool[$pool] = new self($dp, $opts);
             } else {
                 if (strpos($pool,"://")!==false) {
                     self::$dbpool[$pool] = new self($pool);
@@ -173,7 +181,7 @@ class DatabaseConnection {
         if ($argcount>1) {
             $esql = call_user_func_array('sprintf',$argo);
         } else { $esql = $argo[0]; }
-        $this->debug("Escaping string: %s", $esql);
+        $this->debug("Escape [{$this->pool}]: %s", $esql);
         return $esql;
     }
 
@@ -193,7 +201,7 @@ class DatabaseConnection {
             }
         }
         $esql = call_user_func_array('sprintf',$argo);
-        $this->debug("Running query: %s", $esql);
+        $this->debug("Query: [{$this->pool}] %s", $esql);
         if ($this->hlog) fputs($this->hlog,$esql."\n");
         return $this->conn->query($esql); // fetchmode?
     }
@@ -213,7 +221,7 @@ class DatabaseConnection {
             }
         }
         $esql = call_user_func_array('sprintf',$argo);
-        $this->debug("Executing statement: %s", $esql);
+        $this->debug("Exec: [{$this->pool}] %s", $esql);
         if ($this->hlog) fputs($this->hlog,$esql."\n");
         return $this->conn->exec($esql); // fetchmode?
     }
