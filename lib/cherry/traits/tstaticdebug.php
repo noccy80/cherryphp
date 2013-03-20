@@ -8,11 +8,6 @@ if (!defined("DEBUG_MAX_CLASSLEN"))
 trait TStaticDebug {
 
     protected static function debug($str) {
-        static $lp,$rp;
-        if (!$lp) list($lp,$rp) = [
-            html_entity_decode("&#x2590;", ENT_NOQUOTES, 'UTF-8'),
-            html_entity_decode("&#x258B;", ENT_NOQUOTES, 'UTF-8')
-        ];
         $class = get_called_class();
         if (defined("DEBUG_IGNORE_CLASSES")) {
             static $ignore;
@@ -33,7 +28,7 @@ trait TStaticDebug {
         if ($cl<DEBUG_MAX_CLASSLEN) $class = str_repeat(" ",DEBUG_MAX_CLASSLEN-$cl).$class;
         $fmt = array_shift($args);
         $class = sprintf("\033[32m%s\033[0m", $class);
-        $type = sprintf("\033[0;32m{$lp}\033[32;7mDEBUG\033[0;32m{$rp}\033[0m");
+        $type = sprintf("\033[32;7m DEBUG \033[0m");
         $fmt = "{$class} {$type} ".$fmt;
         array_unshift($args,$fmt);
         call_user_func_array("\cherry\debug",$args);

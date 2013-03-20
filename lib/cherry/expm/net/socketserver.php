@@ -60,6 +60,7 @@ class SocketServer {
         }
         if (!$server)
             throw new \Exception("Server setup failed: {$errstr} ({$errno})");
+        $this->debug("Created new listener for {$endpoint} (on %s)", get_class($transport));
         // Save our instances so we can use them for select as well as to look
         // up the status.
         $this->listeners[$endpoint] = $server;

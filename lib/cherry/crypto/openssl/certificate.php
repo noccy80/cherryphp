@@ -12,10 +12,10 @@ class Certificate {
     private $certstr = null;
 
     public function __construct($file,$password=null) {
-        $this->debug("Certificate: Creating certificate handler for '{$file}'");
         if (!file_exists($file))
             throw new CertificateException("Certificate not found: {$file}");
         $this->certfile = realpath($file);
+        $this->debug("Reading certificate '{$this->certfile}'");
         $this->certmeta = $this->getCertificateInfo();
         $this->certpass = $password;
     }

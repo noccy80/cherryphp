@@ -111,6 +111,8 @@ class InputStreamParser implements \IteratorAggregate {
         $chunk->datalen = $chunk->chunkstart + $chunk->chunklen - $chunk->datastart;
         $hdr = explode("\r\n",$hdr);
         array_shift($hdr);
+        $chunk->filename = null;
+        $chunk->filetype = null;
         foreach($hdr as $row) {
             if (!empty($row)) {
                 list($k,$v) = explode(":",$row,2);
@@ -124,8 +126,9 @@ class InputStreamParser implements \IteratorAggregate {
                         foreach($cdisp as $cdispattr) {
                             list ($ak,$av) = explode ("=",$cdispattr);
                             $itemcdisp[trim($ak)] = trim($av,"\"' ");
+                            if (array_key_exists("filename",$itemcdisp))
+                                $chunk->filename = $itemcdisp["filename"];
                         }
-                        $chunk->filename = $itemcdisp["filename"];
                         $this->itemcdisp = $itemcdisp;
                         break;
                     case 'content-type':
@@ -167,7 +170,12 @@ class InputStreamParser implements \IteratorAggregate {
         for ($n = 0; $n < $num; $n++) {
             $this->scanHeader($blocks[$n]);
         }
-        $this->chunks = $blocks;
+        $out = [];
+        foreach($blocks as $block) {
+            if (!empty($block->filename))
+                $out[] = $block;
+        }
+        $this->chunks = $out;
         return (count($blocks)>0);
     }
     
