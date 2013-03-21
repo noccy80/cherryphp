@@ -4,9 +4,16 @@ namespace Higgs;
 
 class HttpServer extends \Cherry\Expm\Net\Transport\HttpTransport {
 
+    /**
+     * Set the document root. Pass null to disable serving of static content.
+     */
+    public function setDocumentRoot($root) {
+    
+    }
+
     protected function onHttpRequest() {
         // Set up some generics
-        $this->response->server = "Cherry Higgs/1.0.0";
+        $this->response->server = "Higgs";
         $this->response->connection = "Close";
         // Prepare the response
         $html = $this->request->asHtml().

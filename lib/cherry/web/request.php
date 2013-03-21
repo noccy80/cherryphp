@@ -100,12 +100,16 @@ class Request implements \ArrayAccess, \IteratorAggregate {
                 $this->parser->rawdata.= $string;
             $this->parser->buffer.= $string;
         }
-        if ((!$this->parser->headers) && (strpos($this->parser->buffer,"\r\n\r\n")!==false)) {
-            $this->debug("Parsing headers");
-            $this->parser->datapos = strpos($this->parser->buffer,"\r\n\r\n");
+        static $in_lineend;
+        if (!$in_lineend) 
+            $in_lineend = \Utils::detectLineEnding($this->parser->buffer,"\r\n");
+//        $in_lineend = "\r\n";
+        if ((!$this->parser->headers) && (strpos($this->parser->buffer,$in_lineend.$in_lineend)!==false)) {
+            $this->debug("Parsing headers (%d bytes in buffer)", strlen($this->parser->buffer));
+            $this->parser->datapos = strpos($this->parser->buffer,$in_lineend.$in_lineend);
             $this->parser->rawheader = substr($this->parser->buffer,0,$this->parser->datapos);
             $this->parser->rawdata = substr($this->parser->buffer,$this->parser->datapos);
-            $hbuf = explode("\r\n",trim($this->parser->rawheader));
+            $hbuf = explode($in_lineend,trim($this->parser->rawheader));
             foreach($hbuf as $hstr) {
                 if (strpos($hstr,":")!==false) {
                     list($k,$v) = explode(":",str_replace(": ",":",$hstr),2);
@@ -117,7 +121,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
             }
             $this->complete = true;
         } else {
-            $this->debug("Warning: Incomplete request:\n{$this->parser->buffer}");
+            // $this->debug("Warning: Incomplete request:\n{$this->parser->buffer}");
         }
         if (($append) && empty($string)) $this->complete = true;
     }

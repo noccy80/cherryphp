@@ -32,4 +32,20 @@ class Utils {
         return $path;
     }
 
+    static function indentText($text,$indent,$skipfirstline=false) {
+        return (($skipfirstline==false)?str_repeat(" ",$indent):"").str_replace("\n","\n".str_repeat(" ",$indent),$text);
+    }
+
+    static function detectLineEnding($string,$default="\n") {
+        if (strpos($string, "\r\n")!==false) {
+            return "\r\n";
+        } elseif (strpos($string, "\r")!==false) {
+            return "\r";
+        } elseif (strpos($string, "\n")!==false) {
+            return "\n";
+        } else {
+            return $default;
+        }
+    }
+
 }
