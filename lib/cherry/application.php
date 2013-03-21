@@ -50,7 +50,7 @@ abstract class Application implements \Cherry\Core\IApplication {
 
         if ($errno & E_WARNING) {
             //fprintf(STDERR,"Warning: %s [from %s:%d]\n", $errstr,$errfile,$errline);
-            $this->debug("Warning: %s [from %s:%d]\n", $errstr,$file,$line);
+            self::sdebug("Warning: %s [from %s:%d]\n", $errstr,$file,$line);
             return true;
         }
         if ($errno & E_DEPRECATED) {
@@ -65,7 +65,7 @@ abstract class Application implements \Cherry\Core\IApplication {
     // Create a handler function
     public static function __php_handleAssert($file, $line, $code, $desc = null) {
 
-        $this->debug("Assertion failed in %s on line %d", $file, $line);
+        self::sdebug("Assertion failed in %s on line %d", $file, $line);
         /*$log = DebugLog::getDebugLog();
         $ca = \Cherry\Cli\Console::getAdapter();
 
