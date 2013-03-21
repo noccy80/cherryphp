@@ -42,9 +42,11 @@ abstract class HttpTransport extends SocketTransport {
 
         // Read until we got the whole request. The isRequestComplete() method
         // will return true once it has detected a full request.
-        if(!$this->request->isRequestComplete()) {
-            $this->request->createFromString($data,true);
-            if (!$this->request->isRequestComplete()) return;
+        static $cont = false;
+        $this->request->createFromString($data,$cont);
+        if (!$cont) $cont = true;
+        if (!$this->request->isRequestComplete()) {
+            return;
         }
 
         $this->debug("<%s> Received request %s for %s", $this->getUuid(), $this->request->getRequestMethod(), $this->request->getRequestUrl());

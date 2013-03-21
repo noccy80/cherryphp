@@ -95,7 +95,11 @@ class Socket {
         }
             // throw new SocketException("Write operation on closed socket.", self::ERR_NOT_OPEN);
         if ($length == null) $length = strlen($data);
-        $ret = fwrite($this->stream, $data, $length);
+        try {
+            $ret = fwrite($this->stream, $data, $length);
+        } catch (\ErrorException $e) {
+            $ret = null;
+        }
         return $ret;
     }
 
@@ -158,6 +162,8 @@ class Socket {
     }
 
     public function onDisconnect() {
+        fclose($this->stream);
+        $this->stream = null;
         $this->discard = true;
     }
 

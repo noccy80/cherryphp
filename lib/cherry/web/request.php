@@ -2,6 +2,8 @@
 
 namespace Cherry\Web;
 
+define("WEB_REQUEST_MAX_MEMORY",8000000);
+
 /*
  * @class Request
  *
@@ -13,7 +15,22 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     private $headers = [];
     private $complete = false;
     private $requester = null;
+    private $cachefile = null;
+    private $hcachefile = null;
+    
+    private $http_protocol;
+    private $http_method;
+    private $http_uri;
+    
+    private $remoteip;
+    private $remotehost;
+    private $remoteport;
+    private $servername;
+    private $timestamp;
 
+    private $rawrequest;
+    private $parserstate;
+    
     /**
      * Create a new request.
      *
@@ -30,33 +47,20 @@ class Request implements \ArrayAccess, \IteratorAggregate {
                     $this->headers[$header] = $v;
                 }
             }
-            $this->requester = [
-                'protocol' => $_SERVER['SERVER_PROTOCOL'],
-                'method' => $_SERVER['REQUEST_METHOD'],
-                'url' => $_SERVER['REQUEST_URI'],
-                'remoteip' => $_SERVER['REMOTE_ADDR'],
-                'remotehost' => (!empty($_SERVER['REMOTE_HOST']))?
-                    $_SERVER['REMOTE_HOST']:
-                    null,
-                'remoteport' => $_SERVER['REMOTE_PORT'],
-                'timestamp' => $_SERVER['REQUEST_TIME'],
-                'server' => $_SERVER['SERVER_ADDR'].':'.$_SERVER['SERVER_PORT']
-            ];
+            $this->protocol = $_SERVER['SERVER_PROTOCOL'];
+            $this->http_method = $_SERVER['REQUEST_METHOD'];
+            $this->url = $_SERVER['REQUEST_URI'];
+            $this->remoteip = $_SERVER['REMOTE_ADDR'];
+            $this->remotehost = (!empty($_SERVER['REMOTE_HOST']))?
+                $_SERVER['REMOTE_HOST']:
+                null;
+            $this->remoteport = $_SERVER['REMOTE_PORT'];
+            $this->timestamp = $_SERVER['REQUEST_TIME'];
+            $this->server = $_SERVER['SERVER_ADDR'].':'.$_SERVER['SERVER_PORT'];
             $this->complete = true;
         } elseif (function_exists('getallheaders')) {
             // Apache etc
-        } else {
-            $this->requester = [
-                'protocol' => null,
-                'method' => null,
-                'url' => null,
-                'remoteip' => null,
-                'remotehost' => null,
-                'remoteport' => null,
-                'timestamp' => time(),
-                'server' => null
-            ];
-        }
+        } 
     }
 
     /**
@@ -70,7 +74,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     public function setServer($server,$port=80) {
         if (strpos($server,':')!==false)
             list($server,$port) = explode(":",$server,2);
-        $this->requester["server"] = $server.':'.(int)$port;
+        $this->servername = $server.':'.(int)$port;
     }
 
     /**
@@ -86,43 +90,67 @@ class Request implements \ArrayAccess, \IteratorAggregate {
      *    exist in the buffer.
      */
     public function createFromString($string, $append=false) {
-        if ((!$append) || (empty($this->parser))) {
-            $this->complete = false;
-            $this->parser = (object)[
-                "buffer" => $string,
+
+        // Buffer for the raw request data        
+        if (!$this->rawrequest) $this->rawrequest = new FlushableBuffer();
+        $this->rawrequest->write($string);
+        
+        // Parser state and stuff
+        if (!$this->parserstate) {
+            $this->parserstate = (object)[
                 "headers" => false,
-                "rawheader" => null,
-                "rawdata" => null,
-                "datapos" => null
+                "raw_header" => null,
+                "raw_data" => null,
+                "data_offset" => null,
+                "data_length" => 0
             ];
-        } else {
-            if ($this->parser->headers)
-                $this->parser->rawdata.= $string;
-            $this->parser->buffer.= $string;
         }
-        static $in_lineend;
-        if (!$in_lineend) 
-            $in_lineend = \Utils::detectLineEnding($this->parser->buffer,"\r\n");
-//        $in_lineend = "\r\n";
-        if ((!$this->parser->headers) && (strpos($this->parser->buffer,$in_lineend.$in_lineend)!==false)) {
-            $this->debug("Parsing headers (%d bytes in buffer)", strlen($this->parser->buffer));
-            $this->parser->datapos = strpos($this->parser->buffer,$in_lineend.$in_lineend);
-            $this->parser->rawheader = substr($this->parser->buffer,0,$this->parser->datapos);
-            $this->parser->rawdata = substr($this->parser->buffer,$this->parser->datapos);
-            $hbuf = explode($in_lineend,trim($this->parser->rawheader));
-            foreach($hbuf as $hstr) {
-                if (strpos($hstr,":")!==false) {
-                    list($k,$v) = explode(":",str_replace(": ",":",$hstr),2);
-                    $this->setHeader(strtolower($k),$v);
-                } elseif (strpos(strtoupper($hstr),"HTTP")!==false) {
-                    list($method,$url,$proto) = explode(" ",$hstr,3);
-                    $this->setRequestMethodInfo($proto,$method,$url);
+        
+        // If we haven't got headers, look for them in the buffer
+        if (!$this->parserstate->headers) {
+            // 8KB should be enough for most HTTP requests.
+            $buf = $this->rawrequest->getBytes(0,8192);
+            $sep = "\r\n\r\n";
+            if (strpos($buf,$sep)!==false) {
+                $this->debug("Parsing headers from request (%d bytes in buffer)", $this->rawrequest->getLength());
+                // Locate the data part of the buffer, the header is 
+                $this->parserstate->data_offset = strpos($buf,$sep)+strlen($sep);
+                $this->parserstate->raw_header = substr($buf,0,$this->parserstate->data_offset);
+                $this->debug("Data starts at %d", $this->parserstate->data_offset);
+                // Parse the header part of the buffer
+                $hbuf = explode("\r\n",trim($this->parserstate->raw_header));
+                foreach($hbuf as $hstr) {
+                    $this->debug(" -> %s", trim($hstr));
+                    if (strpos($hstr,":")!==false) {
+                        list($k,$v) = explode(":",str_replace(": ",":",$hstr),2);
+                        $this->setHeader(strtolower($k),$v);
+                    } elseif (strpos(strtoupper($hstr),"HTTP")!==false) {
+                        list($method,$url,$proto) = explode(" ",$hstr,3);
+                        $this->setRequestMethodInfo($proto,$method,$url);
+                    }
+                }
+                $this->debug("Parsing %s", $this->http_method);
+                if ($this->http_method == "GET")
+                    $this->complete = true;
+                $this->parserstate->headers = true;
+            } else {
+                if (strlen($buf)>=8192) {
+                    // This should be an invalid request
                 }
             }
-            $this->complete = true;
-        } else {
-            // $this->debug("Warning: Incomplete request:\n{$this->parser->buffer}");
         }
+
+        // If header not parsed and break found, then parse the headers.
+        if ($this->http_method == "POST") {
+            $clen = $this->headers['content-length'];
+            $dlen = $this->rawrequest->getLength() - $this->parserstate->data_offset;
+            $this->debug("POST info: content-length=%d bytes, parsed-length=%d bytes", $clen, $dlen);
+            if ($dlen >= $clen) {
+                $this->complete = true;
+            }
+            
+        }
+
         if (($append) && empty($string)) $this->complete = true;
     }
 
@@ -134,16 +162,20 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         return $this->complete;
     }
 
+    public function getRequestDataAsFile() {
+        return $this->rawrequest->getBufferFile();
+    }
+    
     /**
      *
      * @param string $proto The protocol of the HTTP request
      * @param string $method The method of the HTTP request
      * @param string $url The requested URL
      */
-    public function setRequestMethodInfo($proto,$method,$url) {
-        $this->requester["protocol"] = $proto;
-        $this->requester["method"] = $method;
-        $this->requester["url"] = $url;
+    public function setRequestMethodInfo($proto,$method,$uri) {
+        $this->http_protocol = $proto;
+        $this->http_method = $method;
+        $this->http_uri = $uri;
     }
 
     /**
@@ -153,7 +185,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
      * @return int The timestamp
      */
     public function getTimestamp() {
-        return $this->requester["timestamp"];
+        return $this->timestamp;
     }
 
     /**
@@ -163,11 +195,11 @@ class Request implements \ArrayAccess, \IteratorAggregate {
      * @return string The request method
      */
     public function getRequestMethod() {
-        return $this->requester["method"];
+        return $this->http_method;
     }
     
     public function getRequestProtocol() {
-        return $this->requester["protocol"];
+        return $this->http_protocol;
     }
 
     /**
@@ -179,11 +211,11 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     public function getRequestUrl() {
         /* $url = new \Cherry\Net\Url("http://".$this->request["server"]);
         echo "URL: {$url}\n"; */
-        return $this->requester["url"];
+        return $this->http_uri;
     }
     
     public function getRequestUrlSegment($index) {
-        $seg = explode("/",$this->requester["url"]);
+        $seg = explode("/",$this->http_uri);
         if (count($seg) > $index + 1)
             return $seg[$index+1];
         return null;
@@ -195,39 +227,39 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     public function setRemoteIp($ip) {
         if (strpos($ip,":")!==false) {
             list($ip,$port) = explode(":",$ip,2);
-            $this->requester['remoteport'] = $port;
+            $this->remoteport = $port;
         }  else {
-            $this->requester['remoteport'] = null;
+            $this->remoteport = null;
         }
-        $this->requester['remoteip'] = $ip;
-        $this->requester['remotehost'] = null;
+        $this->remoteip = $ip;
+        $this->remotehost = null;
     }
 
     /**
      *
      */
     public function getRemoteIp() {
-        return $this->requester['remoteip'];
+        return $this->remoteip;
     }
 
     /**
      *
      */
     public function getRemoteHost() {
-        if (!$this->requester['remotehost']) {
-            if (!empty($this->requester['remoteip']))
-                $this->requester['remotehost'] = gethostbyaddr($this->requester['remoteip']);
+        if (!$this->remotehost) {
+            if (!empty($this->remoteip))
+                $this->remotehost = gethostbyaddr($this->remoteip);
             else
                 return null;
         }
-        return $this->requester['remotehost'];
+        return $this->remotehost;;
     }
 
     /**
      *
      */
     public function getRemotePort() {
-        return $this->requester['remoteport'];
+        return $this->remoteport;
     }
 
     /**
@@ -262,7 +294,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
      */
     public function asText() {
         $out = [];
-        $out[] = $this->requester["method"]." ".$this->requester["url"]." ".$this->requester["protocol"];
+        $out[] = $this->http_method." ".$this->http_uri." ".$this->http_protocol;
         foreach($this->headers as $header=>$value) {
             $hstr = str_replace(' ', '-', ucwords(str_replace('-', ' ', $header)));
             $out[] = "{$hstr}: {$value}";
@@ -274,9 +306,9 @@ class Request implements \ArrayAccess, \IteratorAggregate {
      * Return the formatted request as HTML
      */
     public function asHtml() {
-        $protocol = $this->requester['protocol'];
-        $method = $this->requester['method'];
-        $url = $this->requester['url'];
+        $protocol = $this->http_protocol;
+        $method = $this->http_method;
+        $url = $this->http_uri;
         if (strpos($url,"?")!==false) {
             list($url,$qs) = explode("?",$url,2);
             $qs = "?".$qs;
@@ -312,11 +344,6 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         return file_get_contents("php://input");
     }
 
-    public function getRequestDataFile() {
-        $fn = tempnam(null,"upload");
-        file_put_contents($fn,$this->parser->rawdata);
-        return $fn;
-    }
 
    /**
     * Create a Response object prepared with information from the request such
@@ -324,7 +351,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     * a default content-type of text/html.
     */
    public function createResponse() {
-        $rsp = new Response($this->requester["protocol"], $this->requester["url"]);
+        $rsp = new Response($this->http_protocol, $this->http_uri);
         $rsp->host = $this["host"];
         $rsp->contentType = "text/html";
         return $rsp;
@@ -345,15 +372,106 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         return new \ArrayIterator($this->headers);
     }
 
-    public function __get($key) {
-        if (array_key_exists($key,$this->requester))
-            return $this->requester[$key];
-        return null;
-    }
-
     public function __toString() {
         return $this->asText();
     }
 
 
+}
+
+/**
+ * Flushable Buffer: 
+ */
+class FlushableBuffer {
+    private $maxmem = null;
+    private $mbuffer = null;
+    private $dbuffer = null;
+    private $hdbuf = null;
+    private $buflen = 0;
+    
+    /**
+     * Create the buffer
+     *
+     * @param int $maxmem The maximum amount of memory to use before swapping to disk.
+     */
+    function __construct($maxmem=4000000) {
+        $this->maxmem = $maxmem;
+    }
+    
+    /**
+     * Clean up, the buffer only lives as long as the buffer lives!
+     */
+    public function __destruct() {
+        if ($this->hdbuf)
+            fclose($this->hdbuf);
+        if ($this->dbuffer)
+            unlink($this->dbuffer);
+    }
+    
+    /**
+     * Retrieve a file containing the buffer. Will force a flush, and
+     * subsequently written data (if any) will be written to the disk.
+     *
+     * @return mixed The file name of the buffer on disk.
+     */
+    public function getBufferFile() {
+        $this->checkFlush(true);
+        return $this->dbuffer;
+    }
+    
+    /**
+     * Retrieve a set of bytes from the buffer
+     *
+     * @param int $start The byte offset to start reading from
+     * @param int $length The number of bytes to read out
+     * @return mixed The data from the buffer
+     */
+    public function getBytes($start, $length) {
+        if (($start + $length) < $this->maxmem) {
+            return substr($this->mbuffer,$start,$length);
+        } else {
+            fseek($this->hdbuf,$start,\SEEK_SET);
+            return fread($this->hdbuf, $length);
+        }
+    }
+    
+    /**
+     * Return the full length of the buffer
+     *
+     * @return integer The length of the buffer
+     */
+    public function getLength() {
+        return $this->buflen;
+    }
+    
+    /**
+     * Write data to the buffer
+     *
+     * @param mixed $data The data to write
+     */
+    public function write($data) {
+        $this->buflen += strlen($data);
+        if ($this->dbuffer) {
+            fseek($this->hdbuf,0,\SEEK_END);
+            fwrite($this->hdbuf,$data);
+            fflush($this->hdbuf);
+        } else {
+            $this->mbuffer.= $data;
+            $this->checkFlush();
+        }
+    }
+    
+    /**
+     * Check size of data in buffer, and flush if it exceeds maxmem.
+     *
+     * @param bool $force If true, the buffer is always moved to disk.
+     */
+    private function checkFlush($force=false) {
+        if ((!$force) && ($this->buflen<$this->maxmem)) return;
+        // Flush to file: Generate temporary name
+        $this->dbuffer = tempnam(null,"fbuf");
+        // Write the buffer to file.
+        $this->hdbuf = fopen($this->dbuffer,"wb");
+        fwrite($this->hdbuf,$this->mbuffer);
+    }
 }
