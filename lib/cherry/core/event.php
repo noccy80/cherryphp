@@ -13,10 +13,10 @@ class Event {
         $this->sender = $sender;
         $this->target = $target;
         $this->type = $type;
-        $this->data = $data;
+        $this->data = (object)$data;
         $fromstr = ($this->sender)?get_class($this->sender):'*';
         $tostr = ($this->target)?get_class($this->target):'*';
-        $this->debug("Spawned event [%s]->[%s] type=%s", $fromstr,$tostr,$type);
+        $this->debug("Event '%s' spawned (%s)".\Cherry\Cli\Glyph::getGlyph("&#x2192;")."(%s)",$type,$fromstr,$tostr);
     }
     public function stop() {
         $this->propagate = false;

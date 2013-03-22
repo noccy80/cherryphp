@@ -16,7 +16,7 @@ abstract class HttpProxyTransport extends SocketTransport {
 
     public function onAccept($socket,$peer,$endpoint) {
 
-        $this->debug("<%s> Accepted connection from %s on %s", $this->getUuid(), $peer, $endpoint);
+        $this->debug("<%s> [PROXY] Accepted connection from %s on %s", $this->getUuid(), $peer, $endpoint);
         parent::onAccept($socket, $peer, $endpoint);
         // Create the request object
         $this->request = new Request();
@@ -39,7 +39,6 @@ abstract class HttpProxyTransport extends SocketTransport {
             return;
         }
 
-
         // Read until we got the whole request. The isRequestComplete() method
         // will return true once it has detected a full request.
         if(!$this->request->isRequestComplete()) {
@@ -47,19 +46,7 @@ abstract class HttpProxyTransport extends SocketTransport {
             if (!$this->request->isRequestComplete()) return;
         }
 
-        $this->debug("<%s> Received request %s for %s", $this->getUuid(), $this->request->getRequestMethod(), $this->request->getRequestUrl());
-        $this->debug("<%s> Creating response object", $this->getUuid());
-        if (!$this->response) $this->response = $this->request->createResponse();
 
-        if ($this->onHttpRequest()) {
-            $this->debug("<%s> Sending response %d (%s, %d bytes)", $this->getUuid(), $this->response->getStatus(), $this->response->contentType, $this->response->contentLength );
-            $this->write($this->response->asHttpResponse());
-            // If we got content we send the content
-            if ($this->response->hasContent()) {
-                $this->write($this->response->getContent());
-                $this->disconnect();
-            }
-        }
     }
 
     public function onProcess() { }

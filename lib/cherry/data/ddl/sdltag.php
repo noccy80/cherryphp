@@ -212,8 +212,9 @@ class SdlTag implements \ArrayAccess, \Countable {
 
                     // Strings and numbers
                     case T_CONSTANT_ENCAPSED_STRING:
-                        $str = trim($str,"\"");
-                        $str = str_replace("\\\"",'"',$str);
+                        if ((substr($str,0,1) == "\"") && (substr($str,-1,1) == "\"")) {
+                            $str = substr($str,1,strlen($str)-2);
+                        }
                         $str = \stripcslashes($str);
                     case T_LNUMBER:
                         if ($state == self::SP_NODENAME) {

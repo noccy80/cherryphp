@@ -12,22 +12,17 @@ trait TEventEmitter {
             $this->handlers[$event] = array();
         }
         $this->handlers[$event][] = $callback;
-        if (is_callable([$this,'debug'])) $this->debug("Event hooked: <%s>", $event);
+        //if (is_callable([$this,'debug'])) $this->debug("Event hooked: <%s>", $event);
     }
 
-    protected function emit($event,$args=null) {
-        $args = func_get_args();
-        $args = array_slice($args,1);
+    protected function emit($event,array $data) {
         if (array_key_exists($event,$this->handlers)) {
-            if (is_callable([$this,'debug'])) $this->debug("Emiting event <%s> to %d listeners", $event, count($this->handlers[$event]));
-            // If only one arg, and arg is array we use that as the argument.
-            if ((count($args)==1) && (is_array($args[0])))
-                $args = $args[0];
+            if (is_callable([$this,'debug'])) $this->debug("Emiting event '%s' to %d listeners", $event, count($this->handlers[$event]));
             // Re-emit events straight away
-            if ($args instanceof Event)
+            if ((count($data)>0) && (reset($data) instanceof Event))
                 $evt = $args;
             else
-                $evt = new Event($this,null,$event,$args);
+                $evt = new Event($this,null,$event,$data);
             // Send the event to the handlers
             foreach($this->handlers[$event] as $cb) {
                 $ret = call_user_func($cb,$evt);
@@ -35,7 +30,7 @@ trait TEventEmitter {
                 if ($ret) return $ret;
             }
         } else {
-            if (DEBUG_VERBOSE) if (is_callable([$this,'debug'])) $this->debug("Event <%s> has no listeners so not emited", $event);
+            if (DEBUG_VERBOSE) if (is_callable([$this,'debug'])) $this->debug("Event '%s' has no listeners so not emited", $event);
         }
     }
 

@@ -8,7 +8,7 @@ use Cherry\Base\PathResolver;
 
 /**
  * class Controller
- */
+ */ 
 class Controller {
 
     protected $request = null;
