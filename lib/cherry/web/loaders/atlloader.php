@@ -19,6 +19,7 @@ class AtlLoader extends Loader {
         foreach($doc->getChildren() as $child) {
             $out.= $this->buildNodeTree($child);
         }
+        
         if (class_exists("tidy")) {
             $t = new \tidy();
             $cfg = [
@@ -30,12 +31,13 @@ class AtlLoader extends Loader {
             $t->cleanRepair();
             $out = (string)$t;
         }
+
         $out = "<!DOCTYPE HTML>\n".$out;
         if ($output)
             echo $out;
         return $out;
     }
-    
+
     private function buildNodeTree(SdlTag $node) {
         $tag = strtolower($node->getName());
         $attr = "";
@@ -44,18 +46,21 @@ class AtlLoader extends Loader {
         }
         $out = "";
         if ($node->hasChildren()) {
-            $out.= "<{$tag}{$attr}>";
+            if ($tag) $out.= "<{$tag}{$attr}>";
             foreach($node->getChildren() as $child) {
                 $out.= $this->buildNodeTree($child);
             }
-            $out.= "</{$tag}>";
+            if ($tag) $out.= "</{$tag}>";
         } else {
             if (count($node)>0)
-                $out.= "<{$tag}{$attr}>".$node[0]."</{$tag}>";
+                if (!$tag)
+                    $out.= $node[0];
+                else
+                    $out.= "<{$tag}{$attr}>".$node[0]."</{$tag}>";
             else
                 $out.= "<{$tag}{$attr}>";
         }
         return $out;
     }
-    
+
 }

@@ -8,8 +8,8 @@ html {
         img src="/hello.jpg"
         p "This is a page written in ATL."
         // Comments translate to HTML too
-        p "This is how you add {link} to the output" {
-            link:a "a link" href="#"
+        p {
+            "This is how you add "; a "a link" href="#"; " to the output"
         }
     }
 }

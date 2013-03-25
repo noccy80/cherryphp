@@ -40,7 +40,7 @@ class HiggsService extends ServiceInstance {
 
     function servicemain() {
         CfgMan::bind("higgs","httpd.sdl");
-        
+
         // Set up the httpd. Will be cloned for each new instance.
         $http = new \Higgs\HttpServer();
 /*
@@ -65,7 +65,7 @@ class HiggsService extends ServiceInstance {
                 $this->warn("Could not load extension '{$ext[0]}'");
             }
         }
-        
+
         //$ctrl = new \Higgs\HttpControl();
 
         $server = new SocketServer();
@@ -80,7 +80,7 @@ class HiggsService extends ServiceInstance {
                 list($vfrom,$vto) = $cert->getValidity();
                 $this->debug("    Issued to:    %s", $info["name"]);
                 $this->debug("    Issuer:       %s (%s)", $info["issuer"]["O"], $info["issuer"]["OU"]);
-                $this->debug("    Hash:         %s", $info["hash"]);
+                $this->debug("    Hash:         0x%s", $info["hash"]);
                 $this->debug("    Valid from:   %s", $vfrom);
                 $this->debug("    Valid until:  %s", $vto);
                 if ($cert->isSelfSigned()) {

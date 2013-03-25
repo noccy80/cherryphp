@@ -6,12 +6,13 @@ use Cherry\Base\PathResolver;
 use Cherry\Data\Ddl\SdlTag;
 
 abstract class ConfigPool {
-    use \Cherry\Traits\TStaticDebug;
+    use \Cherry\Traits\TstaticDebug;
     private static $configfiles = [];
     private static $pools = [];
     private function __construct() {
     }
     public static function bindPool($config,$identifier,$writeable=false) {
+        \utils::deprecated(__CLASS__."::bindPool", "\\Cherry\\Core\\ConfigManager::bind");
         $cfgpath = PathResolver::path($config);
         $cfghash = sha1($cfgpath);
         if (array_key_exists($identifier,self::$pools)) {
@@ -34,6 +35,7 @@ abstract class ConfigPool {
 
     }
     public static function getPool($identifier) {
+        \utils::deprecated(__CLASS__."::getPool", "\\Cherry\\Core\\ConfigManager::get");
         if (array_key_exists($identifier,self::$pools)) {
             $pool = self::$pools[$identifier];
             if (!array_key_exists($pool->cfghash,self::$configfiles)) {
@@ -64,6 +66,7 @@ abstract class ConfigPool {
         }
     }
     public static function setPool($identifier, SdlTag $root) {
+        \utils::deprecated(__CLASS__."::set", "\\Cherry\\Core\\ConfigManager::set");
         if (array_key_exists($identifier,self::$pools)) {
             $pool = self::$pools[$identifier];
             self::$configfiles[$pool->cfghash] = $root;

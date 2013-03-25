@@ -1,6 +1,10 @@
 <?php
 
+require_once __LIB__."/cherry/traits/tstaticdebug.php";
+
 class Utils {
+
+    use \Cherry\Traits\TStaticDebug;
 
     public static function getClassFromDotted($classname) {
         $cn = str_replace("-"," ",$classname);
@@ -46,6 +50,10 @@ class Utils {
         } else {
             return $default;
         }
+    }
+
+    static function deprecated($depr,$instead=null) {
+        self::warn("Deprecation: \033[1m{$depr}\033[0m has been deprecated.".(($instead)?" Use \033[1m{$instead}":""));
     }
 
 }

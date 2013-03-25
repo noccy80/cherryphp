@@ -1,12 +1,17 @@
+// Configuration for the HTTPD (higgs)
 httpd {
+    // Add a server. Servers share the handler, which is "higgs.HttpServer" as
+    // default, so it's included here for clarity.
     server "default" handler="higgs.HttpServer" {
+        // Listen to http://*:9700
         listen "tcp://0.0.0.0:9700"
+        // Listen to https://*:9701
         listen "ssl://0.0.0.0:9701" certificate="{DATA}/server.pem"
-    
-        //extension "higgs.extensions.net.AccessControl" 
+
+        extension "higgs.extensions.net.AccessControl"
         extension "higgs.extensions.fs.StaticContent" docroot="{APP}/public" default="index.html;index.htm"
         extension "higgs.extensions.fs.DirIndex" docroot="{APP}/public"
-        extension "higgs.extensions.web.mvcrouter" 
+        extension "higgs.extensions.web.mvcrouter"
         extension "higgs.extensions.misc.AddHeader" header="x-social-rpc" value="xmlrpc=\"http://domain.tld/social/api/1.0\" soap=\"http://domain.tld/social/api/1.0\""
         extension "higgs.extensions.misc.AddHeader" header="x-social-realm" value="name=\"MySiteName\" v=\"social-api-v1\" p=1 k=\"Keywords\""
         extension "higgs.extensions.rpc.Soap" bind="/social/api/1.0/soap" handler="social.SoapHandler"

@@ -62,7 +62,7 @@ class SdlTag implements \ArrayAccess, \Countable {
      * @param string $comment A textual description of the node. The comment will be serialized.
      */
     public function __construct($name = null, $values = null, array $attr = null, array $children = null, $comment = null) {
-        if (!$name) $name = "content";
+        if (!$name) $name = null;
         if (strpos($name,':')!==false) {
             list($this->ns,$this->name) = explode(':',$name,2);
         } else {
@@ -339,7 +339,7 @@ class SdlTag implements \ArrayAccess, \Countable {
             if ($_final) {
                 if ($_name || count($_vals)>0) {
                     if ($_ns) $_name = $_ns.':'.$_name; // Add namespace
-                    if (!$_name) $_name = "content";
+                    if (!$_name) $_name = null;
                     $cnod = new SdlTag($_name,$_vals,$_attr,null,$_comment);
                     if ($_doccomment) $cnod->setDocComment($_doccomment);
                     $_comment = null;
@@ -408,7 +408,7 @@ class SdlTag implements \ArrayAccess, \Countable {
         if ($indent==0) $node.="\n";
         return $node;
     }
-    
+
     public function encodeChildren() {
         $nodes = null;
         foreach($this->children as $child)
