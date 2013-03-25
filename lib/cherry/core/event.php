@@ -9,10 +9,11 @@ class Event {
     public $type = null;
     public $data = [];
     public $propagate = true;
-    public function __construct($sender, $target, $type, array $data) {
+    public function __construct($sender, $target, $type, $data=null) {
         $this->sender = $sender;
         $this->target = $target;
         $this->type = $type;
+        if (!$data) $data = [];
         $this->data = (object)$data;
         $fromstr = ($this->sender)?get_class($this->sender):'*';
         $tostr = ($this->target)?get_class($this->target):'*';

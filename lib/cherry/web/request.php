@@ -21,6 +21,9 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     private $http_protocol;
     private $http_method;
     private $http_uri;
+    private $http_uri_clean;
+    private $http_query;
+    private $http_query_vars = [];
     
     private $remoteip;
     private $remotehost;
@@ -176,6 +179,15 @@ class Request implements \ArrayAccess, \IteratorAggregate {
         $this->http_protocol = $proto;
         $this->http_method = $method;
         $this->http_uri = $uri;
+        if (strpos($uri,"?")!==false) {
+            $this->http_query = explode("?",$uri,2);
+            parse_str($this->http_query[1], $this->http_query_vars);
+            $this->http_uri_clean = $this->http_query[0];
+        } else {
+            $this->http_query = null;
+            $this->http_query_vars = [];
+            $this->http_uri_clean = $uri;
+        }
     }
 
     /**
@@ -215,7 +227,7 @@ class Request implements \ArrayAccess, \IteratorAggregate {
     }
     
     public function getRequestUrlSegment($index) {
-        $seg = explode("/",$this->http_uri);
+        $seg = explode("/",$this->http_uri_clean);
         if (count($seg) > $index + 1)
             return $seg[$index+1];
         return null;
@@ -287,6 +299,13 @@ class Request implements \ArrayAccess, \IteratorAggregate {
      */
     public function getHeaders() {
         return $this->headers;
+    }
+    
+    public function getParameter($param) {
+        if (array_key_exists($param,$this->http_query_vars)) {
+            return $this->http_query_vars[$param];
+        }
+        return null;
     }
 
     /**

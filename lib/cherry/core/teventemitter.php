@@ -15,7 +15,7 @@ trait TEventEmitter {
         //if (is_callable([$this,'debug'])) $this->debug("Event hooked: <%s>", $event);
     }
 
-    protected function emit($event,array $data) {
+    protected function emit($event, $data=null) {
         if (array_key_exists($event,$this->handlers)) {
             if (is_callable([$this,'debug'])) $this->debug("Emiting event '%s' to %d listeners", $event, count($this->handlers[$event]));
             // Re-emit events straight away

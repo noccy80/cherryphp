@@ -127,6 +127,7 @@ class StreamClient extends ClientBase {
     }
 
     public function execute() {
+        if (!$this->url) throw new \Exception("Request has not been opened.");
         $this->emit('httprequest:before');
         $this->timings = ['started' => microtime(true)];
         // \Cherry\Debug('StreamClient: Creating context and opening connection...');

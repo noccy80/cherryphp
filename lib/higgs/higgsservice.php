@@ -17,7 +17,9 @@ use Cherry\Crypto\OpenSSL\Certificate;
 
 use Cherry\Core\ObjectManager as ObjMan;
 use Cherry\Core\ConfigManager as CfgMan;
+
 CfgMan::register();
+CfgMan::bind("higgs","httpd.sdl");
 
 class HiggsService extends ServiceInstance {
 
@@ -39,7 +41,6 @@ class HiggsService extends ServiceInstance {
     }
 
     function servicemain() {
-        CfgMan::bind("higgs","httpd.sdl");
 
         // Set up the httpd. Will be cloned for each new instance.
         $http = new \Higgs\HttpServer();

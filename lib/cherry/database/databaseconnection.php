@@ -133,7 +133,7 @@ class DatabaseConnection {
                     $curi = $connection[1];
                     if (empty(self::$connections[$cpool]))
                         self::$connections[$cpool] = [];
-                    $this->debug("Database: Registered connection '{$curi}' to pool {$cpool}");
+                    self::debug("Database: Registered connection '{$curi}' to pool {$cpool}");
                     self::$connections[$cpool][] = $connection;
                 }
             }
@@ -192,12 +192,12 @@ class DatabaseConnection {
         for($n = 1; $n < $argcount; $n++) {
             $value = $args[$n];
             if (!is_numeric($value)) {
-                if ($this->type == "sqlite") {
-                    $str = \SQLite3::escapeString($value);
-                } else {
-                    $str = \mysqli::escape_string($value);
-                }
-                $argo[$n] = "'".$str."'";
+                //if ($this->type == "sqlite") {
+                //    $str = $this->conn->escapeString($value);
+                //} else {
+                    $str = $this->conn->quote($value);
+                //}
+                $argo[$n] = $str; // "'".$str."'";
             }
         }
         $esql = call_user_func_array('sprintf',$argo);

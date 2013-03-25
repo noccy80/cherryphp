@@ -53,7 +53,7 @@ class Utils {
     }
 
     static function deprecated($depr,$instead=null) {
-        self::warn("Deprecation: \033[1m{$depr}\033[0m has been deprecated.".(($instead)?" Use \033[1m{$instead}":""));
+        self::debug("Deprecation warning: \033[1m{$depr}\033[0m has been deprecated.".(($instead)?" Use \033[1m{$instead}":""));
     }
 
 }

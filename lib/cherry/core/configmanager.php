@@ -12,7 +12,21 @@ class ConfigManager implements \Cherry\Core\IObjectManagerInterface {
     private function __construct() {
     }
     public static function bind($identifier,$config,$writeable=false) {
-        $cfgpath = PathResolver::path($config);
+        // If the file name contains a path, resolve it via pathresolver,
+        // otherwise try to detect the location of the configuration file.
+        if (strpos($config,"/")!==false) {
+            $cfgpath = PathResolver::path($config);
+        } else {
+            $test = PathResolver::path("{APP}/{$config}");
+            if (file_exists($test)) {
+                $cfgpath = $test;
+            } else {
+                $test = PathResolver::path("{APP}/config/{$config}");
+                if (file_exists($test)) {
+                    $cfgpath = $test;
+                }
+            }
+        }
         $cfghash = sha1($cfgpath);
         if (array_key_exists($identifier,self::$pools)) {
             // Key exists, make sure it's the same config file

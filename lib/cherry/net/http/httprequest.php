@@ -48,6 +48,7 @@ class HttpRequest {
         $this->client->on('httprequest:before', function($e) {
             $this->emit(HttpRequest::ON_BEFORE, $e);
         });
+        /*
         $this->client->on('httprequest:complete', function($e) {
             if ($e->data[0] == 200) {
                 $this->emit(HttpRequest::ON_SUCCESS, [
@@ -61,6 +62,7 @@ class HttpRequest {
                 ]);
             }
         });
+        */
         if ($url) $this->url = $url;
         $this->client->setMethod($method);
         if (($postdata) && ($contenttype)) {
@@ -97,7 +99,7 @@ class HttpRequest {
         // Don't cache post requests
         if ($this->client->getMethod() == "POST")
             $use_cache = false;
-        //$this->client->setUrl($this->url);
+        $this->client->setUrl($this->url);
         if ($use_cache) {
             $flags = CacheObject::CO_USE_DISK|CacheObject::CO_COMPRESS;
             $co = new CacheObject($this->url,$flags,function($url){

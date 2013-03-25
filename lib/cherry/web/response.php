@@ -136,10 +136,11 @@ class Response {
         }
     }
 
-    public function setContent($content,$httpcode=null) {
+    public function setContent($content,$httpcode=null,$contenttype=null) {
         $this->contentLength = strlen($content);
         $this->content = $content;
         if ($httpcode) $this->setStatus((int)$httpcode);
+        if ($contenttype) $this->contentType = $contenttype;
     }
 
     public function getContent() {
