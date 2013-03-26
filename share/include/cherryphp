@@ -1,22 +1,40 @@
 <?php
 
+if (!defined("STDERR")) {
+    $_stderr = fopen("php://stderr","w");
+    define("STDERR", $_stderr);
+}
+define("DEBUG_BOOTSTRAP", getenv("DEBUG_BOOTSTRAP")==1);
+
+if (DEBUG_BOOTSTRAP) {
+    $_serverinfo = []; foreach($_SERVER as $k=>$v) $_serverinfo[] = "{$k}: {$v}";
+    fprintf(STDERR,join("\n",$_serverinfo));
+}
+
 $findlib = function() {
     $bootfile = "lib/_bootstrap.php";
-    if (defined("CHERRY_LIB"))
+    if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Searching for {$bootfile}...\n");
+    if (defined("CHERRY_LIB")) {
+        fprintf(STDERR,"Testing %s/{$bootfile}\n", CHERRY_LIB);
         if (file_exists(CHERRY_LIB."/".$bootfile))
             return CHERRY_LIB;
+    }
     $_env = getenv("CHERRY_LIB");
-    if ($_env)
+    if ($_env) {
+        if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Testing %s/{$bootfile}\n", $_env);
         if (file_exists($_env."/".$bootfile))
             return $_env;
-    $_init = $_SERVER["SCRIPT_NAME"];
-    while($_init != "/") {
+    }
+    $_init = $_SERVER["SCRIPT_FILENAME"];
+    while(strlen($_init) > 1) {
+        if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Testing %s/{$bootfile}\n", $_init);
         if (file_exists($_init."/".$bootfile))
             return $_init;
         $_init = dirname($_init);
     }
     $_dir = __DIR__;
-    while($_dir != "/") {
+    while(strlen($_dir) > 1) {
+        if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Testing %s/{$bootfile}\n", $_dir);
         if (file_exists($_dir."/".$bootfile)) {
             return $_dir;
         }
@@ -26,24 +44,32 @@ $findlib = function() {
 };
 
 $findapp = function() {
-    $appfiles = [ "config/application.sdl", "application.json", "config/_setup.php", "src", "lib/_bootstrap.php" ];
+    $appfiles = [ "config/application.sdl", "application.json", "config/_setup.php", "lib/_bootstrap.php", ".cherryphp" ];
     while(count($appfiles)>0) {
         $appfile = array_shift($appfiles);
-        if (defined("CHERRY_APP"))
+        if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Searching for {$appfile}...\n");
+        if (defined("CHERRY_APP")) {
+            if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Testing %s/{$appfile}\n", CHERRY_APP);
             if (file_exists(CHERRY_APP."/".$appfile))
                 return CHERRY_APP;
+        }
         $_env = getenv("CHERRY_APP");
-        if ($_env)
+        if ($_env) {
+            if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Testing %s/{$appfile}\n", $_env);
             if (file_exists($_env."/".$appfile))
                 return $_env;
-        $_init = realpath($_SERVER["SCRIPT_NAME"]);
-        while($_init != "/") {
+        }
+        if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Script: ".realpath($_SERVER["SCRIPT_FILENAME"])."\n");
+        $_init = realpath($_SERVER["SCRIPT_FILENAME"]);
+        while(strlen($_init) > 1) {
+            if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Testing %s/{$appfile} [via %s]\n", $_init, "PHP_SELF");
             if (file_exists($_init."/".$appfile))
                 return $_init;
             $_init = dirname($_init);
         }
         $_dir = __DIR__;
-        while($_dir != "/") {
+        while(strlen($_dir) > 1) {
+            if (DEBUG_BOOTSTRAP) fprintf(STDERR,"Testing %s/{$appfile} [via %s]\n", $_dir, "__DIR__");
             if (file_exists($_dir."/".$appfile))
                 return $_dir;
             $_dir = dirname($_dir);

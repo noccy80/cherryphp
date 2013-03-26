@@ -37,7 +37,7 @@ class HttpRequest {
         $client = null,     ///< HttpClient instance
         $status = null,     ///< HTTP status code
         $options = [
-            self::OPT_CACHEPOLICY => self::CACHEPOLICY_AUTO,
+            self::OPT_CACHEPOLICY => self::CACHEPOLICY_NEVER,
             self::OPT_COOKIEJAR => null
         ],
         $response = null,
@@ -95,7 +95,7 @@ class HttpRequest {
         // Check cache policy
         if ($this->options[self::OPT_CACHEPOLICY] == self::CACHEPOLICY_AUTO) {
             $use_cache = true;
-        }
+        } else $use_cache = false;
         // Don't cache post requests
         if ($this->client->getMethod() == "POST")
             $use_cache = false;
@@ -123,13 +123,10 @@ class HttpRequest {
             $this->status = 200;
         } else {
             \debug("HttpRequest: Sending direct request");
-            if (($postdata) && ($contenttype)) {
-                $this->client->setPostData($contenttype, $postdata);
-            }
             $this->status = $this->client->execute();
             $this->response = $this->client->getResponse();
-            $this->headers = $this->client->getHeaders();
-            $this->contenttype = $this->client->getHeaders();
+            $this->headers = $this->client->getAllHeaders();
+            $this->contenttype = null; // $this->client->getHeaders();
         }
         if ($this->status == 200) {
             return true;

@@ -132,7 +132,8 @@ class StreamClient extends ClientBase {
         $this->timings = ['started' => microtime(true)];
         // \Cherry\Debug('StreamClient: Creating context and opening connection...');
         $ctx = $this->createContext();
-        if (!($stream = @fopen($this->url, 'rb', false, $ctx))) {
+        $stream = fopen($this->url, 'rb', false, $ctx);
+        if (!$stream) {
             $this->timings['request_sent'] = microtime(true);
             $this->emit('httprequest:complete', (int)0);
             return false;
@@ -183,15 +184,15 @@ class StreamClient extends ClientBase {
 
     public function _cb_notification($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) {
         switch($notification_code) {
+            case STREAM_NOTIFY_AUTH_REQUIRED:
+                throw new \Cherry\Net\Http\HttpException("Authentication required");
             case STREAM_NOTIFY_RESOLVE:
                 $this->timings['resolve'] = microtime(true); break;
             case STREAM_NOTIFY_COMPLETED:
                 $this->timings['completednf'] = microtime(true); break;
             case STREAM_NOTIFY_FAILURE:
-                throw new \Cherry\Net\Http\HttpException("Authentication required");
-            case STREAM_NOTIFY_AUTH_REQUIRED:
             case STREAM_NOTIFY_AUTH_RESULT:
-                $this->setError("{$message}");
+                //$this->setError("{$message}");
                 //var_dump($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max);
                 /* Ignore */
                 break;

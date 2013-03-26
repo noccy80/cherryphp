@@ -129,7 +129,10 @@ class AutoLoader {
                 }
             }
         }
-        $this->debug("No candidate for autoloading {$class}; tried %s", join(", ",$tested));
+        $bt = \Cherry\Core\Debug::getCaller(3);
+        $srcfile = (empty($bt["file"])?"na":$bt["file"]);
+        $srcline = (empty($bt["line"])?"na":$bt["line"]);
+        $this->debug("No candidate for autoloading {$class}; tried %s [from %s]", join(", ",$tested), "{$srcfile}:{$srcline}");
         return false;
 
     }

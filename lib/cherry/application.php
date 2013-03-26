@@ -31,8 +31,8 @@ abstract class Application implements \Cherry\Core\IApplication {
             assert_options(ASSERT_WARNING, 0);
             assert_options(ASSERT_QUIET_EVAL, 1);
             assert_options(ASSERT_CALLBACK, array($this,'__php_handleAssert'));
-            register_shutdown_function(array($this,'__php_handleShutdown'));
         }
+        register_shutdown_function(array($this,'__php_handleShutdown'));
 
         if (!self::$instance) self::$instance = $this;
     }
@@ -60,7 +60,8 @@ abstract class Application implements \Cherry\Core\IApplication {
 
         if (!error_reporting()) return;
         throw new \ErrorException($errstr,$errno,0,$file,$line);
-
+        exit(1);
+    
     }
     // Create a handler function
     public static function __php_handleAssert($file, $line, $code, $desc = null) {
