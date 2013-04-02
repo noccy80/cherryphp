@@ -153,7 +153,7 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                             break;
                         }
                     }
-                    if ($buf) {
+                    if (trim($buf)) {
                         if ($pstate == self::PARSER_TAGATTR) {
                             // Found a tag attribute
                             $lt = SdlTypedValue::parse($buf);
@@ -172,28 +172,34 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                         } elseif ($pstate == self::PARSER_TAGNAME) {
                             // Found a tag name, inspect and see if it is a valid
                             // tag name, and if not create an anonymous tag.
-                            if ($this->parserIsValidIdentifier($buf)) {
-                                $tagname = $buf;
+                            if ($this->isValidIdentifier(trim($buf))) {
+                                $tagname = trim($buf);
                                 //echo "Tag: {$buf}\n";
                             } else {
                                 $tagname = null;
-                                $tagvals[] = SdlTypedValue::parse($buf);
+                                $tagvals[] = SdlTypedValue::parse($buf,true);
                                 //echo "(anon)\n  Value: {$buf}\n";
                             }
                             $pstate = self::PARSER_TAGVALUE;
                         }
                     }
                     if ($thisstr == "{") {
+                        //echo "Got { ... \n"; var_dump($tagname);
                         //echo "Entering child...\n";
+                        //var_dump($tagvals);
                         if (!empty($tagname) || !empty($tagvals)) {
                             $tag = new SdlTag($tagname,$tagvals,$tagattr);
                             $toks = $tag->loadString($toks,$opts);
                         }
                         $break = true;
                     } elseif ($break) {
+                        //echo "Got ; ... \n"; var_dump($tagname);
+                        //var_dump($tagvals);
                         if (!empty($tagname) || !empty($tagvals)) {
                             $tag = new SdlTag($tagname,$tagvals,$tagattr);
                         }
+                    } else {
+                        $tag = null;
                     }
                     // If we are at the end of the tag, reset the state
                     if ($break) {
@@ -211,7 +217,7 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                 case "=":
                     // Remember the last token and set the parser state to
                     // expect an attribute value.
-                    if ($this->parserIsValidIdentifier($buf)) {
+                    if ($this->isValidIdentifier($buf)) {
                         $lasttok = $buf;
                         $pstate = self::PARSER_TAGATTR;
                     } else {
@@ -233,7 +239,7 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
      * Check if the name is a valid identifier according to SDL 1.2
      *
      */
-    private function parserIsValidIdentifier($name) {
+    private function isValidIdentifier($name) {
         // From the SDL language guide: An SDL identifier starts with a unicode
         // letter or underscore (_) followed by zero or more unicode letters,
         // numbers, underscores (_), dashes (-), periods (.) and dollar signs
@@ -781,508 +787,3 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class OldSdlTag {
-
-    // Literal types - U = unsupported, P = partial support
-    const   LT_STRING   = 1;  //     "string" or `string`
-    const   LT_CHAR     = 2;  // [U] Character as 'c'
-    const   LT_INT      = 3;  //     123
-    const   LT_LONGINT  = 4;  // [U] 123L or 123l
-    const   LT_FLOAT    = 5;  // [U] 123.45F or 123.45f
-    const   LT_DFLOAT   = 6;  // [P] 123.45 or 123.45d or 123.45D
-    const   LT_DECIMAL  = 7;  // [U] 123.45BD or 123.45bd
-    const   LT_BOOLEAN  = 8;  //     Boolean, yes no or true false
-    const   LT_DATE     = 9;  // [U] YYYY/MM/DD
-    const   LT_DATETIME = 10; // [U] yyyy/mm/dd hh:mm(:ss)(.xxx)(-ZONE)
-    const   LT_TIMESPAN = 11; // [U] (d'd':)hh:mm:ss(.xxx)
-    const   LT_BINARY   = 12; //     [base64data]
-    const   LT_NULL     = 13; //     null
-    // States for parser
-    const   SP_NODENAME  = 0; // Expecting node name
-    const   SP_NODEVALUE = 1; // Expecting node value
-    const   SP_VALUELIST = 2; // We are in a value list
-    const   SP_ATTRIBUTE = 3; // We are assigning to an attribute
-    const   SP_NODEB64C = 4; // Base64-chunk for node value.
-
-    private $name       = null;
-    private $values     = null;
-    private $attr       = [];
-    private $children   = [];
-    private $comment    = null;
-    private $doccomment = null;
-    private $ns         = null;
-    private $parent     = null;
-
-    /**
-     * @brief Load a file as children to the current node.
-     *
-     * @param string $file The filename to load
-     */
-    public function loadFile($file) {
-        // TODO: Check for errors
-        $fc = file_get_contents($file);
-        $this->decode($fc);
-    }
-
-    /**
-     * @brief Load a string as children to the current node.
-     *
-     * @param string $str The string containing SDL data to decode
-     */
-    public function loadString($str) {
-        $this->decode($str);
-    }
-
-    public static function createFromFile($file) {
-        $tag = new SdlTag("root");
-        $tag->loadFile($file);
-        return $tag;
-    }
-
-    /**
-     * @brief DEPRECATED: Decode a string into the node.
-     * @see loadString()
-     *
-     *
-     */
-    public function decode($string,array $options=null) {
-        $opts = (object)array_merge([ 'verify_base64'=>true ], (array)$options);
-        if (!is_array($string)) {
-            $subnodes = [];
-            $depth = 0;
-            // Opening tag required for the parser to do it's thing.
-            $toks = token_get_all("<?php {$string}\n");
-        } else {
-            $toks = $string;
-        }
-
-
-        // Local state for parser
-        $_attrn = null;
-        $_b64data = null;
-        $_attr = [];
-        $_name = null;
-        $_vals = [];
-        $_doccomment = null;
-        $_comment = null;
-        $_final = false;
-        $_recurse = false;
-        $_ret = false;
-        $_ns = null;
-        $_wspace = null;
-        $idx = 0;
-        $state = self::SP_NODENAME;
-
-        // Go over all the tokens
-        while (count($toks)>0) {
-            $tok = array_shift($toks);
-            if (is_array($tok)) {
-                $str = $tok[1];
-                $line = $tok[2];
-                switch($tok[0]) {
-                    // Ignore open tag
-                    case T_OPEN_TAG:
-                        break;
-
-                    // Keywords, let these slip through as strings
-                    case T_LOGICAL_OR:
-                    case T_DEFAULT:
-                    case T_CLASS:
-                    case T_INTERFACE:
-                    case T_EXTENDS:
-                    case T_ISSET:
-                    case T_NAMESPACE:
-                    case T_NEW:
-                    case T_ECHO:
-                    case T_INCLUDE:
-                    case T_IF:
-                    case T_VAR:
-                    case T_STATIC:
-                    case T_PRINT:
-                    case T_USE:
-                    case T_ELSE:
-                    case T_ELSEIF:
-                    case T_IS_EQUAL:
-                    // And we have numbers as well
-                    case T_DNUMBER:
-                    // Strings as keywords are handled here
-                    case T_STRING:
-                        if ($state == self::SP_NODENAME) {
-                            // If we are expecting the node name, we got it
-                            $_name = $str;
-                            $state = self::SP_NODEVALUE;
-                        } elseif ($state == self::SP_NODEVALUE) {
-                            // If we are expecting a node value, this must be
-                            // an attribute or a reserved keyword.
-                            $nvalue = null;
-                            if ($this->getTypedValue($str,$tok[0],$nvalue)) {
-                                $_vals[] = $nvalue;
-                                $idx++;
-                            } else {
-                                $_attrn = $str;
-                                $state = self::SP_ATTRIBUTE;
-                            }
-                        } elseif ($state == self::SP_ATTRIBUTE) {
-                            $value = null;
-                            $_attrn = $this->toAttributeName($_attrn);
-                            if ($this->getTypedValue($str,$tok[0],$value)) {
-                                $_attr[$_attrn] = $value;
-                            } else {
-                                $_attr[$_attrn] = $str;
-                            }
-                            $state = self::SP_NODEVALUE;
-                        } elseif ($state == self::SP_NODEB64C) {
-                            $_b64data.=$str;
-                        } else {
-                            throw new SdlParseException("Value token without state on line {$line}.");
-                        }
-                        break;
-
-                    // Strings and numbers
-                    case T_CONSTANT_ENCAPSED_STRING:
-                        if ((substr($str,0,1) == "\"") && (substr($str,-1,1) == "\"")) {
-                            $str = substr($str,1,strlen($str)-2);
-                        }
-                        $str = \stripcslashes($str);
-                    case T_LNUMBER:
-                        if ($state == self::SP_NODENAME) {
-                            if ($_ns)
-                                throw new SdlParseException("Namespace declared but no node value present on line {$tok[2]}");
-                            $value = null;
-                            if ($this->getTypedValue($str,$tok[0],$value)) {
-                                $_vals[] = $value;
-                            } else {
-                                $_vals[] = $str;
-                            }
-                            $state = self::SP_NODEVALUE;
-                            //echo str_repeat(" ",($depth+1)*4)."(value list)\n";
-                        } elseif ($state == self::SP_NODEVALUE) {
-                            if ($this->getTypedValue($str,$tok[0],$value)) {
-                                $_vals[] = $value;
-                            } else {
-                                $_vals[] = $str;
-                            }
-                            $idx++;
-                        } elseif ($state == self::SP_ATTRIBUTE) {
-                            $_attr[$_attrn] = $str;
-                            $state = self::SP_NODEVALUE;
-                            //echo $str."\n";
-                        } else {
-
-                        }
-                        break;
-
-                    case T_WHITESPACE:
-                        if (strpos($str, "\n")!==false) {
-                            // Continue if we are parsing base64 data
-                            if ($state == self::SP_NODEB64C) break;
-                            $_final = true;
-                            $state = self::SP_NODENAME;
-                            $idx = 0;
-                        } else {
-                            $_wspace = $str;
-                        }
-                        break;
-                    case T_COMMENT:
-                        $str = trim(substr($str,3));
-                        if ($_comment) $_comment.="\n".$str;
-                        else $_comment = $str;
-                        break;
-
-                    case T_DOC_COMMENT:
-                        if ($_doccomment) $_doccomment.="\n".$str;
-                        else $_doccomment = $str;
-                        $str = null;
-                        break;
-                    default:
-                        $type = token_name($tok[0]);
-                        throw new SdlParseException("Unhandled token in sdl: {$tok[1]} of type {$type} (line {$tok[2]}");
-                }
-            } else {
-                switch($tok) {
-                    case "{":
-                        // Parse the current tag and recurse the children
-                        $_final = true;
-                        $_recurse = true;
-                        $state = self::SP_NODENAME;
-                        $idx = 0;
-                        break;
-                    case "}":
-                        //$_final = true;
-                        $_ret = true;
-                        break;
-                    case "[":
-                        // Begin base64 chunk
-                        if ($state == self::SP_NODEVALUE) {
-                            $state = self::SP_NODEB64C;
-                            $_b64data = null;
-                        } else {
-                            throw new SdlParseException("Unexpected '[' in data on line {$line}");
-                        }
-                        break;
-                    case "]";
-                        // End base64 chunk
-                        if ($state == self::SP_NODEB64C) {
-                            $state = self::SP_NODEVALUE;
-                            $nvalue = null;
-                            $str = base64_decode($str);
-                            if ($this->getTypedValue($str,'base64',$nvalue)) {
-                                $_vals[] = $nvalue;
-                                $idx++;
-                            }
-                        } else {
-                            throw new SdlParseException("Unexpected ']' in data on line {$line}");
-                        }
-                        break;
-                    case ";";
-                        // On semicolon we finalize the current tag and resume
-                        // looking for the next node name.
-                        $_final = true;
-                        $state = self::SP_NODENAME;
-                        break;
-                    case "=":
-                        // Pop the last found value as the attribute name
-                        // We should make sure that it is a valid attribute
-                        // here really.
-                        $state = self::SP_ATTRIBUTE;
-                        $_attrn = array_pop($_vals)[0];
-                        break;
-                    case ":":
-                        // Namespace parsing. Implementation needed for attribute
-                        // namespaces.
-                        $_ns = $_name;
-                        $_name = null;
-                        $state = self::SP_NODENAME;
-                        break;
-                    case "-":
-                    case ".":
-                    case "_":
-                        $_wspace = $tok;
-                        break;
-                    default:
-                        throw new SdlParseException("Unhandled string in sdl: {$tok} on line {$line}");
-                }
-            }
-            // The final flag creates the node.
-            if ($_final) {
-                if ($_name || count($_vals)>0) {
-                    if ($_ns) $_name = $_ns.':'.$_name; // Add namespace
-                    if (!$_name) $_name = null;
-                    $cnod = new SdlTag($_name,$_vals,$_attr,null,$_comment);
-                    if ($_doccomment) $cnod->setDocComment($_doccomment);
-                    $_comment = null;
-                    $_doccomment = null;
-                    if ($_recurse) $toks = $cnod->decode($toks);
-                    $this->children[] = $cnod;
-                }
-                $_name = null; $_vals = []; $_attr = [];
-                $_final = false; $_recurse = false; $_ns = null;
-            }
-            if ($_ret) { break; }
-        }
-        // Return the remainder of the tokens after parsing a subtree.
-        if (is_array($string)) {
-            return $toks;
-        }
-    }
-
-    private function toAttributeName($value) {
-        if ($value === null) return "null";
-        if ($value === false) return "false";
-        if ($value === true) return "true";
-        return $value;
-    }
-
-
-    /**
-     * @brief Escape strings.
-     *
-     * This function will escape special characters such as backslashes as well
-     * as encode boolean keywords (true/false) or the "meta-null" value "@NULL"
-     * into the string null.
-     *
-     * @param string $str The string to escape
-     * @return string The escaped and quoted string
-     */
-    private function escape($str) {
-        if (is_array($str)) {
-            $type = $str[1];
-            $val = $str[0];
-            switch($type) {
-                case self::LT_BOOLEAN:
-                    return ($val?'true':'false');
-                case self::LT_BINARY:
-                    $sd = \wordwrap(\base64_encode($val),74);
-                    return '['.$sd.']';
-                case self::LT_NULL:
-                    return 'null';
-                case self::LT_DFLOAT:
-                    return $val;
-                case self::LT_INT:
-                    return $val;
-                default:
-                    $str = $val;
-            }
-        } elseif (is_numeric($str)) {
-            if (!is_string($str)) return $str;
-        } elseif (is_bool($str)) {
-            return ($str?'true':'false');
-        } elseif (is_null($str) || ($str=="@NULL")) {
-            return "null";
-        }
-        return "\"".str_replace("\"","\\\"",$str)."\"";
-    }
-
-    /**
-     * @private
-     * @brief Returns a typed value pair for a token.
-     *
-     * This method also handles the keywords to ensure that they come out
-     * properly.
-     *
-     * @todo Throw exception on invalid keywords.
-     * @todo Parse dates and other value types.
-     *
-     * @param string $value The value string
-     * @param Mixed $tok The token identifier (or keyword, such as "base64")
-     * @param Array &$typedval The resulting value
-     * @return bool True if the typed value could be retrieved
-     */
-    private function getTypedValue($value,$tok,&$typedval) {
-        if (is_array($value)) {
-            $typedval = $value;
-            return true;
-        }
-        if ($value === null) {
-            $typedval = [ null, self::LT_NULL ];
-            return true;
-        } elseif ($value === true) {
-                $typedval = [ true, self::LT_BOOLEAN ];
-                return true;
-        } elseif ($value === false) {
-                $typedval = [ false, self::LT_BOOLEAN ];
-                return true;
-        }
-        if ($tok == 'base64') {
-            $typedval = [ $value, self::LT_BINARY ];
-            return true;
-        }
-        switch($value) {
-            case "null":
-                if ($tok == T_STRING) {
-                    $typedval = [ null, self::LT_NULL];
-                    return true;
-                }
-            case "true":
-            case "yes":
-                if ($tok == T_STRING) {
-                    $typedval = [ true, self::LT_BOOLEAN ];
-                    return true;
-                }
-            case "false":
-            case "no":
-                if ($tok == T_STRING) {
-                    $typedval = [ false, self::LT_BOOLEAN ];
-                    return true;
-                }
-                break;
-            default:
-                // TODO: Check token to make sure it's a constant encapsed string, and do
-                // approproiate multi-line merging based on trailing \
-                if (is_string($value)) {
-                    $typedval = [ $value, self::LT_STRING ];
-                    return true;
-                }
-                // For numbers we need some magic
-                if (is_numeric($value)) {
-                    if (is_integer($value)) {
-                        $typedval = [ intval($value), self::LT_INT ];
-                        return true;
-                    }
-                    $typedval = [ floatval($value), self::LT_DFLOAT ];
-                    return true;
-                }
-        }
-        return false;
-    }
-
-    /**
-     * @private
-     * @brief Convert a single known value into a typed value.
-     *
-     * This is used for assignments.
-     *
-     * @param Mixed $value The value
-     * @return Mixed The typed value
-     */
-    private function getSingleTypedValue($value,$type=null) {
-        $ret = null;
-        switch($type) {
-            case self::LT_BINARY:
-                $type = 'base64';
-                break;
-            case self::LT_BOOLEAN:
-                $type = \T_STRING;
-                break;
-            default:
-                $type = null;
-                break;
-        }
-        if ($this->getTypedValue($value,$type,$ret)) {
-            return $ret;
-        } else {
-            return $value;
-        }
-    }
-
-    /**
-     * @private
-     * @brief Return the value in a native PHP value type.
-     *
-     * @param Mixed $value The value to cast
-     * @return Mixed The cast value
-     */
-    private function getCastValue($value) {
-        if (is_array($value)) {
-            $type = $value[1];
-            $val = $value[0];
-            switch($type) {
-                case self::LT_BOOLEAN:
-                    return ($val?true:false);
-                case self::LT_NULL:
-                    return null;
-                case self::LT_DFLOAT:
-                    return $val;
-                case self::LT_INT:
-                    return $val;
-                case self::LT_STRING:
-                    return $val;
-                case self::LT_BINARY:
-                    return $val;
-                default:
-                    \debug("Warning: Casting from unhandled internal value type.");
-                    return (string)$val;
-            }
-        }
-        return $value;
-    }
-
-
-
-}
-
-class SdlParseException extends \Exception { }

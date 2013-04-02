@@ -100,17 +100,21 @@ class SdlTypedValue {
 
     }
 
-    public static function parse($value) {
+    public static function parse($value,$raw=false) {
         // TODO: Pay attention to quoting and parse non-quoted tokens
         //echo "[Parsing value string '{$value}']\n";
-        if (preg_match(self::RE_STRING, $value)) {
+        if (($value === true) || ($value === false)) {
+            return new self($value,self::LT_BOOLEAN,$value);
+        } elseif ($value === null) {
+            return new self($value,self::LT_NULL,$value);
+        } elseif (preg_match(self::RE_STRING, $value)) {
             return new self(substr($value,1,strlen($value)-2), self::LT_STRING, $value);
         } elseif (preg_match(self::RE_CHAR, $value)) {
             return new self(substr($value,1,strlen($value)-2), self::LT_CHAR, $value);
-        } elseif (preg_match(self::RE_FLOAT, $value)) {
-            return new self(floatval($value), self::LT_FLOAT, $value);
         } elseif (preg_match(self::RE_DFLOAT, $value)) {
             return new self(floatval($value), self::LT_DFLOAT, $value);
+        } elseif (preg_match(self::RE_FLOAT, $value)) {
+            return new self(floatval($value), self::LT_FLOAT, $value);
         } elseif (preg_match(self::RE_INT, $value)) {
             return new self(intval($value), self::LT_INT, $value);
         } elseif (preg_match(self::RE_LONGINT, $value)) {
@@ -147,7 +151,7 @@ class SdlTypedValue {
         } elseif (preg_match(self::RE_DATE, $value)) {
             $match = null;
             preg_match_all(self::RE_DATE, $value, $match);
-        } elseif (array_key_exists($value,self::$kwexpand)) {
+        } elseif ((array_key_exists($value,self::$kwexpand)) && $raw) {
             $value = self::$kwexpand[$value];
             if (is_bool($value)) {
                 return new SdlTypedValue($value,self::LT_BOOLEAN, $value);
@@ -161,6 +165,36 @@ class SdlTypedValue {
     }
 
     public function encode() {
+        //echo "Type:{$this->type} / Value:{$this->value}\n";
+        switch($this->type) {
+            case self::LT_BINARY:
+                return "[".base64_encode($this->value)."]";
+            case self::LT_BOOLEAN:
+                return ($this->value)?'true':'false';
+            case self::LT_NULL:
+                return "null";
+            case self::LT_STRING:
+                $str = str_replace("\"","\\\"", $this->value);
+                return "\"".$str."\"";
+            case self::LT_CHAR:
+                return "'".substr($this->value,0,1)."'";
+
+            case self::LT_DECIMAL:
+                return $this->value;
+            case self::LT_DFLOAT:
+                return $this->value;
+            case self::LT_FLOAT:
+                return $this->value."F";
+            case self::LT_INT:
+                return $this->value;
+            case self::LT_LONGINT:
+                return $this->value."L";
+
+
+            case self::LT_DATE:
+            case self::LT_DATETIME:
+            case self::LT_TIMESPAN:
+        }
         return $this->source;
     }
 
