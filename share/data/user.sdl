@@ -1,0 +1,40 @@
+table "users" {
+    // User ID
+    column "id" type="int" auto=true;
+    // User UUID
+    column "uuid" type="text:36" null=false;
+
+    // Username (max 32 chars)
+    column "username" type="text:32" null=false;
+    //
+    column "email" type="text:128";
+
+    //
+    column "enabled" type="int" null=false;
+    // The users' timezone, null for server
+    column "timezone" type="text:128" null=true;
+
+    // Users real name
+    column "realname" type="text:128" null=true;
+
+    // Location name
+    column "location" type="text:128" null=true;
+    // Location ID (f.ex. geoid)
+    column "locationid" type="int" null=true;
+    // ISO Country code of user's country
+    column "countrycode" type="text:2" null=true;
+    //
+
+    // Password hash as $$algo:iters:salt:hash
+    column "passwordhash" type="text:512" null=false;
+    // Second factor setup as provider:initdata
+    column "secondfactor" type="text:512" null=true;
+}
+
+table "userauthlog" {
+    // Log ID
+    column "id" type="int" auto=true;
+    column "userid" type="int" null=false;
+    column "eventtime" type="datetime" null=false;
+    column "userip" type="text:64" null=false;
+}

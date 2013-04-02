@@ -95,6 +95,10 @@ function bind($context,callable $closure) {
     return Closure::bind($closure,$context,$context);
 }
 
+function p($path) {
+    return \Cherry\Base\PathResolver::path($path);
+}
+
 if (_IS_WINDOWS) {
     // Define functions that are not available in windoze
 }

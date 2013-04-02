@@ -59,6 +59,11 @@ class ConfigManager implements \Cherry\Core\IObjectManagerInterface {
                         // Load from cache
                         self::debug("Reading config '{$identifier}' from cache...");
                         $tag = unserialize(file_get_contents($cpath));
+                        if (!$tag) {
+                            self::debug("Updating cache for config '{$identifier}' (Forced)");
+                            $tag = SdlTag::createFromFile($path);
+                            file_put_contents($cpath,serialize($tag));
+                        }
                     } else {
                         // Update cache
                         self::debug("Updating cache for config '{$identifier}'...");

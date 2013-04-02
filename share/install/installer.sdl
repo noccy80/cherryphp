@@ -1,0 +1,25 @@
+installer {
+    package:cherryphp {
+        install "{CHERRY_LIB}/lib" "{DEST}/lib"
+    }
+    package:tools {
+        install "cherrydoc"
+        install "cherry"
+        install "cherryview"
+        install "cherrykey"
+        install "editserialize"
+        install "cherryprofiler"
+        install "sdlint"
+
+    }
+}
+/*
+            $foh->installdir(CHERRY_LIB.'/lib',$dest.'/lib', null);
+            $foh->installdir(CHERRY_LIB.'/bin',$dest.'/bin', null);
+            $foh->installdir(CHERRY_LIB.'/share',$dest.'/share',null);
+
+            $foh->install(CHERRY_LIB.'/docs/cherrydoc.ini',$dest.'/docs/cherrydoc.ini',null);
+            $foh->installdir(CHERRY_LIB.'/docs/manual',$dest.'/docs/manual',null);
+            $foh->installdir(CHERRY_LIB.'/docs/template',$dest.'/docs/template',null);
+            $foh->installdir(CHERRY_LIB.'/docs/images',$dest.'/docs/images',null);
+*/

@@ -41,7 +41,7 @@ testspath($temp,"cyanogenmod/*");
 
 function testspath($root,$expr) {
     echo "Expression: '{$expr}'\n";
-    foreach($root->spath($expr) as $child) {
+    foreach($root->query($expr) as $child) {
         echo "  CM{$child[0]}: Based on Android AOSP {$child->android}.";
         if ($child->multiuser) echo " Multiple user-profiles supported.";
         echo "\n";
