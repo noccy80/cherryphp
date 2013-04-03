@@ -108,9 +108,9 @@ class SdlTypedValue {
         } elseif ($value === null) {
             return new self($value,self::LT_NULL,$value);
         } elseif (preg_match(self::RE_STRING, $value)) {
-            return new self(substr($value,1,strlen($value)-2), self::LT_STRING, $value);
+            return new self(stripcslashes(substr($value,1,strlen($value)-2)), self::LT_STRING, $value);
         } elseif (preg_match(self::RE_CHAR, $value)) {
-            return new self(substr($value,1,strlen($value)-2), self::LT_CHAR, $value);
+            return new self(stripcslashes(substr($value,1,strlen($value)-2)), self::LT_CHAR, $value);
         } elseif (preg_match(self::RE_DFLOAT, $value)) {
             return new self(floatval($value), self::LT_DFLOAT, $value);
         } elseif (preg_match(self::RE_FLOAT, $value)) {
@@ -159,7 +159,7 @@ class SdlTypedValue {
                 return new SdlTypedValue($value,self::LT_NULL, $value);
             }
         } else {
-            return new SdlTypedValue($value,self::LT_STRING, $value);
+            return new SdlTypedValue(stripcslashes($value),self::LT_STRING, $value);
             //fprintf(STDERR,"Warning: Value type could not be determined for '{$value}'\n");
         }
     }
@@ -174,7 +174,7 @@ class SdlTypedValue {
             case self::LT_NULL:
                 return "null";
             case self::LT_STRING:
-                $str = str_replace("\"","\\\"", $this->value);
+                $str = addslashes($this->value);
                 return "\"".$str."\"";
             case self::LT_CHAR:
                 return "'".substr($this->value,0,1)."'";
