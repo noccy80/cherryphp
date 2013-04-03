@@ -1,4 +1,8 @@
 <?php
+/**
+ * @deprecated
+ * @x-remove
+ */
 
 namespace Cherry;
 

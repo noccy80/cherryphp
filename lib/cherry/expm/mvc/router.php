@@ -17,7 +17,7 @@ class Router {
         } else {
             $root = new SdlTag();
             $root->loadFile($cfg);
-            $this->routes = $root->spath("/routes/route");
+            $this->routes = $root->query("/routes/route");
             $num = count($this->routes);
             \debug("Parsed {$num} routes from {$cfg}");
         }

@@ -4,6 +4,7 @@ namespace Cherry\Crypto;
 
 use Cherry\Traits\TSingletonAccess;
 use Cherry\Crypto\Algorithm as Crypto;
+use Cherry\Core\PathResolver;
 use App;
 use debug;
 
@@ -28,7 +29,7 @@ class KeyStore {
     private $keys = [];
 
     public function __construct($store=null, $key=null) {
-        if (!$store) $store = \Cherry\Base\PathResolver::getInstance()->getPath("{DATA}/default.cks");
+        if (!$store) $store = PathResolver::path("{DATA}/default.cks");
         if (file_exists($store)) {
             $this->attachFile($store,$key);
         }

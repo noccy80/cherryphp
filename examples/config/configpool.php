@@ -16,9 +16,9 @@ Config::bindPool("configpool.sdl","cyanogenmod");
 // file, so you can go on and query it. Remember that spath always returns an 
 // array, so grab the first item.
 $pool = Config::getPool("test");
-echo "Version 9 is:\n".$pool->spath("//cyanogenmod/version[9]")[0]->encode()."\n";
+echo "Version 9 is:\n".$pool->query("//cyanogenmod/version[9]")[0]->encode()."\n";
 
 // Let's try that on the cyanogenmod pool:
 $pool = Config::getPool("cyanogenmod");
-echo "Version 9 is:\n".$pool->spath("//cyanogenmod/version[9]")[0]->encode()."\n";
+echo "Version 9 is:\n".$pool->query("//cyanogenmod/version[9]")[0]->encode()."\n";
 

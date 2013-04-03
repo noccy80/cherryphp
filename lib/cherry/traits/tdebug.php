@@ -31,7 +31,7 @@ trait TDebug {
         $type = sprintf("\033[32;7m DEBUG \033[0m");
         $fmt = "{$class} {$type} ".$fmt;
         array_unshift($args,$fmt);
-        call_user_func_array("\cherry\debug",$args);
+        call_user_func_array("debug",$args);
     }
 
     protected function warn($str) {
@@ -64,7 +64,7 @@ trait TDebug {
         $markup = "\033[33m";
         $fmt = "{$class} {$type} {$markup}".$fmt."\033[0m";
         array_unshift($args,$fmt);
-        call_user_func_array("\cherry\debug",$args);
+        call_user_func_array("debug",$args);
     }
     protected static function sdebug($str) {
         $class = get_called_class();
@@ -90,6 +90,6 @@ trait TDebug {
         $type = sprintf("\033[32;7m DEBUG \033[0m");
         $fmt = "{$class} {$type} ".$fmt;
         array_unshift($args,$fmt);
-        call_user_func_array("\cherry\debug",$args);
+        call_user_func_array("debug",$args);
     }
 }

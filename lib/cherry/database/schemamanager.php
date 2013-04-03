@@ -59,7 +59,7 @@ class SchemaManager implements ArrayAccess {
 
     public function generateModel(SdlTag $tag,$namespace = "Models") {
         $model = ($tag->modelname)?$tag->modelname:ucwords($tag[0]).'Model';
-        $cols = $tag->spath("column");
+        $cols = $tag->query("column");
         $php = "<?php\n\n";
         $php.= "namespace {$namespace};\n\n";
         $php.= "use \\Cherry\\Data\\Model;\n\n";

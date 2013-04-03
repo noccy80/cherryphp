@@ -1,6 +1,6 @@
 <?php
 
-namespace Cherry\Base;
+namespace Cherry\Core;
 
 if (!defined('_NS_')) define('_NS_',"\\");
 

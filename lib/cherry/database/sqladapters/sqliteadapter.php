@@ -15,7 +15,7 @@ class SqliteAdapter extends SqlAdapter {
     public function getAlterFromSdl(SdlTag $tag, $meta) {
         $cols = [];
         $ret = [];
-        foreach($tag->spath("column") as $column) {
+        foreach($tag->query("column") as $column) {
             if (array_key_exists($column[0],$meta)) {
 
                 // TODO: Rewrite this part with a function to cast to appropriate
@@ -81,7 +81,7 @@ class SqliteAdapter extends SqlAdapter {
     public function getCreateFromSdl(SdlTag $tag) {
         $sql = "CREATE TABLE {$tag[0]} (\n    ";
         $cols = [];
-        foreach($tag->spath("column") as $column) {
+        foreach($tag->query("column") as $column) {
             $cid = $column[0];
             $ctype = $this->getSqlVartype($column);
             $col = "`{$cid}` $ctype";
@@ -156,13 +156,13 @@ class SqliteAdapter extends SqlAdapter {
                 break;
             case 'set':
                 $values = [];
-                foreach ($tag->spath("value") as $value) {
+                foreach ($tag->query("value") as $value) {
                     $values[] = $value[0];
                 }
                 $type = "TEXT";
             case 'enum':
                 $values = [];
-                foreach ($tag->spath("value") as $value) {
+                foreach ($tag->query("value") as $value) {
                     $values[] = $value[0];
                 }
                 $type = "TEXT";

@@ -66,14 +66,32 @@ function preload_class($class) {
     return class_exists($class);
 }
 
-function debug($str) {
-    $args = func_get_args();
-    call_user_func_array('\Cherry\debug',$args);
-    //if (count($args)>1)
-    //    $str = call_user_func_array("sprintf",$args);
-    //\Cherry\debug($str);
 
+function logstr($type,$fmt,$args=null) {
+    $args = func_get_args();
+    if (DEBUG_VERBOSE) {
+        $bt = debug_backtrace();
+        if (count($bt)>1) {
+            $ol = \Cherry\Core\Debug::getLineInfo($bt[1]);
+            if ($ol) $args[1] = $ol.' '.$args[1];
+        }
+    }
+    call_user_func_array(array('\Cherry\Core\DebugLog','log'),$args);
 }
+
+function debug($fmt,$args=null) {
+    $args = func_get_args();
+    array_unshift($args,LOG_DEBUG);
+    if (DEBUG_VERBOSE) {
+        $bt = debug_backtrace();
+        if (count($bt)>1) {
+            $ol = \Cherry\Core\Debug::getLineInfo($bt[1]);
+            if ($ol) $args[1] = $ol.' '.$args[1];
+        }
+    }
+
+    call_user_func_array(array('\Cherry\Core\DebugLog','log'),$args);
+}    
 
 function indent($string,$indent=4) {
     $le = ((strpos($string,"\n\r")!==false)?"\n\r":
@@ -96,7 +114,7 @@ function bind($context,callable $closure) {
 }
 
 function p($path) {
-    return \Cherry\Base\PathResolver::path($path);
+    return \Cherry\Core\PathResolver::path($path);
 }
 
 if (_IS_WINDOWS) {

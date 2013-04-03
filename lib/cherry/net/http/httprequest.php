@@ -18,6 +18,7 @@ use Cherry\Cache\CacheObject;
 class HttpRequest {
 
     use TEventEmitter;
+    use \Cherry\Traits\TDebug;
 
     const ON_ERROR = 'httprequest:error';
     const ON_SUCCESS = 'httprequest:success';
@@ -81,7 +82,7 @@ class HttpRequest {
     }
 
     public function send($postdata=null,$contenttype=null) {
-        \debug("HttpRequest: Sending request (for %s)");
+        $this->debug("Sending request (for %s)");
         if (($postdata) && ($contenttype)) {
             $this->client->setPostData($contenttype, $postdata);
         }
@@ -103,9 +104,9 @@ class HttpRequest {
         if ($use_cache) {
             $flags = CacheObject::CO_USE_DISK|CacheObject::CO_COMPRESS;
             $co = new CacheObject($this->url,$flags,function($url){
-                \debug("HttpRequest: Refreshing cache object...");
+                $this->debug("Refreshing cache object...");
                 $status = $this->client->execute();
-                \debug("HttpRequest: Response gave status {$status} when updating cache object");
+                $this->debug("Response gave status {$status} when updating cache object");
                 //if ($status == 200) {
                     $doc = $this->client->getResponse();
                     $ct = $this->client->getContentType();
@@ -115,14 +116,14 @@ class HttpRequest {
                 //return null;
             });
             if ($co->isCached()) {
-                \debug("HttpRequest: Returning content from cache");
+                $this->debug("Returning content from cache");
                 $this->emit(self::ON_CACHEHIT);
             }
             $this->response = $co->getContent();
             $this->contenttype = $co->getContentType();
             $this->status = 200;
         } else {
-            \debug("HttpRequest: Sending direct request");
+            $this->debug("Sending direct request");
             $this->status = $this->client->execute();
             $this->response = $this->client->getResponse();
             $this->headers = $this->client->getAllHeaders();

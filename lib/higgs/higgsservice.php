@@ -52,7 +52,7 @@ class HiggsService extends ServiceInstance {
 */
         $cfg = ObjMan::getObject("local:/config/higgs");
 
-        $exts = $cfg->spath("/httpd/server[default]/extension");
+        $exts = $cfg->query("/httpd/server[default]/extension");
         foreach($exts as $ext) {
             $cn = \Utils::getClassFromDotted($ext[0]);
             class_exists($cn);
@@ -71,7 +71,7 @@ class HiggsService extends ServiceInstance {
 
         $server = new SocketServer();
 
-        $ports = $cfg->spath("/httpd/server[default]/listen");
+        $ports = $cfg->query("/httpd/server[default]/listen");
         foreach($ports as $ep) {
             $endpoint = $ep[0];
             if ($ep->hasAttribute("certificate")) {

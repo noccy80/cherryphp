@@ -1,6 +1,6 @@
 <?php
 
-namespace Cherry\Base;
+namespace Cherry\Core;
 
 use ArrayObject;
 use Cherry\Crypto\Algorithm as Crypto;

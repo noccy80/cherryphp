@@ -4,8 +4,6 @@ namespace Cherry;
 
 $_os = strtolower(PHP_OS);
 
-require_once CHERRY_LIB.'/lib/utils.php';
-
 // Defines
 define('_DS_',DIRECTORY_SEPARATOR);
 define('_IS_LINUX', ($_os=='linux'));
@@ -14,6 +12,9 @@ define('_IS_MACOS',($_os=='darwin'));
 define('_IS_CLI',(php_sapi_name() == 'cli'));
 define('_IS_CLI_SERVER',(php_sapi_name() == 'cli-server'));
 define('CHERRY_VERSION','1.0.0-alpha');
+
+require_once CHERRY_LIB.'/lib/utils.php';
+require_once CHERRY_LIB.'/lib/_globals.php';
 
 if ($_app = getenv("CHERRY_APP")) if (!defined("CHERRY_APP")) define('CHERRY_APP',$_app);
 if ($_lib = getenv("CHERRY_LIB")) if (!defined("CHERRY_LIB")) define('CHERRY_LIB',$_lib);
@@ -28,10 +29,10 @@ if (!defined('PHP_VERSION_ID')) {
     define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
 }
 
-require_once CHERRY_LIB.'/lib/cherry/base/debug.php';
-require_once CHERRY_LIB.'/lib/cherry/base/autoloader.php';
+require_once CHERRY_LIB.'/lib/cherry/core/debug.php';
+require_once CHERRY_LIB.'/lib/cherry/core/autoloader.php';
 
-$al = new \Cherry\Base\Autoloader(CHERRY_LIB.'/lib');
+$al = new \Cherry\Core\Autoloader(CHERRY_LIB.'/lib');
 $al->register();
 
 require_once CHERRY_LIB.'/lib/_globals.php';
@@ -56,10 +57,9 @@ if (getenv("PROFILE")) {
         \Cherry\Util\AppProfiler::profile($fn,$binlog);
     }
 }
-require_once CHERRY_LIB.'/lib/cherry/base/config.php';
-require_once CHERRY_LIB.'/lib/cherry/base/event.php';
+require_once CHERRY_LIB.'/lib/cherry/core/config.php';
+require_once CHERRY_LIB.'/lib/cherry/core/event.php';
 require_once CHERRY_LIB.'/lib/cherry/extension.php';
-require_once CHERRY_LIB.'/lib/cherry/base/cherry.php';
 require_once CHERRY_LIB.'/lib/app.php';
 //require_once CHERRY_LIB.'/lib/cherry/base/application.php';
 

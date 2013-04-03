@@ -3,10 +3,10 @@
 namespace Cherry\Cli;
 
 use debug;
-use Cherry\DebugLog;
+use Cherry\Core\DebugLog;
 use Cherry\Cli\Console;
 use Cherry\Crypto\KeyStore;
-use Cherry\Base\PathResolver;
+use Cherry\Core\PathResolver;
 
 class ConsoleApplication extends \Cherry\Application {
 
@@ -298,7 +298,7 @@ class ConsoleApplication extends \Cherry\Application {
             $errfile = $exception->getFile();
             $errline = $exception->getLine();
         }
-        $bt = \Cherry\Debug::makeBacktrace($fbt,true);
+        $bt = \Cherry\Core\Debug::makeBacktrace($fbt,true);
         $this->showError($ca,'Exception',$exception->getMessage().' ('.$exception->getCode().')',$errfile,$errline,$log,$bt);
         exit(1);
     }

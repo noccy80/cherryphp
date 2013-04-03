@@ -3,7 +3,7 @@
 namespace Cherry\Database;
 
 use PDO;
-use Cherry\Base\PathResolver;
+use Cherry\Core\PathResolver;
 use Cherry\Data\Ddl\SdlTag;
 
 class DatabaseConnection {
@@ -128,12 +128,12 @@ class DatabaseConnection {
             $cp = PathResolver::path("{APP}/config/database.sdl");
             if (file_exists($cp)) {
                 $cfg = SdlTag::createFromFile($cp);
-                foreach($cfg->spath("database/connection") as $connection) {
+                foreach($cfg->query("database/connection") as $connection) {
                     $cpool = $connection[0];
                     $curi = $connection[1];
                     if (empty(self::$connections[$cpool]))
                         self::$connections[$cpool] = [];
-                    self::debug("Database: Registered connection '{$curi}' to pool {$cpool}");
+                    self::sdebug("Database: Registered connection '{$curi}' to pool {$cpool}");
                     self::$connections[$cpool][] = $connection;
                 }
             }
