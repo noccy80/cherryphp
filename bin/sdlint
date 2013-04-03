@@ -8,16 +8,18 @@ use Cherry\Data\Ddl\SdlTag;
 class SdlintApplication extends Cherry\Cli\ConsoleApplication {
 
     public function setup() {
+        $this->addArgument("h","help","Show the help");
         $this->addArgument("t","tidy","Print tidy SDL from input");
     }
 
     public function main() {
-        if (count($this->parameters) > 0) {
+        if ((count($this->parameters) > 0) && (!$this->hasArgument("h"))) {
             foreach($this->parameters as $file) {
                 $this->lintfile($file);
             }
+        } else {
+            $this->usage();
         }
-
     }
 
     private function lintfile($file) {
