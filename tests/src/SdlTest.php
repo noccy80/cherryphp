@@ -144,6 +144,7 @@ EOT;
         $node = new SdlTag("testnode2");
         $testvalue = "Putting binary data in the SDL node";
         $node->setValue($testvalue, 0, SdlTypedValue::LT_BINARY);
+        // $node->setBinaryValue($testvalue);
         $test->addChild($node);
         $this->assertEquals($testvalue,$node[0],"Set binary string does not match retrieved binary string");
         
@@ -177,11 +178,13 @@ EOT;
 
         $test->setValue(true);
         $test->setValue("yes",1,SdlTypedValue::LT_BOOLEAN);
+        // $test->setValue(new SdlTypedValue("yes",SdlTypedValue::LT_BOOLEAN));
         $this->assertEquals(true,$test[0],"Boolean value does not match");
         $this->assertEquals(true,$test[1],"Boolean value does not match");
 
         $test->setValue(false);
         $test->setValue("no",1,SdlTypedValue::LT_BOOLEAN);
+        //$test->setValue(new SdlTypedValue("no",SdlTypedValue::LT_BOOLEAN));
         $this->assertEquals(false,$test[0],"Boolean value does not match");
         $this->assertEquals(false,$test[1],"Boolean value does not match");
         

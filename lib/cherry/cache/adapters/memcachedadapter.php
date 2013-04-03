@@ -1,6 +1,8 @@
 <?php
 
-namespace Cherry\Cache;
+namespace Cherry\Cache\Adapters;
+
+use \Cherry\Cache\CacheAdapter;
 
 class MemcachedAdapter extends CacheAdapter {
 
@@ -12,6 +14,7 @@ class MemcachedAdapter extends CacheAdapter {
         $this->mc->setOption(\Memcached::OPT_PREFIX_KEY, $persistent_id);
         $this->mc->setOption(\Memcached::OPT_LIBKETAMA_COMPATIBLE, true); // advisable option
         if (!count($this->mc->getServerList())) {
+            $cfg = ObjectManager::getObject("local:/config/system");
             $this->mc->addServer('localhost','11211');
         }
 
