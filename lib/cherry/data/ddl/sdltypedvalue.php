@@ -49,11 +49,13 @@ class SdlTypedValue {
     const RE_STRING     = "/^\"(.*)\"$/m";
     const RE_CHAR       = "/^\'.\'$/";
     const RE_INT        = "/^[\+\-]{0,1}[0-9]*$/";
-    const RE_LONGINT    = "/^[\+\-]{0,1}[\.0-9]*[l]?$/i";
-    const RE_FLOAT      = "/^[\+\-]{0,1}[\.0-9]*[f]?$/i";
+    const RE_LONGINT    = "/^[\+\-]{0,1}[\.0-9]*l$/i";
+    const RE_FLOAT      = "/^[\+\-]{0,1}[\.0-9]*f$/i";
     const RE_DFLOAT     = "/^[\+\-]{0,1}[\.0-9]*[d]?$/i";
-    const RE_DATETIME   = "/^([0-9]{4})\/([0-9]{2})\/([0-9]{2}) ([0-9]{2}):([0-9]{2})(:[0-9]{2})([\.]{0,1}[0-9]*)([\-]{0,1}.*)$/";
+    const RE_DECIMAL    = "/^[\+\-]{0,1}[\.0-9]*bd$/i";
+    const RE_DATETIME   = "/^([0-9]{4})\/([0-9]{2})\/([0-9]{2}) ([0-9]{2}):([0-9]{2})(:[0-9]{2}(\.[0-9]{1,3}([\-]{0,1}.*)?)?)?$/";
     const RE_DATE       = "/^([0-9]{4})\/([0-9]{2})\/([0-9]{2})$/";
+    const RE_TIME       = "/^([0-9]{0,5}):([0-9]{2}):([0-9]{2})(\.[0-9]{1,3})?$/";
 
     public function getValue() {
         return $this->value;
@@ -111,6 +113,8 @@ class SdlTypedValue {
             return new self(stripcslashes(substr($value,1,strlen($value)-2)), self::LT_STRING, $value);
         } elseif (preg_match(self::RE_CHAR, $value)) {
             return new self(stripcslashes(substr($value,1,strlen($value)-2)), self::LT_CHAR, $value);
+        } elseif (preg_match(self::RE_DECIMAL, $value)) {
+            return new self(floatval($value), self::LT_DECIMAL, $value);
         } elseif (preg_match(self::RE_DFLOAT, $value)) {
             return new self(floatval($value), self::LT_DFLOAT, $value);
         } elseif (preg_match(self::RE_FLOAT, $value)) {
@@ -122,35 +126,33 @@ class SdlTypedValue {
         } elseif (preg_match(self::RE_DATETIME, $value)) {
             $match = null;
             preg_match_all(self::RE_DATETIME, $value, $match);
-            list($year,$month,$day) = [$match[1][0],$match[2][0],$match[3][0]];
-            list($hour,$minute,$second) = [$match[4][0],$match[5][0],$match[6][0]];
-            if ($second[0] != ":") {
-                if ($second[0] == ".") {
-                    $micro = floatval($second);
-                } elseif ($second[0] == "-") {
-                    $tz = substr($second,1);
-                }
-                $second = 0;
-            } else {
-                $second = substr($second,1);
-                $micro = $match[7][0];
-                if ($micro[0] != ".") {
-                    $tz = substr($micro,1);
-                    $micro = 0;
-                } else {
-                    $tz = substr($match[8][0],1);
-                }
-            }
+            list($year,$month,$day) = [(int)$match[1][0],(int)$match[2][0],(int)$match[3][0]];
+            list($hour,$minute,$second) = [(int)$match[4][0],(int)$match[5][0],$match[6][0]];
+            list($micro,$tz) = [(float)$match[7][0], (string)$match[8][0]];
+            if ($second) $second = (int)substr($second,1); else $second = 0;
             if ($tz && (!defined("SDL_IGNORE_TIMEZONE"))) {
                 throw new SdlParserException("Timezones for dates are not implemented. Define SDL_IGNORE_TIMEZONE to disable this exception.", SdlParserException::ERR_NOT_IMPLEMENTED);
             }
             // TODO: Implement timezones
             $ts = mktime($hour,$minute,$second,$month,$day,$year); //
             $ts+= $micro;
+            //echo "{$value} =>\n Y: {$year}\n M: {$month}\n D: {$day}\n H: {$hour}\n M: {$minute}\n S: {$second}\n µ: {$micro}\n TZ: {$tz}\n ==> {$ts}\n";
             return new SdlTypedValue($ts, self::LT_DATETIME, $value);
         } elseif (preg_match(self::RE_DATE, $value)) {
             $match = null;
             preg_match_all(self::RE_DATE, $value, $match);
+            list($year,$month,$day) = [$match[1][0],$match[2][0],$match[3][0]];
+            // TODO: Implement timezones
+            $ts = mktime(0,0,0,$month,$day,$year); //
+            return new SdlTypedValue($ts, self::LT_DATE, $value);
+        } elseif (preg_match(self::RE_TIME, $value)) {
+            $match = null;
+            preg_match_all(self::RE_TIME, $value, $match);
+            list($hours,$minutes,$seconds,$micro) = [(int)$match[1][0],(int)$match[2][0],(int)$match[3][0],(float)$match[4][0]];
+            $time = ($seconds) + ($minutes*60) + ($hours*60*60);
+            if ($micro) $time += $micro;
+            //echo "{$value} =>\n H: {$hours}\n M: {$minutes}\n S: {$seconds}\n ==> {$time}\n";
+            return new SdlTypedValue($time, self::LT_TIMESPAN, $value);
         } elseif ((array_key_exists($value,self::$kwexpand)) && $raw) {
             $value = self::$kwexpand[$value];
             if (is_bool($value)) {
@@ -159,6 +161,7 @@ class SdlTypedValue {
                 return new SdlTypedValue($value,self::LT_NULL, $value);
             }
         } else {
+            echo "Warning: Value type of {$value} not determined.\n";
             return new SdlTypedValue(stripcslashes($value),self::LT_STRING, $value);
             //fprintf(STDERR,"Warning: Value type could not be determined for '{$value}'\n");
         }
@@ -180,15 +183,15 @@ class SdlTypedValue {
                 return "'".substr($this->value,0,1)."'";
 
             case self::LT_DECIMAL:
-                return $this->value;
+                return $this->value."bd";
             case self::LT_DFLOAT:
                 return $this->value;
             case self::LT_FLOAT:
-                return $this->value."F";
+                return $this->value."f";
             case self::LT_INT:
                 return $this->value;
             case self::LT_LONGINT:
-                return $this->value."L";
+                return $this->value."l";
 
 
             case self::LT_DATE:

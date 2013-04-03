@@ -156,7 +156,7 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                     if (trim($buf)) {
                         if ($pstate == self::PARSER_TAGATTR) {
                             // Found a tag attribute
-                            $lt = SdlTypedValue::parse($buf);
+                            $lt = SdlTypedValue::parse($buf,true);
                             if (!$lt)
                                 throw new SdlParserException("Unparsed attribute value: {$buf}");
                             $tagattr[$lasttok] = $lt;
@@ -164,7 +164,7 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                             $pstate = self::PARSER_TAGVALUE;
                         } elseif ($pstate == self::PARSER_TAGVALUE) {
                             // Found a tag value
-                            $tv = SdlTypedValue::parse($buf);
+                            $tv = SdlTypedValue::parse($buf,true);
                             if (!$tv)
                                 throw new SdlParserException("Unparsed value: {$buf}");
                             $tagvals[] = $tv;
