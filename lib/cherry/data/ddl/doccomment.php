@@ -24,7 +24,12 @@ class DocComment {
                     list($tag,$row) = explode(" ",$row,2);
                     $tag = substr($tag,1);
                     $_tag = null; // Don't parse trailing tags
-                    $this->tags[$tag] = trim($row);
+                    if (array_key_exists($tag,$this->tags)) {
+                        if (!is_array($this->tags[$tag]))
+                            $this->tags[$tag] = [ $this->tags[$tag] ];
+                        $this->tags[$tag][] = trim($row);
+                    } else
+                        $this->tags[$tag] = trim($row);
                 } else {
                     $_tag = substr($row,1);
                     $row = null;
@@ -40,6 +45,7 @@ class DocComment {
         }
     }
     public function __get($key) {
+        $key = str_replace("_","-",$key);
         if (array_key_exists($key,$this->tags))
             return $this->tags[$key];
         return null;
