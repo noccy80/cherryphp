@@ -108,17 +108,36 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
         $tagname = null; // The parsed tag name
         $tagvals = []; // The tag values
         $tagattr = []; // The tag attributes
+        $tagcmt = null;
+        $tagdcmt = null;
         $break = false; // flag to indicate end of tag
+        $lline = "n/a";
+        $toktyp = null;
 
         while(count($toks)>0) {
             $thistok = array_shift($toks);
-
             // Get the string representation of the token
-            if (is_array($thistok)) { $thisstr = $thistok[1]; }
-            else { $thisstr = $thistok; }
+            if (is_array($thistok)) {
+                list($toktyp,$thisstr,$lline) = $thistok;
+                switch($toktyp) {
+                    case T_COMMENT:
+                        $tagcmt = $thisstr;
+                        $thisstr = null;
+                        break;
+                    case T_DOC_COMMENT:
+                        $tagdcmt = $thisstr;
+                        $thisstr = null;
+                        break;
+                }
+                //echo token_name($toktyp)."\n";
+            } else {
+                $thisstr = $thistok; $toktyp = null;
+            }
             // we do this to only detect newlines, we don't care about the
             // padding around it.
-            if (strpos($thisstr,"\n")!==false) $thisstr = "\n";
+            if (strpos($thisstr,"\n")!==false) {
+                if (!trim($thisstr)) $thisstr = "\n";
+            }
 
             // Parse the tokens
             $break = false;
@@ -153,10 +172,18 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                             break;
                         }
                     }
+                    // If this is a binary chunk we want to keep reading til "]"
+                    if (substr(trim($buf),0,1)=="[") {
+                        if (substr(trim($buf),-1,1)!="]") {
+                            $break = false;
+                            break;
+                        }
+                        // If we make it here we have a full binary blob
+                    }
                     if (trim($buf)) {
                         if ($pstate == self::PARSER_TAGATTR) {
                             // Found a tag attribute
-                            $lt = SdlTypedValue::parse($buf,true);
+                            $lt = SdlTypedValue::parse($buf,true,$lasttok);
                             if (!$lt)
                                 throw new SdlParserException("Unparsed attribute value: {$buf}");
                             $tagattr[$lasttok] = $lt;
@@ -189,6 +216,8 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                         //var_dump($tagvals);
                         if (!empty($tagname) || !empty($tagvals)) {
                             $tag = new SdlTag($tagname,$tagvals,$tagattr);
+                            $tag->setComment($tagcmt);
+                            $tag->setDocComment($tagdcmt);
                             $toks = $tag->loadString($toks,$opts);
                         }
                         $break = true;
@@ -208,6 +237,7 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                         $tag = null;
                         $tagname = null;
                         $tagvals = []; $tagattr = [];
+                        $tagcmt = null; $tagdcmt = null;
                         $pstate = self::PARSER_TAGNAME;
                         $break = false;
                     }
@@ -217,6 +247,11 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                 case "=":
                     // Remember the last token and set the parser state to
                     // expect an attribute value.
+                    if (substr($buf,0,1) == "[") {
+                        // If we are in a binary chunk, just stash and break out
+                        $buf.=$thisstr;
+                        break;
+                    }
                     if ($this->isValidIdentifier($buf)) {
                         $lasttok = $buf;
                         $pstate = self::PARSER_TAGATTR;
@@ -615,6 +650,10 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
      */
     public function getValueMap() {
 
+    }
+
+    public function value($index=0) {
+        return $this->values[$index];
     }
 
 
