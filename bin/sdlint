@@ -10,6 +10,7 @@ class SdlintApplication extends Cherry\Cli\ConsoleApplication {
     public function setup() {
         $this->addArgument("h","help","Show the help");
         $this->addArgument("t","tidy","Print tidy SDL from input");
+        $this->addArgument("s","structure","Print the structure of the parsed SDL (default mode)");
     }
 
     public function main() {
@@ -29,7 +30,8 @@ class SdlintApplication extends Cherry\Cli\ConsoleApplication {
             foreach($root->getChildren() as $node) {
                 echo $node->encode()."\n";
             }
-        } else {
+        }
+        if (!$this->hasArgument('t') || $this->hasArgument('s')) {
             foreach($root->getChildren() as $tag) {
                 $this->printTag($tag,0);
             }
@@ -37,18 +39,42 @@ class SdlintApplication extends Cherry\Cli\ConsoleApplication {
         }
     }
     
-    private function printTag($root,$d=0) {
-        if (($cmt = $root->getComment())) {
-            echo str_repeat("  ",$d)."(comment={$cmt})\n";
+    private function printTag($root,$d=0,array $t=null) {
+        $tree = [
+            html_entity_decode(" &#x2570;&#x2500;",ENT_HTML5,"utf-8"),
+            html_entity_decode(" &#x2502; ",ENT_HTML5,"utf-8"),
+            html_entity_decode(" &#x251C;&#x2500;",ENT_HTML5,"utf-8"),
+            "   "
+        ];
+        $t = (array)$t;
+        $tc = null; $tcc = null;
+        $cmt = $root->getComment();
+        foreach($t as $ti=>$tv) {
+            // Build the tree
+            if ($ti == count($t)-1) {
+                $tcc = $tc.$tree[1];
+            }
+            if ($tv == 1) { $tc.= $tree[0]; $t[$ti]=0; }
+                elseif ($tv == 2) { $tc.= $tree[1]; }
+                elseif ($tv == 3) { $tc.= $tree[2]; $t[$ti]=2; }
+                elseif ($tv == 0) { $tc.= $tree[3]; }
         }
-        echo str_repeat("  ",$d).$root->getNameNs();
+        if ($cmt) {
+            echo $tcc."\033[38;5;248m// {$cmt}\033[0m\n";
+        }
+        echo $tc."\033[4m".$root->getNameNs()."\033[24m";
         if (count($root)>0) echo " [".join(",",array_map('\var_inspect',$root->getValues()))."]";
         foreach($root->getAttributes() as $k=>$v) {
             echo " {$k}=".\var_inspect($v);
         }
         echo "\n";
-        foreach($root->getChildren() as $tag) {
-            $this->printTag($tag,$d+1);
+        $cl = $root->getChildren();
+        foreach($cl as $tag) {
+            if ($tag === end($cl))
+                $dl = 1; else $dl = 3;
+            array_push($t,$dl);
+            $this->printTag($tag,$d+1,$t);
+            array_pop($t);
         }
     
     }

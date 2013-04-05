@@ -121,7 +121,15 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                 list($toktyp,$thisstr,$lline) = $thistok;
                 switch($toktyp) {
                     case T_COMMENT:
-                        $tagcmt = $thisstr;
+                        $thiscmt = trim(substr($thisstr,2));
+                        if ($tagcmt) {
+                            if (!$thiscmt)
+                                $tagcmt.="\n";
+                            else
+                                $tagcmt.=" ".$thiscmt;
+                        } else {
+                            $tagcmt = $thiscmt;
+                        }
                         $thisstr = null;
                         break;
                     case T_DOC_COMMENT:
