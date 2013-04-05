@@ -21,6 +21,20 @@ class HtmlTag {
         $this->value = (string)$value;
     }
 
+    
+    public static function buildSelect($id=null,$name=null,array $values=null,$selected=null) {
+        $options = null;
+        foreach($values as $value=>$text) {
+            if ($value == $current) {
+                $options.= HtmlTag::option($text)->_value($value)->_selected("selected");
+            } else {
+                $options.= HtmlTag::option($text)->_value($value);
+            }
+        }
+        $tag = HtmlTag::select($options)->setId($id)->setName($name);
+        
+    }
+    
     public function setStyle($styles) {
         if (is_array($styles)) {
             $cssr = [];

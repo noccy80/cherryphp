@@ -138,6 +138,7 @@ class DatabaseConnection {
                 }
             }
         }
+        if (!self::$connections) self::$connections = [];
         if (!array_key_exists($pool,self::$dbpool)) {
             if (array_key_exists($pool,self::$connections)) {
                 $pc = self::$connections[$pool];
