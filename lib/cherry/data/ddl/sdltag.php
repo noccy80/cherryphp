@@ -144,12 +144,16 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
             // we do this to only detect newlines, we don't care about the
             // padding around it.
             if (strpos($thisstr,"\n")!==false) {
-                if (!trim($thisstr)) $thisstr = "\n";
+                if (!trim($thisstr,"\n\r ")) $thisstr = "\n";
             }
+            // Replace tabs
+            if (strpos($thisstr,"\t")!==false)
+                $thisstr = str_replace("\t"," ",$thisstr);
 
             // Parse the tokens
             $break = false;
             //echo "\033[1m{$level}\033[0m\033[7m{$thisstr}\033[0m\n";
+            $thisstr = trim($thisstr," ");
             switch($thisstr) {
                 case "}":
                     if ($level <= 0)
@@ -168,7 +172,7 @@ class SdlTag implements \ArrayAccess, \IteratorAggregate, \Countable {
                 case "{":
                     $break = true;
 
-                case " ":
+                case "":
                     if (!$break) {
                         // is this part of a date?
                         $next = $toks[0]; if (is_array($next)) $next = $next[1];
