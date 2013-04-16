@@ -44,7 +44,7 @@ $findlib = function() {
 };
 
 $findapp = function() {
-    $appfiles = [ "config/application.sdl", "application.json", "config/_setup.php", "lib/_bootstrap.php", ".cherryphp" ];
+    $appfiles = [ "config/application.sdl", "application.sdl", "application.json", "config/_setup.php", "lib/_bootstrap.php", ".cherryphp" ];
     while(count($appfiles)>0) {
         $appfile = array_shift($appfiles);
         if (DEBUG_BOOTSTRAP) fprintf(STDERR,"FindApp: Searching for {$appfile}...\n");

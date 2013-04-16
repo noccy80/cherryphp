@@ -8,7 +8,7 @@ class Glyph {
         'fullblock'=>'&#x2588;',
         'lightshade' => '&#x2591;',
         'mediumshade' => '&#x2592;',
-        'darkshare' => '&#x2593;',
+        'darkshade' => '&#x2593;',
         'block1of8' => '&#x2581;',
         'block2of8' => '&#x2582;',
         'block3of8' => '&#x2583;',

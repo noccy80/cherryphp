@@ -31,7 +31,7 @@ class ConIo {
     public static function write($str=null) {
         if (func_num_args()>1) {
             $args = func_get_args();
-            unshift($args,STDOUT);
+            array_unshift($args,STDOUT);
             call_user_func_array("fprintf",$args);
         } else
             fprintf(STDOUT,$str);

@@ -120,7 +120,12 @@ class Canvas implements IDrawable {
         $this->truecolor = true;
         $this->refresh();
         if ($bgcolor)
-            $this->drawFilledRect(0,0,$width,$height,$bgcolor);
+            $this->clear($bgcolor);
+    }
+
+    public function clear($color) {
+        $c = $this->map($color);
+        $this->drawFilledRect(0,0,$this->width,$this->height,$c);
     }
 
     public function setDitherClass(Dither\Dither $class) {
@@ -287,7 +292,14 @@ class Canvas implements IDrawable {
         $this->refresh();
     }
 
+    public function getRect() {
+        return new Rect(0,0,$this->width,$this->height);
+    }
+
     public function draw(Canvas $dest, Rect $destrect = null, Rect $srcrect = null) {
+        if (!$srcrect) {
+            $srcrect = $this->getRect();
+        }
         imagecopyresampled($dest->himage, $this->himage,
                            $destrect->x, $destrect->y,
                            $srcrect->x, $srcrect->y,

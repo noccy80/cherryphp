@@ -20,4 +20,8 @@ class BitmapFont extends Font {
         \imagestring($image->himage,$this->font,$x,$y,$text, $image->map($color));
     }
 
+    public function drawTextUp(Canvas $image, $x, $y, $text, $color) {
+        \imagestringup($image->himage,$this->font,$x,$y,$text, $image->map($color));
+    }
+
 }
