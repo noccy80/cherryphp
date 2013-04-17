@@ -63,16 +63,16 @@ class Map {
     private function getApiQueryUrl(array $opts) {
         $base = "http://ojw.dev.openstreetmap.org/StaticMap/";
         $param = [
-            "show" => 1,
-            "lat" => $this->geo->lat,
-            "lon" => $this->geo->lon,
-            "z" => $this->zoom,
+            "show"  => 1,
+            "lat"   => $this->geo->lat,
+            "lon"   => $this->geo->lon,
+            "z"     => $this->zoom,
             "layer" => $this->layer,
-            "fmt" => "png",
+            "fmt"   => "png",
             "filter" => $this->filter?:self::FILTER_NONE,
-            "att" => $this->att?:self::ATT_TEXT
+            "att"   => $this->att?:self::ATT_TEXT
         ];
-        $param += $opts;
+        $param = array_merge($param,$opts);
         $query = http_build_query($param);
         return $base."?".$query;
     }

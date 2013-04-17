@@ -89,6 +89,7 @@ class App {
 
 class AppConfig {
 
+    use \Cherry\Traits\TStaticDebug;
     private $cfg = [];
 
     /**
@@ -112,7 +113,7 @@ class AppConfig {
      */
     function get($keypath,$default=null) {
         // new \Cherry\ScopeTimer("Key fetch {$key}");
-        // \Cherry\debug("Config::get {$key}");
+        // self::debug("Config::get {$key}");
         $base = $this->cfg;
         $keyseg = explode('.',$keypath);
         while (($key = array_shift($keyseg))) {
@@ -144,7 +145,7 @@ class AppConfig {
             }
         } else {
             if (file_exists($file)) {
-                \Cherry\debug("Attempting to load configuration file %s.", $file);
+                self::debug("Attempting to load configuration file %s.", $file);
                 $cfg = json_decode(file_get_contents($file));
                 if (($err = json_last_error())) {
                     switch($err) {
@@ -160,7 +161,7 @@ class AppConfig {
                 }
                 $this->cfg = array_merge_recursive($this->cfg, (array)$cfg);
             } else {
-                \Cherry\debug("Skipping config file %s: File not found", $file);
+                self::debug("Skipping config file %s: File not found", $file);
             }
         }
     }

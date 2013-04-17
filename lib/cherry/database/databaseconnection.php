@@ -22,6 +22,7 @@ class DatabaseConnection {
     private $database = null;
     private $hlog = null;
     private $pool = null;
+    private $connid = null;
 
     public function __construct($uri, $opts=array()) {
 
@@ -55,6 +56,7 @@ class DatabaseConnection {
                 $this->database = $database;
                 if (!$password)
                     $password = $this->getKeystorePassword($type,$username,$host,$database);
+                $this->connid = "MySQL:{$host}/{$database}";
             } elseif ($type == "sqlite") {
                 $database = "{APP}/{$ci['host']}";
                 if (!empty($ci['path'])) $database.= '/'.$ci['path'];
@@ -64,6 +66,7 @@ class DatabaseConnection {
                 $username = null;
                 $password = null;
                 $options = [];
+                $this->connid = "SQLite3:{$database}";
             } else {
                 throw new \Exception("Invalid connection uri '{$uri}'");
             }
@@ -160,6 +163,10 @@ class DatabaseConnection {
             }
         }
         return self::$dbpool[$pool];
+    }
+    
+    public function getId() {
+        return $this->connid;
     }
 
     public function prepare($statement) {

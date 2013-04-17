@@ -20,9 +20,9 @@ class Certificate {
         $this->certpass = $password;
     }
 
-    public function getCertificateInfo() {
+    public function getCertificateInfo($shortnames=true) {
         if (!$this->certstr) $this->certstr = file_get_contents($this->certfile);
-        $info = openssl_x509_parse($this->certstr);
+        $info = openssl_x509_parse($this->certstr,$shortnames);
         return $info;
     }
 
@@ -38,22 +38,34 @@ class Certificate {
     }
 
     public function getCertificateText() {
-        $info = $this->getCertificateInfo();
-        return $this->_getCertText($info);
-    }
-
-    private function _getCertText($info,$indent=0) {
-        $ind = str_repeat(" ",$indent);
-        $str = "";
-        foreach($info as $name=>$value) {
-            if (is_array($value)) {
-                $str.= $ind.$name.":\n";
-                $str.= $this->_getCertText($value,$indent+4);
-            } else {
-                $str.= $ind.$name.": ".$value."\n";
-            }
+        $info = $this->getCertificateInfo(false);
+        
+        $subject    = $info["subject"];
+        $asubject   = [];
+        foreach($subject as $k=>$v) $asubject[] = "    {$k}: {$v}";
+        $ssubject   = join("\n",$asubject);
+        $issuer     = $info["issuer"];
+        $aissuer    = [];
+        foreach($issuer as $k=>$v) $aissuer[] = "    {$k}: {$v}";
+        $sissuer    = join("\n",$aissuer);
+        $hash       = $info["hash"];
+        list($svalidfrom,$svalidto) = $this->getValidity();
+        $purposes   = $info["purposes"];
+        foreach($purposes as $purpose) {
+            $types = [];
+            if ($purpose[0]) $types[] = "GA"; // General availability
+            if ($purpose[1]) $types[] = "T"; // Tested
+            if (count($types) == 0) $types[] = "None";
+            $type = join(",", $types);
+            $apurposes[] = "    {$purpose[2]} ({$type})";
         }
-        return $str;
+        $spurpose   = join("\n", $apurposes);
+        $subjectkey = trim($info["extensions"]["subjectKeyIdentifier"]);
+        $issuerkey  = trim($info["extensions"]["authorityKeyIdentifier"]);
+        
+        $txt        = "Hash: 0x{$hash}\nValidity:\n    From: {$svalidfrom}\n    To:   {$svalidto}\nSubject:\n{$ssubject}\nIssued by:\n{$sissuer}\nPurposes:\n{$spurpose}\nSubjectKey: {$subjectkey}\nIssuerKey: {$issuerkey}\n\n";
+        
+        return $txt; // $str;
     }
 
     public function getStreamContext() {

@@ -2,7 +2,6 @@
 
 namespace Cherry\Core;
 
-use Cherry\Base\PathResolver;
 use Cherry\Data\Ddl\SdlTag;
 
 abstract class ConfigPool {

@@ -14,9 +14,10 @@ class PathResolver {
     public function getPath($path) {
         $ret = $path;
         $ret = str_replace('{APP}', CHERRY_APP,$ret);
-        $ret = str_replace('{DATA}',$this->apppath.'/data',$ret);
-        $ret = str_replace('{CACHE}',$this->apppath.'/cache',$ret);
-        $ret = str_replace('{PUBLIC}',$this->apppath.'/public',$ret);
+        $ret = str_replace('{DATA}',__APP__.'/data',$ret);
+        $ret = str_replace('{CACHE}',__APP__.'/cache',$ret);
+        $ret = str_replace('{CONFIG}',__APP__.'/config',$ret);
+        $ret = str_replace('{PUBLIC}',__APP__.'/public',$ret);
         $ret = str_replace('{SYSTEM}','/etc/cherryphp',$ret);
         $ret = str_replace('{USER}',rtrim(getenv("HOME"),'/').'/.cherryphp',$ret);
         return $ret;
