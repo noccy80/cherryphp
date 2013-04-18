@@ -13,7 +13,8 @@ class Response {
             $status = 200,
             $contenttype = 'text/html',
             $contentlength = 0,
-            $protocol = null;
+            $protocol = null,
+            $content = null;
 
     public function setDocument(Document $document) {
         $this->document = $document;
@@ -35,13 +36,26 @@ class Response {
         ]), true, $code);
         $this->status = $code;
     }
+    
+    public function setContent($content=null) {
+        $this->content = $content;
+    }
+    public function getContent() {
+        return $this->content;
+    }
 
-    public function setHeader($header,$value) {
+    public function setHeader($header,$value,$repl=true,$code=null) {
         if (headers_sent()) return false;
-        header($header.': '.$value, true);
+        header($header.': '.$value, $repl,$code);
         return true;
     }
 
+    public function redirect($url,$httpcode=302) {
+        $this->setHeader("Location",$url, true, $httpcode);
+        if (_IS_CLI) return;
+        exit;
+    }
+    
     public function send404($file) {
         while(ob_get_level()>0) ob_end_clean();
         $this->setStatus(404,'File not found');
@@ -87,7 +101,10 @@ class Response {
         //ini_set('zlib.output_compression',1);
         $compress = false;
         if ($this->document) {
-            $doc = $this->document->getContent();
+            if (empty($this->content))
+                $doc = $this->document->getContent();
+            else
+                $doc = $this->content;
             $this->contentlength = strlen($doc);
             if ($compress) {
                 // Check if browser accepts gzip
