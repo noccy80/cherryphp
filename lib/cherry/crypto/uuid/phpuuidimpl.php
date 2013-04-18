@@ -13,7 +13,7 @@ class PhpUuidImpl extends UuidImpl {
      * @return bool True if the UUID is valid.
      */
     public function test($uuid) {
-        return reg_match(preg_match("/^(\{)?[a-f\d]{8}(-[a-f\d]{4}){4}[a-f\d]{8}(?(1)\})$/i", $uuid));
+        return preg_match("/^(\{)?[a-f\d]{8}(-[a-f\d]{4}){4}[a-f\d]{8}(?(1)\})$/i", $uuid);
     }
 
     /**
