@@ -24,5 +24,6 @@ class Polygon {
             $data["d{$index}p{$point}lat"] = $p->lat;
             $data["d{$index}p{$point}lon"] = $p->lon;
         }
+        return $data;
     }
 }
