@@ -2,7 +2,7 @@
 
 namespace Cherry\Expm\Mvc;
 
-use \Cherry\Base\PathResolver;
+use \Cherry\Core\PathResolver;
 use \Cherry\Data\Ddl\SdlTag;
 use \Cherry\Web\Request;
 use \Cherry\Web\Response;

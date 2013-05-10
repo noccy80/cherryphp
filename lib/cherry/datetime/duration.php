@@ -27,10 +27,10 @@ abstract class Duration {
     public static function toSeconds($duration, $offset = null) {
         $mags = [ 's'=> 1, 'm' => 60, 'h' => 3600, 'd' => 86400, 'w' => 604800 ];
         $stot = 0;
-        foreach(explode(' ',$duration) as $ent) {
+        foreach(explode(' ',strtolower($duration)) as $ent) {
             if ($ent) {
                 $val = intval($ent);
-                $mag = strtolower(substr($ent,-1,1));
+                $mag = substr($ent,-1,1);
                 if (array_key_exists($mag,$mags)) {
                     $secs = $val * $mags[$mag];
                 } else {
