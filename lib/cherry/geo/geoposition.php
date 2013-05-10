@@ -92,7 +92,7 @@ class GeoPosition {
         $latsec = ($latm * 60 + $lats) / 3600;
         $latms = ($latd + $latsec)*(strtolower($latz)=="n"?1:-1);
         $lonsec = ($lonm * 60 + $lons) / 3600;
-        $lonms = ($lond + $lonsec)*(strtolower($lonz)=="w"?1:-1);
+        $lonms = ($lond + $lonsec)*(strtolower($lonz)=="w"?-1:1);
         return new GeoPosition($latms,$lonms);
     }
 }

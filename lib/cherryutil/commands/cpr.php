@@ -1,5 +1,6 @@
 <?php
 
+/*
 namespace CherryUtil\commands;
 use cherryutil\Command;
 use cherryutil\CommandBundle;
@@ -51,3 +52,4 @@ class CpaCommands extends CommandBundle {
 }
 
 CommandList::getInstance()->registerBundle(new CpaCommands());
+*/

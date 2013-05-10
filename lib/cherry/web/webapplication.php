@@ -6,7 +6,7 @@ use App;
 use Cherry\Application;
 use Cherry\Web\Request;
 use Cherry\Web\Response;
-use Cherry\Base\PathResolver;
+use Cherry\Core\PathResolver;
 use Cherry\Data\Ddl\SdlTag;
 
 abstract class WebApplication extends Application {
@@ -20,7 +20,7 @@ abstract class WebApplication extends Application {
         if (file_exists($cfg)) {
             $this->debug("WebApplication: Reading %s", $cfg);
             $config = new SdlTag("root");
-            $config->decode(file_get_contents($cfg));
+            $config->loadString(file_get_contents($cfg));
             $this->config = $config;
         } else {
             $this->debug("WebApplication: Could not find %s", $cfg);

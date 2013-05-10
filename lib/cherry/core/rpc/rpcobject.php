@@ -6,8 +6,8 @@ use \Cherry\Data\Ddl\DocComment;
 
 abstract class RpcObject {
     
-    public function getDefinition() {
-        $rc = new \ReflectionClass($this);
+    public static function getDefinition() {
+        $rc = new \ReflectionClass(get_called_class());
         $ml = $rc->getMethods();
         $def = [];
         foreach($ml as $mt) {
@@ -42,9 +42,9 @@ abstract class RpcObject {
         return $def;
     }
     
-    public function getProxy($target) {
+    public static function connect($target) {
         $rpo = new RpcProxy();
-        $rpo->setup($this->getDefinition());
+        $rpo->setup(self::getDefinition());
         $rpo->connect($target);
         return $rpo;
     }
