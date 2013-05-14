@@ -12,8 +12,9 @@ interface IDrawable {
 }
 
 class Canvas implements IDrawable {
-    use
-        \Cherry\Traits\Extendable;
+    use \Cherry\Traits\Extendable;
+    use \Cherry\Traits\TDebug;
+        
 
     private
         $himage = null,
@@ -117,6 +118,7 @@ class Canvas implements IDrawable {
         if ($this->himage)
             imagedestroy($this->himage);
         $this->himage = imagecreatetruecolor($width,$height);
+        imagealphablending($this->himage,false);
         $this->truecolor = true;
         $this->refresh();
         if ($bgcolor)
@@ -124,8 +126,7 @@ class Canvas implements IDrawable {
     }
 
     public function clear($color) {
-        $c = $this->map($color);
-        $this->drawFilledRect(0,0,$this->width,$this->height,$c);
+        $this->drawFilledRect(0,0,$this->width,$this->height,$color);
     }
 
     public function setDitherClass(Dither\Dither $class) {
@@ -175,7 +176,19 @@ class Canvas implements IDrawable {
 
     public function getPixel($x,$y) {
         $c = imagecolorat($this->himage, $x, $y);
-        return $c;
+        $cc = imagecolorsforindex($this->himage, $c); 
+        list($r,$g,$b,$a) = [ $cc["red"], $cc["green"], $cc["blue"], $cc["alpha"] ];
+        //$this->debug("Got pixel: %d %d %d %d (from %ld, for %dx%d)\n", $r, $g, $b, $a, $c,$x,$y);
+        return $r | ($g << 8) | ($b << 16) | ($a << 24);
+    }
+
+    public function getPixelRGB($x,$y) {
+        $c = imagecolorat($this->himage, $x, $y);
+        $r = ($c >> 32) & 0xFF;
+        $g = ($c >> 16) & 0xFF;
+        $b = ($c >> 8) & 0xFF;
+        $a = ($c & 0xFF);
+        return [$r,$g,$b,$a];
     }
 
     public function map($color) {
@@ -183,7 +196,12 @@ class Canvas implements IDrawable {
             $color = func_get_args();*/
         if (is_integer($color)) {
             // Color is already a color value
-            return $color;
+            list($r,$g,$b) = [
+                ($color & 0xFF),
+                (($color >> 8) & 0xFF),
+                (($color >> 16) & 0xFF)
+            ];
+            $a = 0; // 127;
         } elseif (is_array($color)) {
             $color = array_map("intval",$color);
             // RGB[A]
@@ -196,13 +214,12 @@ class Canvas implements IDrawable {
             // Color is a color
             list($r,$g,$b,$a) = $color->getRGBA();
         } else {
-            user_error("No parsable color provided to map");
+            user_error("No parsable color provided to map: {$color}");
         }
         // For truecolor images, we just return the color
         if ($this->truecolor) {
-            if (!$a) $a = 255;
-            $a = ((~((int)$a)) & 0xff) >> 1;
-            return ( (($a & 0x7F) << 24) | (($r & 0xFF) << 16) | (($g & 0xFF) << 8) | ($b & 0xFF) );
+            return imagecolorallocate($this->himage,$r,$g,$b);
+            //return ( (($a & 0x7F) << 24) | (($r & 0xFF) << 16) | (($g & 0xFF) << 8) | ($b & 0xFF) );
         }
         // Make sure we don't use more than 255 colors. This might not be
         // the optimal solution but it works for now. It does mean we can

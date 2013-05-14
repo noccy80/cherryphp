@@ -13,7 +13,8 @@ define('_IS_CLI',(php_sapi_name() == 'cli'));
 define('_IS_CLI_SERVER',(php_sapi_name() == 'cli-server'));
 define('CHERRY_VERSION','1.0.0-alpha');
 
-require_once CHERRY_LIB.'/lib/shims/_loader.php';
+if (file_exists(CHERRY_LIB.'/lib/shims/_loader.php'))
+    require_once CHERRY_LIB.'/lib/shims/_loader.php';
 require_once CHERRY_LIB.'/lib/utils.php';
 require_once CHERRY_LIB.'/lib/_globals.php';
 

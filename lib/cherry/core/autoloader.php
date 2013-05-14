@@ -52,8 +52,11 @@ class AutoLoader {
      *
      */
     public function register($prepend=false) {
+        if (!file_exists($this->path))
+            return false;
         spl_autoload_register([&$this,'autoload'],true,$prepend);
         $this->debug('Registered loader for %s', $this->path);
+        return true;
     }
 
     /**
