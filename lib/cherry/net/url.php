@@ -2,6 +2,8 @@
 
 namespace Cherry\Net;
 
+use ArrayAccess;
+
 /**
  * @brief URL wrapper
  *
@@ -10,7 +12,7 @@ namespace Cherry\Net;
  *
  * @author Christopher Vagnetoft <noccy@chillat.net>
  */
-class Url {
+class Url implements ArrayAccess {
 
     private $scheme = null;
     private $host = null;
@@ -29,7 +31,21 @@ class Url {
     function __construct($url = null) {
 
         // Parse the URL if we got any
-        if ($url) {
+        if ((strpos($url,":///")!==false)
+            || (strpos($url,"://.")!==false)) {
+            list($proto,$path) = explode("://",$url);
+            $this->scheme = $proto;
+            if (strpos($path,"?")!==false) {
+                list($path,$query) = explode("?",$path,2);
+                $this->query = $this->qs_parse($query);
+            } else {
+                $this->query = [];
+            }
+            $this->path = $path;
+            $this->user = null;
+            $this->pass = null;
+            $this->fragment = null;
+        } elseif ($url) {
             $c = parse_url($url);
             if (array_key_exists('scheme',$c)) $this->scheme = $c['scheme'];
             if (array_key_exists('host',$c)) $this->host = $c['host'];
@@ -40,7 +56,7 @@ class Url {
             if (array_key_exists('query',$c)) $this->query = $this->qs_parse($c['query']);
             if (array_key_exists('fragment',$c)) $this->fragment = $c['fragment'];
         }
-
+        
     }
 
     /**
@@ -66,9 +82,16 @@ class Url {
     public function __get($key) {
         switch($key) {
         case 'scheme':
+        case 'schema':
+        case 'protocol':
             return $this->scheme;
             break;
         case 'host':
+            return $this->host;
+            break;
+        case 'hostport':
+            if ($this->port)
+                return $this->host.':'.$this->port;
             return $this->host;
             break;
         case 'port':
@@ -90,7 +113,7 @@ class Url {
             return $this->fragment;
             break;
         default:
-            throw new BadPropertyException("No property ".$key." on URL");
+            throw new \BadMethodCallException("No property ".$key." on URL");
         }
     }
 
@@ -103,6 +126,8 @@ class Url {
     public function __set($key,$value) {
         switch($key) {
         case 'scheme':
+        case 'schema':
+        case 'protocol':
             $this->scheme = $value;
             break;
         case 'host':
@@ -127,7 +152,7 @@ class Url {
             $this->fragment = $value;
             break;
         default:
-            throw new BadPropertyException("No property ".$key." on URL");
+            throw new \BadMethodCallException("No property ".$key." on URL");
         }
     }
 
@@ -150,6 +175,22 @@ class Url {
     public function getParameter($key) {
         if (array_key_exists($key,$this->query)) return $this->query[$key];
         return null;
+    }
+    
+    public function offsetGet($key) {
+        return $this->getParameter($key);
+    }
+    
+    public function offsetSet($key,$value) {
+        $this->setParameter($key,$value);
+    }
+    
+    public function offsetExists($key) {
+        return ($this->getParameter($key)!==null);
+    }
+    
+    public function offsetUnset($key) {
+        $this->setParameter($key,null);
     }
 
     /**

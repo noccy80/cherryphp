@@ -24,23 +24,26 @@ class Rect {
     public function move($x,$y) {
         $this->x+= $x;
         $this->y+= $y;
+        return $this;
     }
 
     public function resizeTo($w,$h) {
         $this->w = $w;
         $this->h = $h;
+        return $this;
     }
 
     public function moveTo($x,$y) {
         $this->x = $x;
         $this->y = $y;
+        return $this;
     }
 
     public function isXYWithin($x,$y) {
         return (($x >= $this->x) && ($x <= $this->x + $this->w) &&
             ($y >= $this->y) && ($y <= $this->y + $this->h));
     }
-    
+
     public function isPointWithin(Point $p) {
         return isXYWithin($p->x,$p->y);
     }
